@@ -73,6 +73,16 @@
       "aliases": ["sqlc", "sqlc入門", "sqlc完全入門", "sqlc-intro"]
     },
     {
+      "slug": "practical-go",
+      "file": "pages/backend/practical-go.html",
+      "shelf": "backend",
+      "title": "実用 Go言語",
+      "book": "実用 Go言語 ―システム開発の現場で使える実践テクニック",
+      "cat": "Go",
+      "tags": ["インタフェース", "エラー", "並行処理", "context"],
+      "aliases": ["実用Go", "実用Go言語", "Practical Go", "Go言語", "Go", "practical-go"]
+    },
+    {
       "slug": "software-design",
       "file": "pages/design/software-design.html",
       "shelf": "design",
@@ -175,6 +185,16 @@
       "cat": "Git",
       "tags": ["コミット", "ブランチ", "マージ/リベース", "救出術"],
       "aliases": ["Git", "ギット", "Gitガイド", "Git完全ガイド", "git-complete-guide"]
+    },
+    {
+      "slug": "claude-code-tips",
+      "file": "pages/tools/claude-code-tips.html",
+      "shelf": "tools",
+      "title": "Claude Code 超実用Tips",
+      "book": "Claude Code 実践Tips集（公式ドキュメントより）",
+      "cat": "Claude Code",
+      "tags": ["スラッシュコマンド", "CLAUDE.md", "プランモード", "サブエージェント"],
+      "aliases": ["Claude Code", "クロードコード", "claude code", "Claude Code Tips", "cc tips", "Claudeコード", "claude-code-tips"]
     },
     {
       "slug": "world-class-engineer",

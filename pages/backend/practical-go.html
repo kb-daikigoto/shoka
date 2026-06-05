@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>実用 Go言語 — 現場で効く「Goらしい」書き方</title>
+<link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+<meta name="theme-color" content="#10303A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=M+PLUS+1:wght@700;800&family=Murecho:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F1F6F7;--surface:#FFFFFF;--surface-2:#F2F8F9;--ink:#16242A;--muted:#4C5A60;--faint:#86969C;
+    --line:#E0EAEC;--line-2:#CCDCDF;
+    --ac:#0E7C99;--ac-soft:#DEF0F4;--ac-dark:#0A586E;    /* 実用Go = ティールシアン */
+    --amber:#B5781E;--amber-soft:#F8EFDB;
+    --blue:#2E6FA8;--blue-soft:#E4EEF6;
+    --green:#3E7C5A;--green-soft:#E4F1EA;--red:#B5483E;--red-soft:#FBECEA;
+    --navy:#10303A;
+    --term-bg:#11262E;--term-ink:#E7F0F2;--term-dim:#6E8B98;
+    --radius:14px;--maxw:820px;
+    --fs:"Murecho",sans-serif;--fm:"JetBrains Mono",ui-monospace,monospace;--serif:"M PLUS 1",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--fs);line-height:1.9;font-size:16.5px;-webkit-font-smoothing:antialiased;
+    background-image:linear-gradient(#E3EDEF 1px,transparent 1px),linear-gradient(90deg,#E3EDEF 1px,transparent 1px);background-size:30px 30px}
+  ::selection{background:var(--ac);color:#fff}
+  #progress{position:fixed;top:0;left:0;height:3px;width:0%;background:var(--ac);z-index:100;transition:width .12s linear}
+  .layout{max-width:1230px;margin:0 auto;display:grid;grid-template-columns:248px minmax(0,1fr);gap:46px;padding:0 28px}
+  .content{max-width:var(--maxw);padding:0 0 120px}
+  nav.toc{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding:34px 0 40px}
+  nav.toc .tt{font-family:var(--fm);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin:0 0 14px;font-weight:600}
+  nav.toc ol{list-style:none;margin:0;padding:0;counter-reset:t}
+  nav.toc li{counter-increment:t}
+  nav.toc a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--muted);font-size:13.5px;line-height:1.4;padding:6px 12px 6px 14px;border-left:2px solid transparent;transition:all .15s;font-weight:500}
+  nav.toc a::before{content:counter(t,decimal-leading-zero);font-family:var(--fm);font-size:11px;color:var(--faint)}
+  nav.toc a:hover{color:var(--ink)}
+  nav.toc a.active{color:var(--ac);border-left-color:var(--ac)}nav.toc a.active::before{color:var(--ac)}
+  header.hero{padding:64px 0 34px;position:relative}
+  .badge{display:inline-flex;align-items:center;gap:8px;font-family:var(--fm);font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#fff;background:var(--navy);padding:6px 12px;border-radius:6px;margin-bottom:20px}
+  .badge .dot{width:7px;height:7px;border-radius:50%;background:var(--ac)}
+  .kicker{font-family:var(--fm);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ac);font-weight:600;margin-bottom:14px}
+  h1{font-family:var(--serif);font-weight:800;font-size:clamp(30px,5vw,46px);line-height:1.24;margin:0 0 20px;letter-spacing:.01em}
+  h1 .ac{color:var(--ac)}
+  .lede{font-size:18.5px;color:var(--muted);margin:0 0 26px;max-width:43em}
+  .meta{display:flex;flex-wrap:wrap;gap:9px}
+  .chip{font-family:var(--fm);font-size:12px;font-weight:500;padding:7px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--line-2);color:var(--muted)}
+  .chip b{color:var(--ink);font-weight:600}
+  section{padding:44px 0 6px;scroll-margin-top:24px;border-top:1px solid var(--line)}
+  section:first-of-type{border-top:none}
+  .sn{font-family:var(--fm);font-size:13px;color:var(--ac);letter-spacing:.08em;font-weight:600}
+  .pl{font-family:var(--fm);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);font-weight:600;margin:3px 0 0}
+  h2{font-family:var(--serif);font-weight:800;font-size:clamp(22px,3.4vw,30px);line-height:1.3;margin:7px 0 18px;letter-spacing:.01em}
+  h3{font-family:var(--serif);font-weight:700;font-size:19.5px;margin:28px 0 10px}
+  p{margin:0 0 17px}strong{font-weight:700}
+  a.inline{color:var(--ac);text-decoration:none;border-bottom:1.5px solid var(--ac-soft);font-weight:500}a.inline:hover{border-bottom-color:var(--ac)}
+  code.k{font-family:var(--fm);font-size:.84em;background:var(--surface);border:1px solid var(--line-2);padding:1px 6px;border-radius:6px;color:var(--ac-dark);font-weight:500;white-space:nowrap}
+  .mark{background:linear-gradient(transparent 60%,var(--ac-soft) 60%);padding:0 1px}
+  ul.list,ol.list{margin:0 0 17px;padding-left:1.35em}ul.list li,ol.list li{margin:0 0 9px}
+  .panel{border-radius:var(--radius);padding:20px 22px;margin:22px 0;border:1px solid var(--line-2);background:var(--surface)}
+  .panel .lb{font-family:var(--fm);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;display:inline-block;margin-bottom:9px}
+  .panel p:last-child{margin-bottom:0}
+  .why{background:var(--surface-2);border-left:4px solid var(--ac)}.why .lb{color:var(--ac)}
+  .key{background:var(--ac-soft);border-color:#B6DCE5;border-left:4px solid var(--ac)}.key .lb{color:var(--ac-dark)}
+  .tip{background:var(--green-soft);border-color:#C2DECE;border-left:4px solid var(--green)}.tip .lb{color:var(--green)}
+  .warn{background:var(--amber-soft);border-color:#EAD9B4;border-left:4px solid var(--amber)}.warn .lb{color:var(--amber)}
+  .danger{background:var(--red-soft);border-color:#EBC6C1;border-left:4px solid var(--red)}.danger .lb{color:var(--red)}
+  figure.dgm{margin:26px 0;padding:22px 14px;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius)}
+  figure.dgm svg{width:100%;height:auto;display:block}
+  figure.dgm figcaption{font-size:13.5px;color:var(--muted);text-align:center;margin-top:12px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:22px 0}
+  .card{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius);padding:18px}
+  .card .cn{font-family:var(--fm);font-size:11.5px;color:var(--ac);font-weight:600;margin-bottom:7px}
+  .card h4{font-family:var(--serif);font-weight:700;font-size:16.5px;margin:0 0 7px}
+  .card p{font-size:14px;color:var(--muted);margin:0;line-height:1.75}
+  pre{margin:18px 0;background:var(--term-bg);border:1px solid #28414B;border-radius:10px;padding:16px 18px;overflow-x:auto}
+  pre code{font-family:var(--fm);font-size:13px;line-height:1.7;color:var(--term-ink);white-space:pre;display:block}
+  pre code .cm{color:var(--term-dim)}pre code .kw{color:#7FB3D5}pre code .st{color:#8FD3AE}pre code .ty{color:#5FC9D6}pre code .fn{color:#E2C07A}pre code .ng{color:#E59A93}
+  table.tb{width:100%;border-collapse:collapse;margin:18px 0;font-size:14px;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius);overflow:hidden}
+  table.tb th,table.tb td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  table.tb th{font-family:var(--fm);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-weight:600;background:var(--surface-2)}
+  table.tb tr:last-child td{border-bottom:none}
+  table.tb td b{color:var(--ac-dark)}
+  blockquote{margin:22px 0;padding:6px 0 6px 20px;border-left:3px solid var(--ac);color:var(--muted);font-family:var(--serif);font-weight:700;font-size:18px;line-height:1.7}
+  footer{border-top:1px solid var(--line);padding:36px 0 70px;color:var(--muted);font-size:13.5px}
+  footer a{color:var(--ac);text-decoration:none;font-weight:500}
+  .totop{position:fixed;right:22px;bottom:22px;width:44px;height:44px;border-radius:12px;background:var(--navy);color:#fff;border:none;cursor:pointer;font-size:18px;opacity:0;transform:translateY(10px);transition:all .25s;z-index:60}
+  .totop.show{opacity:1;transform:translateY(0)}
+  @media (max-width:900px){.layout{grid-template-columns:1fr;gap:0}nav.toc{display:none}header.hero{padding:48px 0 24px}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+  .reveal{opacity:0;transform:translateY(12px);animation:rise .65s cubic-bezier(.2,.7,.2,1) forwards}
+  @keyframes rise{to{opacity:1;transform:none}}
+  .d1{animation-delay:.04s}.d2{animation-delay:.12s}.d3{animation-delay:.2s}.d4{animation-delay:.28s}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="layout">
+  <nav class="toc" aria-label="目次">
+    <p class="tt">目次</p>
+    <ol id="toc-list">
+      <li><a href="#what">一言でいうと</a></li>
+      <li><a href="#types">定義型とゼロ値を活かす</a></li>
+      <li><a href="#iface">インタフェースは小さく</a></li>
+      <li><a href="#errors">エラーは値として扱う</a></li>
+      <li><a href="#concurrency">並行処理 — 通信で共有する</a></li>
+      <li><a href="#context">context で寿命を渡す</a></li>
+      <li><a href="#io">io と後始末（defer / Close）</a></li>
+      <li><a href="#dbhttp">database/sql と net/http</a></li>
+      <li><a href="#test">テーブル駆動テスト</a></li>
+      <li><a href="#pkg">パッケージとモジュール設計</a></li>
+      <li><a href="#ops">運用へつなぐ</a></li>
+      <li><a href="#cheat">まとめ・早見表・用語集</a></li>
+    </ol>
+  </nav>
+  <main class="content">
+    <header class="hero">
+      <div class="badge reveal d1"><span class="dot"></span>Go · Practical Idioms</div>
+      <div class="kicker reveal d1">Writing idiomatic, production Go</div>
+      <h1 class="reveal d2">実用 <span class="ac">Go言語</span><br>現場で効く「Goらしい」書き方</h1>
+      <p class="lede reveal d3">文法を覚えた次に待っているのは、「で、現場ではどう書くのが正解？」という壁。本書は、定義型・小さなインタフェース・値としてのエラー・通信による並行処理といった<strong>Goらしいイディオム</strong>を、システム開発の実務目線で束ねた一冊です。シンプルさを保ったまま、壊れにくく読みやすいコードに辿り着くための型を、初級の先〜中級向けに自分の言葉で再構成します。</p>
+      <div class="meta reveal d4">
+        <span class="chip">著者 <b>渋川よしき ほか</b></span>
+        <span class="chip">出版 <b>オライリー・ジャパン (2022)</b></span>
+        <span class="chip">分野 <b>Go / 実装作法</b></span>
+        <span class="chip">対象 <b>基礎を終えたGo書き</b></span>
+      </div>
+    </header>
+
+    <section id="what">
+      <div class="sn">01</div>
+      <h2>一言でいうと</h2>
+      <p>Go の魅力は<strong>シンプルさ</strong>です。言語機能が少なく、書き方の「正解」が収束しやすい。だからこそ、本書のテーマは<span class="mark">「言語の流儀（イディオム）に逆らわないこと」</span>に尽きます。他言語の癖を持ち込んで複雑な抽象を作るより、Go が用意した素直な道具を素直に使うほうが、結局いちばん強い。</p>
+      <p>この記事では、その流儀を3本の柱で捉えます。<strong>型で意味を表す</strong>・<strong>小さく合成する</strong>・<strong>明示的に扱う</strong>。エラーも並行処理も後始末も、すべてこの3つの延長線上にあります。</p>
+      <figure class="dgm">
+        <svg viewBox="0 0 720 150" role="img" aria-label="Goらしさの3本柱">
+          <g font-family="Murecho, sans-serif">
+            <rect x="40" y="40" width="200" height="70" rx="12" fill="#DEF0F4" stroke="#0E7C99" stroke-width="1.6"/>
+            <text x="140" y="72" text-anchor="middle" font-size="14" font-weight="700" fill="#0A586E">型で意味を表す</text>
+            <text x="140" y="94" text-anchor="middle" font-size="11.5" fill="#4C5A60">定義型・ゼロ値・構造体</text>
+            <rect x="260" y="40" width="200" height="70" rx="12" fill="#DEF0F4" stroke="#0E7C99" stroke-width="1.6"/>
+            <text x="360" y="72" text-anchor="middle" font-size="14" font-weight="700" fill="#0A586E">小さく合成する</text>
+            <text x="360" y="94" text-anchor="middle" font-size="11.5" fill="#4C5A60">小さなインタフェース・埋め込み</text>
+            <rect x="480" y="40" width="200" height="70" rx="12" fill="#DEF0F4" stroke="#0E7C99" stroke-width="1.6"/>
+            <text x="580" y="72" text-anchor="middle" font-size="14" font-weight="700" fill="#0A586E">明示的に扱う</text>
+            <text x="580" y="94" text-anchor="middle" font-size="11.5" fill="#4C5A60">エラー値・context・defer</text>
+            <text x="360" y="132" text-anchor="middle" font-size="11.5" fill="#86969C">3本柱はすべて「隠さず、素直に」という同じ哲学から伸びている</text>
+          </g>
+        </svg>
+        <figcaption>本記事の地図。個々のテクニックは、この3つの原則の現れにすぎない。</figcaption>
+      </figure>
+      <div class="panel key">
+        <span class="lb">この記事のゴール</span>
+        <p>「動くGo」から「<strong>レビューを通るGo</strong>」へ。なぜその書き方が好まれるのかを言葉で説明できるようになり、現場のコードベースに馴染ませることを目指します。</p>
+      </div>
+    </section>
+
+    <section id="types">
+      <div class="sn">02</div>
+      <div class="pl">Part I · Goらしく書く</div>
+      <h2>定義型とゼロ値を活かす</h2>
+      <p>最初の一歩は、<strong>生の <code class="k">string</code> や <code class="k">int</code> を、意味を持った型に昇格させる</strong>こと。<code class="k">UserID</code> と <code class="k">Email</code> がどちらも <code class="k">string</code> だと、引数の取り違えにコンパイラは気づけません。<span class="mark">定義型（defined type）で包めば、型システムが間違いを止めてくれます。</span></p>
+      <pre><code><span class="cm">// 単なる string ではなく「意味」を型にする</span>
+<span class="kw">type</span> <span class="ty">UserID</span> <span class="kw">string</span>
+<span class="kw">type</span> <span class="ty">Email</span>  <span class="kw">string</span>
+
+<span class="cm">// 取り違えるとコンパイルエラー。ドキュメントにもなる</span>
+<span class="kw">func</span> <span class="fn">SendInvite</span>(id <span class="ty">UserID</span>, to <span class="ty">Email</span>) <span class="kw">error</span> { <span class="cm">/* ... */</span> }</code></pre>
+      <p>もう一つの要が <strong>ゼロ値（zero value）</strong>です。Go は変数を必ず初期化し、その既定値がそのまま<strong>使える状態</strong>になるよう型を設計するのが作法。<code class="k">var buf bytes.Buffer</code> は初期化なしで書き込めるし、<code class="k">sync.Mutex</code> もゼロ値でロックできます。「使う前に初期化メソッドを呼ばせる」設計は、できるだけ避けます。</p>
+      <pre><code><span class="kw">var</span> buf <span class="ty">bytes</span>.<span class="ty">Buffer</span>   <span class="cm">// new も Init も不要、ゼロ値で即使える</span>
+buf.<span class="fn">WriteString</span>(<span class="st">"hello"</span>)
+
+<span class="kw">var</span> mu <span class="ty">sync</span>.<span class="ty">Mutex</span>      <span class="cm">// ゼロ値がそのまま「未ロック」の有効な状態</span>
+mu.<span class="fn">Lock</span>()</code></pre>
+      <div class="panel tip">
+        <span class="lb">設計のコツ</span>
+        <p>新しい型を作るとき「<strong>ゼロ値は意味を持つか？</strong>」を自問する。持つなら最高（利用者が楽になる）。持てないなら、<code class="k">New...()</code> コンストラクタを用意し、不正な状態を作れないようにする。</p>
+      </div>
+    </section>
+
+    <section id="iface">
+      <div class="sn">03</div>
+      <div class="pl">Part I · Goらしく書く</div>
+      <h2>インタフェースは小さく</h2>
+      <p>Go のインタフェースは<strong>暗黙的</strong>です。「implements」と宣言する必要はなく、メソッドが揃っていれば自動的に満たす。この特性が活きるのは、<span class="mark">インタフェースを「使う側」が、必要なメソッドだけを小さく定義する</span>ときです。標準ライブラリの <code class="k">io.Reader</code>・<code class="k">io.Writer</code> がメソッド1つなのは象徴的。</p>
+      <pre><code><span class="cm">// 使う側が、欲しい振る舞いだけを宣言する（小さく！）</span>
+<span class="kw">type</span> <span class="ty">Storer</span> <span class="kw">interface</span> {
+    <span class="fn">Save</span>(ctx <span class="ty">context</span>.<span class="ty">Context</span>, u <span class="ty">User</span>) <span class="kw">error</span>
+}
+
+<span class="cm">// 「引数はインタフェース、戻り値は具体型」が基本形</span>
+<span class="kw">func</span> <span class="fn">NewService</span>(s <span class="ty">Storer</span>) *<span class="ty">Service</span> {
+    <span class="kw">return</span> &amp;<span class="ty">Service</span>{store: s}
+}</code></pre>
+      <p>これにより、テストでは <code class="k">Storer</code> を満たすモックを差し込むだけで差し替えられます。実装側（DB アクセスの具体型）はインタフェースを知らなくてよい——<strong>依存の向きが「呼ぶ側」に閉じる</strong>のが Go 流です。継承の代わりには <strong>埋め込み（embedding）</strong>で機能を合成します。</p>
+      <div class="panel warn">
+        <span class="lb">やりがちな失敗</span>
+        <p>「将来のために」と巨大なインタフェースを<strong>実装側に先回りで</strong>置くこと。Go では逆。インタフェースは<strong>消費される場所</strong>で、実際に必要になってから小さく作る。メソッドが3つを超えたら、分割を疑いましょう。</p>
+      </div>
+    </section>
+
+    <section id="errors">
+      <div class="sn">04</div>
+      <div class="pl">Part I · Goらしく書く</div>
+      <h2>エラーは値として扱う</h2>
+      <p>Go に例外はありません。エラーは <code class="k">error</code> という<strong>ただの値</strong>で、関数の戻り値として返ってくる。だから <code class="k">if err != nil</code> が頻出します。冗長に見えますが、これは<span class="mark">「失敗しうる場所が、コード上で常に見える」</span>という安全装置です。握りつぶしも、伝播も、判断も、すべて明示的になります。</p>
+      <p>実務の肝は <strong>ラップ（wrap）</strong>。<code class="k">fmt.Errorf</code> の <code class="k">%w</code> で文脈を足しながら原因を保持し、呼び出し側で <code class="k">errors.Is</code> / <code class="k">errors.As</code> で中身を判定します。</p>
+      <pre><code><span class="cm">// 文脈を足して上へ返す。原因は %w で保持される</span>
+<span class="kw">if</span> err := repo.<span class="fn">Find</span>(ctx, id); err != nil {
+    <span class="kw">return</span> <span class="ty">fmt</span>.<span class="fn">Errorf</span>(<span class="st">"find user %s: %w"</span>, id, err)
+}
+
+<span class="cm">// 番兵エラーとの一致を判定（ラップを貫いて見てくれる）</span>
+<span class="kw">var</span> <span class="ty">ErrNotFound</span> = <span class="ty">errors</span>.<span class="fn">New</span>(<span class="st">"not found"</span>)
+<span class="kw">if</span> <span class="ty">errors</span>.<span class="fn">Is</span>(err, <span class="ty">ErrNotFound</span>) { <span class="cm">/* 404 を返す等 */</span> }
+
+<span class="cm">// 具体的なエラー型を取り出す</span>
+<span class="kw">var</span> perr *<span class="ty">fs</span>.<span class="ty">PathError</span>
+<span class="kw">if</span> <span class="ty">errors</span>.<span class="fn">As</span>(err, &amp;perr) { <span class="fn">log</span>.<span class="fn">Println</span>(perr.Path) }</code></pre>
+      <figure class="dgm">
+        <svg viewBox="0 0 720 170" role="img" aria-label="エラーが%wで包まれて上位へ伝播し、IsとAsで貫いて判定される図">
+          <defs>
+            <marker id="er-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#0E7C99" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
+          </defs>
+          <g font-family="Murecho, sans-serif">
+            <rect x="40" y="58" width="150" height="54" rx="9" fill="#FDEDE9" stroke="#B5483E"/><text x="115" y="80" text-anchor="middle" font-size="12" fill="#8A2F27">DB: sql.ErrNoRows</text><text x="115" y="98" text-anchor="middle" font-size="10.5" fill="#8A2F27">（最下層の原因）</text>
+            <path d="M192 85 L240 85" fill="none" stroke="#0E7C99" stroke-width="1.6" marker-end="url(#er-a)"/><text x="216" y="74" text-anchor="middle" font-size="10" fill="#0E7C99">%w</text>
+            <rect x="242" y="58" width="150" height="54" rx="9" fill="#DEF0F4" stroke="#0E7C99"/><text x="317" y="80" text-anchor="middle" font-size="12" fill="#0A586E">repo: "find user: …"</text><text x="317" y="98" text-anchor="middle" font-size="10.5" fill="#0A586E">文脈を付けて包む</text>
+            <path d="M394 85 L442 85" fill="none" stroke="#0E7C99" stroke-width="1.6" marker-end="url(#er-a)"/><text x="418" y="74" text-anchor="middle" font-size="10" fill="#0E7C99">%w</text>
+            <rect x="444" y="58" width="150" height="54" rx="9" fill="#DEF0F4" stroke="#0E7C99"/><text x="519" y="80" text-anchor="middle" font-size="12" fill="#0A586E">handler が受け取る</text><text x="519" y="98" text-anchor="middle" font-size="10.5" fill="#0A586E">errors.Is で判定</text>
+            <path d="M519 130 Q519 150 317 150 Q115 150 115 116" fill="none" stroke="#86969C" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#er-a)"/>
+            <text x="360" y="166" text-anchor="middle" font-size="11" fill="#86969C">errors.Is / As は、包みを貫いて一番下の原因まで見に行く</text>
+          </g>
+        </svg>
+        <figcaption>%w は原因を捨てずに積み上げるラップ。Is / As はその層を貫通して、目的のエラーを照合する。</figcaption>
+      </figure>
+      <div class="panel danger">
+        <span class="lb">アンチパターン</span>
+        <p><code class="k">if err != nil { return err }</code> で<strong>素のまま投げ続ける</strong>と、最後に「どこで失敗したか」が分からないログだけが残ります。境界を越えるときは文脈を足す。逆に、<strong>同じエラーを何度もラップしてログにも出す</strong>と二重報告になる。報告は一箇所、と決めておきます。</p>
+      </div>
+    </section>
+
+    <section id="concurrency">
+      <div class="sn">05</div>
+      <div class="pl">Part II · 実用的に組み立てる</div>
+      <h2>並行処理 — 通信で共有する</h2>
+      <p>Go の代名詞、<strong>goroutine</strong> と <strong>channel</strong>。goroutine は <code class="k">go f()</code> と書くだけで動く軽量な並行単位です。設計の合言葉は <span class="mark">「メモリを共有して通信するな。通信してメモリを共有せよ」</span>。ロックで守り合うより、データを channel で<strong>受け渡す</strong>ほうが、Go では素直で壊れにくくなります。</p>
+      <pre><code><span class="cm">// 各仕事を goroutine で走らせ、結果は channel で集める</span>
+results := <span class="fn">make</span>(<span class="kw">chan</span> <span class="ty">Result</span>)
+<span class="kw">for</span> _, job := <span class="kw">range</span> jobs {
+    <span class="kw">go</span> <span class="kw">func</span>(j <span class="ty">Job</span>) {        <span class="cm">// ループ変数は引数で渡す</span>
+        results &lt;- <span class="fn">process</span>(j)
+    }(job)
+}
+<span class="kw">for</span> range jobs {
+    r := &lt;-results               <span class="cm">// 必要な数だけ受け取る</span>
+}</code></pre>
+      <figure class="dgm">
+        <svg viewBox="0 0 720 180" role="img" aria-label="共有メモリ+ロックと、channelによる受け渡しの比較">
+          <defs>
+            <marker id="co-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#0E7C99" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
+          </defs>
+          <g font-family="Murecho, sans-serif">
+            <text x="170" y="24" text-anchor="middle" font-size="12.5" font-weight="700" fill="#B5483E">✕ 共有メモリ＋ロック</text>
+            <circle cx="90" cy="80" r="26" fill="#FDEDE9" stroke="#B5483E"/><text x="90" y="84" text-anchor="middle" font-size="10.5" fill="#8A2F27">G1</text>
+            <circle cx="250" cy="80" r="26" fill="#FDEDE9" stroke="#B5483E"/><text x="250" y="84" text-anchor="middle" font-size="10.5" fill="#8A2F27">G2</text>
+            <rect x="142" y="60" width="56" height="40" rx="7" fill="#fff" stroke="#B5483E"/><text x="170" y="78" text-anchor="middle" font-size="9.5" fill="#8A2F27">共有</text><text x="170" y="91" text-anchor="middle" font-size="9.5" fill="#8A2F27">🔒state</text>
+            <line x1="116" y1="80" x2="142" y2="80" stroke="#B5483E" stroke-width="1.4"/>
+            <line x1="198" y1="80" x2="224" y2="80" stroke="#B5483E" stroke-width="1.4"/>
+            <text x="170" y="138" text-anchor="middle" font-size="11" fill="#566">取り合い＝競合・デッドロックの温床</text>
+
+            <line x1="360" y1="36" x2="360" y2="150" stroke="#CCDCDF" stroke-width="1.3"/>
+
+            <text x="540" y="24" text-anchor="middle" font-size="12.5" font-weight="700" fill="#0E7C99">○ channel で受け渡す</text>
+            <circle cx="450" cy="80" r="26" fill="#DEF0F4" stroke="#0E7C99"/><text x="450" y="84" text-anchor="middle" font-size="10.5" fill="#0A586E">G1</text>
+            <circle cx="630" cy="80" r="26" fill="#DEF0F4" stroke="#0E7C99"/><text x="630" y="84" text-anchor="middle" font-size="10.5" fill="#0A586E">G2</text>
+            <rect x="500" y="66" width="80" height="28" rx="14" fill="#fff" stroke="#0E7C99"/><text x="540" y="84" text-anchor="middle" font-size="10" fill="#0A586E">chan</text>
+            <path d="M476 80 L500 80" fill="none" stroke="#0E7C99" stroke-width="1.6" marker-end="url(#co-a)"/>
+            <path d="M580 80 L604 80" fill="none" stroke="#0E7C99" stroke-width="1.6" marker-end="url(#co-a)"/>
+            <text x="540" y="138" text-anchor="middle" font-size="11" fill="#566">所有権が移動＝同時に触らない</text>
+          </g>
+        </svg>
+        <figcaption>データを「共有して守る」のではなく「渡して持ち替える」。所有権が1箇所に定まるので競合が起きにくい。</figcaption>
+      </figure>
+      <p>とはいえ、単純なカウンタ保護などは <code class="k">sync.Mutex</code> のほうが素直なこともあります。複数 goroutine の完了待ちは <code class="k">sync.WaitGroup</code>、エラーを集めて最初の失敗で打ち切るなら <code class="k">golang.org/x/sync/errgroup</code> が定番。<strong>道具は使い分け</strong>、が実務の答えです。</p>
+      <div class="panel warn">
+        <span class="lb">goroutine リーク注意</span>
+        <p>起動した goroutine が<strong>終わる道筋</strong>を必ず用意する。受け手のいない channel 送信や、止め方のない無限ループは静かに溜まり続けます。停止の合図は次節の <code class="k">context</code> で渡すのが定石です。</p>
+      </div>
+    </section>
+
+    <section id="context">
+      <div class="sn">06</div>
+      <div class="pl">Part II · 実用的に組み立てる</div>
+      <h2>context で寿命を渡す</h2>
+      <p><code class="k">context.Context</code> は、処理の<strong>「寿命」と「中断の合図」</strong>を関数からその先へ運ぶための仕組みです。リクエストがキャンセルされた、制限時間を超えた——そうした事情を、呼び出しの連鎖の<strong>末端まで</strong>伝えます。約束事はシンプルで、<span class="mark">ブロックしうる関数は <code class="k">ctx</code> を第1引数で受け取る</span>。</p>
+      <pre><code><span class="cm">// 3秒の締め切りを付ける。cancel は必ず defer で呼ぶ</span>
+ctx, cancel := <span class="ty">context</span>.<span class="fn">WithTimeout</span>(ctx, <span class="ty">3</span>*<span class="ty">time</span>.<span class="ty">Second</span>)
+<span class="kw">defer</span> <span class="fn">cancel</span>()
+
+<span class="cm">// I/O や DB、HTTP には ctx を必ず渡す（先頭で受ける）</span>
+<span class="kw">func</span> <span class="fn">Fetch</span>(ctx <span class="ty">context</span>.<span class="ty">Context</span>, url <span class="kw">string</span>) ([]<span class="kw">byte</span>, <span class="kw">error</span>) {
+    req, _ := <span class="ty">http</span>.<span class="fn">NewRequestWithContext</span>(ctx, <span class="st">"GET"</span>, url, nil)
+    <span class="cm">// ctx がキャンセルされれば、この通信も即座に打ち切られる</span>
+}</code></pre>
+      <p>キャンセルは<strong>下流へ伝播</strong>します。親 context を畳めば、そこからぶら下がる子の処理がまとめて止まる。これが goroutine リークを防ぎ、無駄な処理を切り上げる土台になります。<code class="k">context.Value</code> で値も運べますが、<strong>濫用は禁物</strong>——本来は引数で渡すべきものをこっそり潜ませる隠れ依存になりがちです。リクエストスコープのID等に限定します。</p>
+      <div class="panel tip">
+        <span class="lb">3つの約束</span>
+        <p>① <code class="k">ctx</code> は第1引数。② 構造体のフィールドに<strong>溜め込まない</strong>（その場で渡す）。③ <code class="k">cancel</code> は <code class="k">defer</code> で必ず呼ぶ。この3つを守るだけで、中断とリソース解放がきれいに揃います。</p>
+      </div>
+    </section>
+
+    <section id="io">
+      <div class="sn">07</div>
+      <div class="pl">Part II · 実用的に組み立てる</div>
+      <h2>io と後始末（defer / Close）</h2>
+      <p>Go の I/O は <code class="k">io.Reader</code> / <code class="k">io.Writer</code> という<strong>2つの小さなインタフェース</strong>に集約されています。ファイルもネットワークもバッファも、すべて同じ「読み出し口・書き込み口」として扱える。だから <code class="k">io.Copy(dst, src)</code> 一つで、出どころを問わずデータを流せます。</p>
+      <pre><code>f, err := <span class="ty">os</span>.<span class="fn">Open</span>(name)
+<span class="kw">if</span> err != nil { <span class="kw">return</span> err }
+<span class="kw">defer</span> f.<span class="fn">Close</span>()              <span class="cm">// 後始末は defer で“その場”に書く</span>
+
+<span class="cm">// Reader → Writer をそのまま流す（中身を全部メモリに載せない）</span>
+<span class="kw">if</span> _, err := <span class="ty">io</span>.<span class="fn">Copy</span>(dst, f); err != nil {
+    <span class="kw">return</span> <span class="ty">fmt</span>.<span class="fn">Errorf</span>(<span class="st">"copy %s: %w"</span>, name, err)
+}</code></pre>
+      <p><strong>defer</strong> は、確保したリソースの解放を<strong>確保の直後に書ける</strong>仕組みです。関数を抜けるときに逆順で実行されるので、<code class="k">Close</code> や <code class="k">Unlock</code> の呼び忘れを防げます。「開いたらすぐ <code class="k">defer</code> で閉じる」をセットで身体に入れるのが王道です。</p>
+      <div class="panel warn">
+        <span class="lb">defer の落とし穴</span>
+        <p>ループの中で <code class="k">defer</code> すると、解放が<strong>関数の最後まで遅れる</strong>（＝ループ中ずっと開きっぱなし）。大量に回すなら、本体を小さな関数に切り出してその関数末尾で閉じる。また、書き込み側の <code class="k">Close</code> のエラーは握りつぶさず確認します（フラッシュ漏れを検知するため）。</p>
+      </div>
+    </section>
+
+    <section id="dbhttp">
+      <div class="sn">08</div>
+      <div class="pl">Part II · 実用的に組み立てる</div>
+      <h2>database/sql と net/http</h2>
+      <p>標準ライブラリだけで、実用的な Web サービスは十分組めます。<strong>DB アクセス</strong>は <code class="k">database/sql</code>。<code class="k">*sql.DB</code> は<span class="mark">コネクションプールそのもの</span>なので、アプリで<strong>1つ作って使い回す</strong>のが鉄則です（リクエストごとに開かない）。クエリには必ず <code class="k">...Context</code> 版を使い、プレースホルダで値を渡してSQLインジェクションを防ぎます。</p>
+      <pre><code><span class="cm">// ctx 付き・プレースホルダ。文字列連結は厳禁</span>
+rows, err := db.<span class="fn">QueryContext</span>(ctx,
+    <span class="st">"SELECT id, name FROM users WHERE team_id = $1"</span>, teamID)
+<span class="kw">if</span> err != nil { <span class="kw">return</span> nil, err }
+<span class="kw">defer</span> rows.<span class="fn">Close</span>()
+<span class="kw">for</span> rows.<span class="fn">Next</span>() {
+    <span class="kw">var</span> u <span class="ty">User</span>
+    <span class="kw">if</span> err := rows.<span class="fn">Scan</span>(&amp;u.ID, &amp;u.Name); err != nil { <span class="kw">return</span> nil, err }
+}
+<span class="kw">return</span> users, rows.<span class="fn">Err</span>()      <span class="cm">// ループ後の Err() 確認を忘れない</span></code></pre>
+      <p><strong>HTTPサーバ</strong>は <code class="k">net/http</code>。ハンドラは <code class="k">http.Handler</code> インタフェースで合成でき、ミドルウェアは「ハンドラを受け取ってハンドラを返す関数」で素直に書けます。本番では<strong>タイムアウトを明示</strong>した <code class="k">http.Server</code> を組み立てるのが必須作法です。</p>
+      <pre><code>srv := &amp;<span class="ty">http</span>.<span class="ty">Server</span>{
+    <span class="ty">Addr</span>:        <span class="st">":8080"</span>,
+    <span class="ty">Handler</span>:     mux,
+    <span class="ty">ReadTimeout</span>:  <span class="ty">5</span> * <span class="ty">time</span>.<span class="ty">Second</span>,   <span class="cm">// 既定は無制限。必ず付ける</span>
+    <span class="ty">WriteTimeout</span>: <span class="ty">10</span> * <span class="ty">time</span>.<span class="ty">Second</span>,
+}
+<span class="kw">if</span> err := srv.<span class="fn">ListenAndServe</span>(); err != nil { <span class="cm">/* ... */</span> }</code></pre>
+      <div class="panel key">
+        <span class="lb">要点</span>
+        <p><code class="k">*sql.DB</code> は<strong>使い回す</strong>・クエリは<strong>ctx＋プレースホルダ</strong>・サーバは<strong>タイムアウト必須</strong>。この3点を外さなければ、標準ライブラリだけで堅牢な土台になります。</p>
+      </div>
+    </section>
+
+    <section id="test">
+      <div class="sn">09</div>
+      <div class="pl">Part III · 品質を担保する</div>
+      <h2>テーブル駆動テスト</h2>
+      <p>Go の <code class="k">testing</code> は標準装備で、外部フレームワークなしで十分戦えます。定番の型が <strong>テーブル駆動テスト</strong>。入力と期待値の<strong>表（スライス）</strong>を作り、ループで回す。ケースの追加が1行で済み、<code class="k">t.Run</code> でサブテストにすると<span class="mark">どのケースで落ちたか</span>が一目で分かります。</p>
+      <pre><code><span class="kw">func</span> <span class="fn">TestAdd</span>(t *<span class="ty">testing</span>.<span class="ty">T</span>) {
+    tests := []<span class="kw">struct</span> {
+        name       <span class="kw">string</span>
+        a, b, want <span class="kw">int</span>
+    }{
+        {<span class="st">"zero"</span>, <span class="ty">0</span>, <span class="ty">0</span>, <span class="ty">0</span>},
+        {<span class="st">"pos"</span>,  <span class="ty">1</span>, <span class="ty">2</span>, <span class="ty">3</span>},
+        {<span class="st">"neg"</span>,  -<span class="ty">2</span>, <span class="ty">1</span>, -<span class="ty">1</span>},
+    }
+    <span class="kw">for</span> _, tt := <span class="kw">range</span> tests {
+        t.<span class="fn">Run</span>(tt.name, <span class="kw">func</span>(t *<span class="ty">testing</span>.<span class="ty">T</span>) {
+            <span class="kw">if</span> got := <span class="fn">Add</span>(tt.a, tt.b); got != tt.want {
+                t.<span class="fn">Errorf</span>(<span class="st">"Add(%d,%d)=%d, want %d"</span>, tt.a, tt.b, got, tt.want)
+            }
+        })
+    }
+}</code></pre>
+      <p>差し替えたい依存は §03 の<strong>小さなインタフェース</strong>でモックに置き換えます。期待される大きな出力は<strong>ゴールデンファイル</strong>（期待値をファイルに保存し <code class="k">-update</code> フラグで更新）にすると、テストが読みやすくなります。<code class="k">go test -race</code> での<strong>競合検出</strong>も習慣にしましょう。</p>
+      <div class="panel tip">
+        <span class="lb">テストを書きやすい設計</span>
+        <p>「テストしづらい」と感じたら、それは設計の声。<strong>副作用（時刻・乱数・I/O）をインタフェース越しに注入</strong>できる形へ寄せると、テスト容易性と本体の見通しが同時に良くなります。テストは品質の検査であり、設計のフィードバックでもあります。</p>
+      </div>
+    </section>
+
+    <section id="pkg">
+      <div class="sn">10</div>
+      <div class="pl">Part III · 品質を担保する</div>
+      <h2>パッケージとモジュール設計</h2>
+      <p>依存は <strong>Goモジュール</strong>（<code class="k">go.mod</code>）で管理します。<code class="k">go mod tidy</code> が使う依存を整理し、<code class="k">go.sum</code> がハッシュで再現性を担保。ここは迷うところが少なく、素直に従えば問題ありません。</p>
+      <p>設計で効くのは<strong>パッケージの切り方</strong>です。Go のパッケージは<span class="mark">「公開する名前（大文字始まり）が、その境界のAPI」</span>。だから、<strong>パッケージ名は中身を表す名詞</strong>にし、利用側で <code class="k">user.New()</code> のように読めるようにします。<code class="k">utils</code> や <code class="k">common</code> のような<strong>意味のない受け皿</strong>は、何でも入って肥大化するので避けます。</p>
+      <table class="tb">
+        <thead><tr><th>観点</th><th>避けたい</th><th>Goらしい</th></tr></thead>
+        <tbody>
+          <tr><td>パッケージ名</td><td><code class="k">utils</code> / <code class="k">common</code> / <code class="k">models</code></td><td>役割を表す名詞（<b><code class="k">billing</code>, <code class="k">auth</code></b>）</td></tr>
+          <tr><td>命名</td><td><code class="k">user.UserService</code>（重複）</td><td><b><code class="k">user.Service</code></b>（パッケージ名と重ねない）</td></tr>
+          <tr><td>公開範囲</td><td>とりあえず全部 export</td><td>必要な物だけ<b>大文字</b>に</td></tr>
+          <tr><td>依存の向き</td><td>相互参照・循環</td><td>一方向。境界は<b>インタフェース</b>で</td></tr>
+        </tbody>
+      </table>
+      <div class="panel why">
+        <span class="lb">なぜ名前が大事か</span>
+        <p>Go では<strong>名前そのものがドキュメント</strong>。<code class="k">context.Context</code>、<code class="k">io.Reader</code> のように「パッケージ名＋型名」で意味が完成するよう設計すると、利用側のコードが英文のように読めます。小さく、正直に名付ける——それがいちばん効く設計判断です。</p>
+      </div>
+    </section>
+
+    <section id="ops">
+      <div class="sn">11</div>
+      <div class="pl">Part III · 品質を担保する</div>
+      <h2>運用へつなぐ</h2>
+      <p>最後に、書いた Go を<strong>届けて動かす</strong>側面。Go は<span class="mark">単一バイナリにコンパイルされる</span>のが最大の運用上の強みです。ランタイムを同梱しないので、配布もコンテナ化も軽い。クロスコンパイルも <code class="k">GOOS</code> / <code class="k">GOARCH</code> を指定するだけです。</p>
+      <pre><code><span class="cm"># Linux 向けに、依存ゼロの静的バイナリを1つ吐く</span>
+$ CGO_ENABLED=0 GOOS=linux <span class="kw">go</span> build -o app ./cmd/server
+
+<span class="cm"># コンテナは「ビルド用」と「実行用」を分ける（軽く・安全に）</span>
+<span class="cm"># 実行イメージは scratch / distroless にバイナリ1枚だけ置ける</span></code></pre>
+      <ul class="list">
+        <li><strong>設定</strong>：環境変数やフラグで外から注入する（<code class="k">flag</code> / 環境変数）。秘密はコードに埋めない。</li>
+        <li><strong>ログ</strong>：標準の <code class="k">log/slog</code> で<strong>構造化ログ</strong>。検索・集計しやすい形で出す。</li>
+        <li><strong>graceful shutdown</strong>：シグナルを受けたら <code class="k">srv.Shutdown(ctx)</code> で処理中のリクエストを捌き切ってから止める。</li>
+      </ul>
+      <div class="panel key">
+        <span class="lb">つながった</span>
+        <p>ここまでの全要素が運用で合流します。<code class="k">context</code> が graceful shutdown を支え、<strong>小さなインタフェース</strong>が設定やログの差し替えを可能にし、<strong>エラーのラップ</strong>が構造化ログで効く。Goらしさは、そのまま運用しやすさになります。</p>
+      </div>
+    </section>
+
+    <section id="cheat">
+      <div class="sn">12</div>
+      <h2>まとめ・早見表・用語集</h2>
+      <table class="tb">
+        <thead><tr><th>場面</th><th>つまずきがち</th><th>Goらしい一手</th></tr></thead>
+        <tbody>
+          <tr><td>型</td><td>何でも string / int</td><td><b>定義型</b>で意味を持たせる・ゼロ値を活かす</td></tr>
+          <tr><td>抽象化</td><td>巨大インタフェースを先回り</td><td><b>使う側で小さく</b>定義（引数はi/f、戻り値は具体型）</td></tr>
+          <tr><td>失敗</td><td>err を素のまま投げ続ける</td><td><b>%w でラップ</b>・<code class="k">Is</code>/<code class="k">As</code>で判定・報告は一箇所</td></tr>
+          <tr><td>並行</td><td>共有メモリをロックで守る</td><td><b>channelで受け渡す</b>・止め方を用意</td></tr>
+          <tr><td>中断</td><td>処理が止まらない/漏れる</td><td><b>ctxを第1引数</b>・<code class="k">defer cancel()</code></td></tr>
+          <tr><td>後始末</td><td>Close 忘れ</td><td>開いたら即 <b><code class="k">defer Close()</code></b></td></tr>
+          <tr><td>テスト</td><td>ケースごとに関数を量産</td><td><b>テーブル駆動</b>＋<code class="k">t.Run</code>・<code class="k">-race</code></td></tr>
+          <tr><td>構成</td><td><code class="k">utils</code> に全部入り</td><td>役割を表す<b>名詞パッケージ</b>・一方向依存</td></tr>
+        </tbody>
+      </table>
+      <blockquote>少ない機能を、素直に使い切る。Goの強さは「書けることの多さ」ではなく「迷いの少なさ」にある。</blockquote>
+      <div class="panel key">
+        <span class="lb">一言で</span>
+        <p>Goらしさとは、<strong>型で意味を表し・小さく合成し・明示的に扱う</strong>こと。言語のシンプルさに逆らわず、標準ライブラリと素直なイディオムに乗る。それがいちばん速く、いちばん壊れにくい道です。</p>
+      </div>
+      <h3>用語集</h3>
+      <table class="tb">
+        <tbody>
+          <tr><td><b>定義型</b></td><td>既存型に新しい名前と意味を与えた型（<code class="k">type UserID string</code>）。取り違えを型で防ぐ。</td></tr>
+          <tr><td><b>ゼロ値</b></td><td>変数の既定の初期値。これがそのまま使える状態になるよう設計するのが作法。</td></tr>
+          <tr><td><b>暗黙的インタフェース</b></td><td>宣言なしで、メソッドが揃えば自動的に満たす仕組み。使う側で小さく定義する。</td></tr>
+          <tr><td><b>%w / errors.Is / As</b></td><td>エラーに文脈を足して包む（<code class="k">%w</code>）／包みを貫いて原因を照合・取り出す。</td></tr>
+          <tr><td><b>goroutine / channel</b></td><td>軽量な並行単位と、その間でデータを受け渡す通路。「通信で共有」する道具。</td></tr>
+          <tr><td><b>context.Context</b></td><td>処理の寿命とキャンセルの合図を下流へ運ぶ型。ブロックする関数の第1引数。</td></tr>
+          <tr><td><b>defer</b></td><td>関数を抜けるときに実行する後処理の予約。確保の直後に解放を書ける。</td></tr>
+          <tr><td><b>テーブル駆動テスト</b></td><td>入力と期待値の表をループで回すテストの型。<code class="k">t.Run</code> でケースを分離。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <footer>
+      <p>本記事は『実用 Go言語 ―システム開発の現場で使える実践テクニック』（渋川よしき・辻大志郎・真野隼記 著／オライリー・ジャパン・2022）を、基礎を終えた学習者向けに自分の言葉で再構成した学習ノートです。原文の引用ではなく要点の咀嚼であり、コードは説明用に簡略化しています。仕様や作法は Go のバージョンで変わりうるため、正確な内容は<a href="https://www.oreilly.co.jp/books/9784873119694/">原著</a>と公式ドキュメントでお確かめください。<br>分野: バックエンド &amp; API — Backend &amp; API</p>
+    </footer>
+  </main>
+</div>
+<button class="totop" id="totop" aria-label="トップへ戻る">↑</button>
+<script>
+  var prog=document.getElementById('progress'),totop=document.getElementById('totop');
+  function s(){var h=document.documentElement,m=h.scrollHeight-h.clientHeight;prog.style.width=(m>0?h.scrollTop/m*100:0)+'%';if(h.scrollTop>600)totop.classList.add('show');else totop.classList.remove('show');}
+  document.addEventListener('scroll',s,{passive:true});s();
+  totop.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  var links=[].slice.call(document.querySelectorAll('nav.toc a')),map={};
+  links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(l){l.classList.remove('active');});var a=map[e.target.id];if(a)a.classList.add('active');}});},{rootMargin:'-20% 0px -70% 0px',threshold:0});
+  document.querySelectorAll('main section').forEach(function(x){io.observe(x);});
+</script>
+</body>
+</html>
