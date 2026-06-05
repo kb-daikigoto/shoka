@@ -7,7 +7,8 @@
     "design": "ソフトウェア設計 (Software Design)",
     "infra": "クラウド & インフラ (Cloud & Infra)",
     "dist": "分散データシステム (Distributed Data)",
-    "tools": "開発ツール (Dev Tools)"
+    "tools": "開発ツール (Dev Tools)",
+    "mindset": "思考と働き方 (Mindset & Practice)"
   },
   "articles": [
     {
@@ -173,6 +174,16 @@
       "cat": "Git",
       "tags": ["コミット", "ブランチ", "マージ/リベース", "救出術"],
       "aliases": ["Git", "ギット", "Gitガイド", "Git完全ガイド", "git-complete-guide"]
+    },
+    {
+      "slug": "world-class-engineer",
+      "file": "pages/mindset/world-class-engineer.html",
+      "shelf": "mindset",
+      "title": "世界一流エンジニアの思考法",
+      "book": "世界一流エンジニアの思考法（牛尾剛）",
+      "cat": "MINDSET",
+      "tags": ["Be Lazy", "理解駆動", "不確実性", "生産性"],
+      "aliases": ["世界一流エンジニア", "一流エンジニアの思考法", "思考法", "Be Lazy", "牛尾剛", "world-class-engineer"]
     }
   ]
 }
