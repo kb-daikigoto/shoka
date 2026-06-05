@@ -62,16 +62,17 @@ git push -u origin main
 
 | コマンド | 用途 |
 |---|---|
-| `/create [書籍名 または 学習内容]` | 新記事を `pages/<棚>/` に作り、ハブ（ARTICLES）と catalog.json に追記 |
-| `/update [識別ワード or file名] [変更内容]` | catalog.json で対象記事を一意に特定し、変更範囲を確認のうえ外科的に編集 |
-| `/org` | `pages/` を棚別サブディレクトリに整頓し、catalog.json を再生成して参照パスを揃える |
+| `/create [書籍名 または 学習内容] [--push]` | 新記事を `pages/<棚>/` に作り、ハブ（ARTICLES）と catalog.json に追記 |
+| `/update [識別ワード or file名] [変更内容] [--push]` | catalog.json で対象記事を一意に特定し、変更範囲を確認のうえ外科的に編集 |
+| `/org [--push]` | `pages/` を棚別サブディレクトリに整頓し、catalog.json を再生成して参照パスを揃える |
 | `/publish [メッセージ]` | 変更を commit & push し、公開サイトに反映（git リポジトリのある環境専用） |
 
 `/update` の第1引数は正確なファイル名でなくてよい。記事を一意に特定できる言葉でも解決する。
 例: `/update sql指南書 〇〇に変更して` → `pages/db/sql-mastery.html` を特定して編集。
 
-`/create`・`/update`・`/org` はファイルを提示するところまで（自動pushはしない）。公開したいときに
-続けて **`/publish`** を叩くと commit & push まで行い、GitHub Pages に反映される。
+`/create`・`/update`・`/org` はファイルを提示するところまで（自動pushはしない）。公開したいときは
+末尾に **`--push`**（`-p`）を付けると提示後そのまま commit & push まで一気通貫。あるいは後から **`/publish`**
+を叩いても反映できる。例: `/create TCP/IP 入門 --push` / `/update sql指南書 〇〇に変更して --push` / `/org --push`
 
 ## 新しい記事を手で追加する場合
 
