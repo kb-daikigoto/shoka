@@ -8,7 +8,8 @@
     "infra": "クラウド & インフラ (Cloud & Infra)",
     "dist": "分散データシステム (Distributed Data)",
     "tools": "開発ツール (Dev Tools)",
-    "mindset": "思考と働き方 (Mindset & Practice)"
+    "mindset": "思考と働き方 (Mindset & Practice)",
+    "team": "チームと組織 (Team & Org)"
   },
   "articles": [
     {
@@ -184,6 +185,16 @@
       "cat": "MINDSET",
       "tags": ["Be Lazy", "理解駆動", "不確実性", "生産性"],
       "aliases": ["世界一流エンジニア", "一流エンジニアの思考法", "思考法", "Be Lazy", "牛尾剛", "world-class-engineer"]
+    },
+    {
+      "slug": "team-topologies",
+      "file": "pages/team/team-topologies.html",
+      "shelf": "team",
+      "title": "チームトポロジー",
+      "book": "チームトポロジー（Team Topologies）",
+      "cat": "ORG DESIGN",
+      "tags": ["コンウェイの法則", "認知負荷", "4つのチーム", "インタラクションモード"],
+      "aliases": ["チームトポロジー", "Team Topologies", "チームトポロジ", "コンウェイの法則", "認知負荷", "team-topologies"]
     }
   ]
 }
