@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>データ指向アプリケーションデザイン 第3巻 ― 分散の難所</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@600;700;900&family=Zen+Kaku+Gothic+Antique:wght@400;500;700&family=Red+Hat+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f141c;--bg2:#151c26;--card:#172029;--ink:#cfd6e2;--ink-soft:#8b95a6;--ink-dim:#5d6776;--line:#26303d;
+  --accent:#41b6e6;--accent-deep:#2c87b4;--accent-soft:rgba(65,182,230,.13);
+  --amber:#e0a458;--amber-soft:rgba(224,164,88,.13);
+  --ok:#5bc88a;--ok-soft:rgba(91,200,138,.13);--warn:#e0b54e;--warn-soft:rgba(224,181,78,.13);--danger:#e8736a;--danger-soft:rgba(232,115,106,.13);
+  --code-bg:#0b1017;--code-bg2:#080c12;--code-line:#1f2935;
+  --mono:'Red Hat Mono',ui-monospace,monospace;--disp:'Noto Serif JP',serif;--sans:'Zen Kaku Gothic Antique',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+body{font-family:var(--sans);color:var(--ink);background-color:var(--bg);background-image:linear-gradient(rgba(65,182,230,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(65,182,230,.035) 1px,transparent 1px);background-size:30px 30px;line-height:1.9;font-size:16px;-webkit-font-smoothing:antialiased;letter-spacing:.01em;}
+#progress{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--accent),var(--amber));z-index:1000;transition:width .12s ease-out;box-shadow:0 0 10px var(--accent);}
+.wrap{display:grid;grid-template-columns:280px 1fr;max-width:1280px;margin:0 auto;}
+#toc{position:sticky;top:0;height:100vh;overflow-y:auto;padding:36px 22px 60px 30px;border-right:1px solid var(--line);background:rgba(15,20,28,.85);backdrop-filter:blur(3px);}
+#toc .toc-brand{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:5px;}
+#toc .toc-vol{font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:.1em;margin-bottom:6px;}
+#toc .toc-title{font-family:var(--disp);font-weight:700;font-size:17px;line-height:1.5;margin-bottom:20px;color:#e8edf4;}
+#toc .part-label{font-family:var(--mono);font-size:10px;letter-spacing:.13em;color:var(--amber);text-transform:uppercase;margin:18px 0 7px;display:block;}
+#toc a{display:flex;gap:9px;align-items:baseline;text-decoration:none;color:var(--ink-soft);font-size:13px;padding:4px 8px;border-radius:7px;line-height:1.45;transition:all .15s;margin-bottom:1px;}
+#toc a .n{font-family:var(--mono);font-size:11px;color:var(--accent);flex:0 0 auto;opacity:.8;}
+#toc a:hover{background:var(--accent-soft);color:#e8edf4;}
+#toc a.active{background:var(--accent);color:#07111a;font-weight:700;}
+#toc a.active .n{color:#07111a;opacity:.9;}
+main{padding:0 clamp(20px,5vw,72px) 120px;min-width:0;}
+.hero{padding:74px 0 50px;border-bottom:1px solid var(--line);position:relative;}
+.badge{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:#07111a;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.08em;padding:5px 12px;border-radius:30px;text-transform:uppercase;}
+.kicker{font-family:var(--mono);font-size:13px;letter-spacing:.04em;color:var(--accent);margin:22px 0 14px;}
+.hero h1{font-family:var(--disp);font-weight:900;font-size:clamp(32px,5.4vw,56px);line-height:1.25;color:#eef2f8;}
+.hero h1 em{font-style:normal;color:var(--accent);}
+.lede{font-size:18px;color:var(--ink-soft);margin-top:24px;max-width:660px;line-height:2;}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:30px;}
+.chip{font-family:var(--mono);font-size:12px;background:var(--bg2);border:1px solid var(--line);padding:6px 13px;border-radius:8px;color:var(--ink-soft);}
+.chip b{color:var(--accent);font-weight:600;}
+.recap{margin:34px 0 0;background:var(--bg2);border:1px solid var(--line);border-left:4px solid var(--ink-dim);border-radius:12px;padding:16px 20px;}
+.recap .rl{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--ink-soft);text-transform:uppercase;display:block;margin-bottom:5px;}
+.recap p{margin:0;font-size:14.5px;color:var(--ink-soft);}
+.map{margin:40px 0 10px;}
+.map h3{font-family:var(--disp);font-size:18px;color:#e8edf4;border:none;padding:0;margin:0 0 14px;}
+.volgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;}
+.vol{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;position:relative;}
+.vol.done{opacity:.62;}
+.vol.cur{border-color:var(--accent);background:linear-gradient(160deg,var(--accent-soft),var(--card));}
+.vol .vn{font-family:var(--mono);font-size:11px;color:var(--amber);letter-spacing:.08em;}
+.vol.cur .vn{color:var(--accent);}
+.vol h4{font-family:var(--disp);font-size:16px;color:#e8edf4;margin:5px 0 6px;}
+.vol p{font-size:13px;color:var(--ink-soft);margin:0;}
+.vol .now{position:absolute;top:14px;right:14px;font-family:var(--mono);font-size:10px;background:var(--accent);color:#07111a;padding:2px 7px;border-radius:20px;font-weight:600;}
+.vol .ck{position:absolute;top:14px;right:14px;font-family:var(--mono);font-size:11px;color:var(--ok);}
+.part{margin:72px 0 8px;padding:26px 30px;border-radius:16px;position:relative;background:linear-gradient(135deg,#10202c,#16323f);border:1px solid var(--accent-deep);overflow:hidden;}
+.part::after{content:"";position:absolute;right:-50px;top:-50px;width:200px;height:200px;border:1px solid rgba(65,182,230,.25);border-radius:50%;}
+.part::before{content:"";position:absolute;right:20px;bottom:-60px;width:130px;height:130px;border:1px solid rgba(65,182,230,.18);border-radius:50%;}
+.part .pl{font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--accent);}
+.part h2{font-family:var(--disp);font-size:26px;font-weight:700;margin-top:6px;color:#eef2f8;}
+.part p{margin-top:8px;font-size:14.5px;color:var(--ink-soft);max-width:600px;}
+section{padding:48px 0 8px;scroll-margin-top:24px;}
+.sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:8px;}
+.sec-num{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--accent);background:var(--bg2);border:1px solid var(--accent-deep);padding:3px 10px;border-radius:7px;flex:0 0 auto;}
+h2.sec-title{font-family:var(--disp);font-size:clamp(23px,3.3vw,31px);font-weight:700;line-height:1.34;color:#eef2f8;}
+h3{font-family:var(--disp);font-size:20px;font-weight:700;margin:34px 0 12px;color:var(--accent);padding-left:13px;border-left:3px solid var(--amber);}
+p{margin:14px 0;}
+strong{color:#e8edf4;font-weight:700;}
+.mono{font-family:var(--mono);font-size:.85em;background:var(--bg2);padding:1px 6px;border-radius:5px;border:1px solid var(--line);color:var(--accent);}
+.oneliner{background:linear-gradient(135deg,#0c1622,#10202c);border:1px solid var(--accent-deep);border-radius:14px;padding:24px 28px;margin:26px 0;}
+.oneliner::before{content:"一言でいうと";font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--accent);display:block;margin-bottom:8px;}
+.oneliner p{margin:0;font-family:var(--disp);font-size:20px;line-height:1.7;font-weight:700;color:#eef2f8;}
+.panel{border-radius:12px;padding:18px 22px;margin:22px 0;border:1px solid;border-left-width:4px;background:var(--bg2);}
+.panel .pt{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;display:block;margin-bottom:6px;}
+.panel p{margin:6px 0;font-size:15px;}
+.panel.why{border-color:var(--accent);background:var(--accent-soft);}.panel.why .pt{color:var(--accent);}
+.panel.point{border-color:var(--amber);background:var(--amber-soft);}.panel.point .pt{color:var(--amber);}
+.panel.tip{border-color:var(--ok);background:var(--ok-soft);}.panel.tip .pt{color:var(--ok);}
+.panel.warn{border-color:var(--warn);background:var(--warn-soft);}.panel.warn .pt{color:var(--warn);}
+.panel.danger{border-color:var(--danger);background:var(--danger-soft);}.panel.danger .pt{color:var(--danger);}
+.code{background:var(--code-bg);border-radius:12px;margin:22px 0;overflow:hidden;border:1px solid var(--code-line);}
+.code-top{display:flex;justify-content:space-between;align-items:center;background:var(--code-bg2);padding:9px 14px;border-bottom:1px solid var(--code-line);}
+.code-top .fn{font-family:var(--mono);font-size:12px;color:var(--ink-soft);letter-spacing:.03em;}
+.copy{font-family:var(--mono);font-size:11px;color:var(--accent);background:transparent;border:1px solid var(--code-line);border-radius:6px;padding:3px 10px;cursor:pointer;transition:.15s;}
+.copy:hover{background:var(--accent);color:#07111a;border-color:var(--accent);}
+.code pre{padding:16px 18px;overflow-x:auto;}
+.code code{font-family:var(--mono);font-size:13px;line-height:1.8;color:#c6d0dd;white-space:pre;}
+.tok-k{color:#5fb6e8;font-weight:500;}.tok-f{color:#e0a458;}.tok-s{color:#8fcf96;}.tok-n{color:#e58fb0;}.tok-c{color:#566273;font-style:italic;}.tok-v{color:#c6d0dd;}
+.tbl{margin:24px 0;overflow-x:auto;border-radius:12px;border:1px solid var(--line);}
+table{border-collapse:collapse;width:100%;font-size:14px;background:var(--card);}
+th{background:#10202c;color:var(--accent);font-weight:700;text-align:left;padding:11px 14px;font-size:13px;border-bottom:1px solid var(--accent-deep);}
+td{padding:10px 14px;border-top:1px solid var(--line);vertical-align:top;color:var(--ink);}
+tr:nth-child(even) td{background:var(--bg2);}
+.tbl.mini td:first-child{font-family:var(--mono);color:var(--accent);font-weight:500;white-space:nowrap;}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:24px 0;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;border-top:3px solid var(--accent);}
+.card h4{font-family:var(--disp);font-size:16px;color:#e8edf4;margin-bottom:7px;}
+.card p{font-size:14px;margin:4px 0;color:var(--ink-soft);}
+.card .tag{font-family:var(--mono);font-size:11px;color:var(--amber);}
+.fig{margin:30px 0;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;text-align:center;}
+.fig svg{max-width:100%;height:auto;}
+.fig .cap{font-family:var(--mono);font-size:12px;color:var(--ink-soft);margin-top:14px;}
+#top-btn{position:fixed;right:24px;bottom:24px;width:48px;height:48px;border-radius:50%;background:var(--accent);color:#07111a;border:none;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.25s;box-shadow:0 6px 18px rgba(0,0,0,.4);z-index:900;}
+#top-btn.show{opacity:1;pointer-events:auto;}
+#top-btn:hover{transform:translateY(-3px);}
+.gloss dt{font-family:var(--disp);font-weight:700;color:var(--accent);font-size:16px;margin-top:16px;}
+.gloss dd{margin:3px 0 0;color:var(--ink-soft);font-size:14.5px;}
+.nextvol{margin:50px 0 0;background:linear-gradient(135deg,#10202c,#16323f);border:1px solid var(--accent-deep);border-radius:16px;padding:26px 30px;}
+.nextvol .nl{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--accent);}
+.nextvol h3{border:none;padding:0;margin:6px 0 6px;color:#eef2f8;font-size:20px;}
+.nextvol p{margin:0;font-size:14.5px;color:var(--ink-soft);}
+.foot{margin-top:60px;padding-top:30px;border-top:1px solid var(--line);font-size:13.5px;color:var(--ink-soft);}
+.foot b{color:#e8edf4;}
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .7s ease,transform .7s ease;}
+.reveal.in{opacity:1;transform:none;}
+@media(max-width:880px){.wrap{grid-template-columns:1fr;}#toc{display:none;}body{font-size:15.5px;}.hero{padding:52px 0 38px;}}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="wrap">
+
+<nav id="toc">
+  <div class="toc-brand">Data-Intensive Apps</div>
+  <div class="toc-vol">第3巻 / 全4巻</div>
+  <div class="toc-title">データ指向<br>アプリケーション<br>デザイン 完全ガイド</div>
+
+  <a href="#map"><span class="n">◈</span>シリーズ地図</a>
+  <a href="#s00"><span class="n">00</span>最難関への入口</a>
+
+  <span class="part-label">A — トランザクション</span>
+  <a href="#s01"><span class="n">01</span>ACIDの正体</a>
+  <a href="#s02"><span class="n">02</span>弱い分離レベルと異常</a>
+  <a href="#s03"><span class="n">03</span>直列化可能性</a>
+
+  <span class="part-label">B — 分散システムの困難</span>
+  <a href="#s04"><span class="n">04</span>部分障害とネットワーク</a>
+  <a href="#s05"><span class="n">05</span>信頼できない時計</a>
+  <a href="#s06"><span class="n">06</span>真実は多数決で決まる</a>
+
+  <span class="part-label">C — 一貫性と合意</span>
+  <a href="#s07"><span class="n">07</span>線形化可能性とCAP</a>
+  <a href="#s08"><span class="n">08</span>順序と因果</a>
+  <a href="#s09"><span class="n">09</span>2相コミットと合意</a>
+
+  <span class="part-label">Reference</span>
+  <a href="#cheat"><span class="n">★</span>チートシート</a>
+  <a href="#gloss"><span class="n">＃</span>用語集</a>
+</nav>
+
+<main>
+  <header class="hero reveal">
+    <span class="badge">▣ Vol.3 / Distributed Data ②</span>
+    <div class="kicker">データ指向アプリケーションデザイン ― 完全理解ガイド 第3巻</div>
+    <h1>ネットワークも時計も、<br><em>信じてはいけない</em>。</h1>
+    <p class="lede">分散システムでは、相手が生きているのか、自分の時計が正しいのか、確かめる術がありません。この不確かさの中で、それでもデータの正しさを守る ― トランザクションの分離、障害の現実、そして複数ノードで1つの真実に「合意」する方法。本シリーズの最難関です。</p>
+    <div class="chips">
+      <span class="chip">本巻 <b>第2部 / 7〜9章</b></span>
+      <span class="chip">主題 <b>分離・障害・合意</b></span>
+      <span class="chip">難度 <b>上級</b></span>
+    </div>
+    <div class="recap">
+      <span class="rl">前巻のおさらい</span>
+      <p>第2巻では複製と分割で「分散」へ踏み出し、レプリケーションラグ・書き込み衝突・クォーラム・クラスタの合意と、繰り返し<strong>一貫性</strong>と<strong>時計のずれ</strong>に行き当たりました。本巻はその正体に正面から向き合います。</p>
+    </div>
+  </header>
+
+  <!-- MAP -->
+  <div class="map reveal" id="map">
+    <h3>◈ シリーズ地図（全4巻）</h3>
+    <div class="volgrid">
+      <div class="vol done"><span class="ck">✓ 読了</span><div class="vn">第1巻 ― 土台</div><h4>Foundations</h4><p>三つの関心事／データモデル／ストレージ／エンコーディング（1〜4章）</p></div>
+      <div class="vol done"><span class="ck">✓ 読了</span><div class="vn">第2巻 ― 複製と分割</div><h4>Distributed Data ①</h4><p>レプリケーション／パーティショニング（5〜6章）</p></div>
+      <div class="vol cur"><span class="now">今ここ</span><div class="vn">第3巻 ― 分散の難所</div><h4>Distributed Data ②</h4><p>トランザクション／分散システムの問題／一貫性と合意（7〜9章）</p></div>
+      <div class="vol"><div class="vn">第4巻 ― 派生データ</div><h4>Derived Data</h4><p>バッチ処理／ストリーム処理／将来像（10〜12章）</p></div>
+    </div>
+  </div>
+
+  <!-- 00 -->
+  <section id="s00" class="reveal">
+    <div class="sec-head"><span class="sec-num">00</span><h2 class="sec-title">最難関への入口</h2></div>
+    <div class="oneliner"><p>本巻の3章は「正しさをどう守るか」の階段。1台の中の保証（トランザクション）→ 分散の現実（障害）→ 複数台での合意、と難度が上がる。</p></div>
+
+    <p>ここからは、本シリーズで最も骨のある領域です。流れを掴んでおくと迷いません。</p>
+
+    <div class="cards">
+      <div class="card"><span class="tag">Ch.7</span><h4>トランザクション</h4><p>まず「1つのデータベース内」で、複数操作をまとめて正しく扱う仕組みと、その保証の強弱。</p></div>
+      <div class="card"><span class="tag">Ch.8</span><h4>分散システムの困難</h4><p>次に、ネットワークと時計が信用できないという分散の<strong>厳しい現実</strong>を直視する。</p></div>
+      <div class="card"><span class="tag">Ch.9</span><h4>一貫性と合意</h4><p>その不確かさの上で、複数ノードが1つの真実に<strong>合意</strong>する方法を組み立てる。</p></div>
+    </div>
+  </section>
+
+  <!-- PART A -->
+  <div class="part reveal">
+    <div class="pl">PART A</div>
+    <h2>トランザクション</h2>
+    <p>複数の読み書きを「ひとまとまり」として扱う仕組み。全部成功か全部なかったことに ― この単純な約束が、並行処理の悪夢から開発者を守ります。</p>
+  </div>
+
+  <!-- 01 -->
+  <section id="s01" class="reveal">
+    <div class="sec-head"><span class="sec-num">01</span><h2 class="sec-title">ACIDの正体</h2></div>
+    <div class="oneliner"><p>ACIDの本当の中身は原子性・分離性・永続性の3つ。「一貫性(C)」だけは毛色が違い、アプリの責任。</p></div>
+
+    <p>トランザクションは複数の操作を1単位にまとめ、その保証を <strong>ACID</strong> と呼びます。ただしACIDは曖昧に使われがちで、実際に意味があるのは次のように整理できます。</p>
+
+    <div class="cards">
+      <div class="card"><span class="tag">A</span><h4>原子性 (Atomicity)</h4><p>全部成功か、全部なかったことにするか。途中で失敗したら<strong>すべて取り消す（アボート可能性）</strong>。並行性の話ではない。</p></div>
+      <div class="card"><span class="tag">I</span><h4>分離性 (Isolation)</h4><p>同時実行されても、互いに<strong>独立して動いたかのように</strong>見える。本章の主役。</p></div>
+      <div class="card"><span class="tag">D</span><h4>永続性 (Durability)</h4><p>コミットしたら<strong>失われない</strong>。ログや複製で保証する。</p></div>
+      <div class="card" style="border-top-color:var(--ink-dim)"><span class="tag" style="color:var(--ink-soft)">C</span><h4>一貫性 (Consistency)</h4><p>「残高は負にならない」等のアプリ固有の不変条件。<strong>これを保つのはアプリ側の責任</strong>で、他3つとは性質が違う。</p></div>
+    </div>
+
+    <div class="panel point">
+      <span class="pt">要点</span>
+      <p>原子性と永続性は直感的です。難しく、そして面白いのは<strong>分離性</strong>。「完全に独立」を保証すると重いので、現実のDBはより弱い分離レベルを多く用意しています。次節で、その弱さがどんなバグを招くかを見ます。</p>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section id="s02" class="reveal">
+    <div class="sec-head"><span class="sec-num">02</span><h2 class="sec-title">弱い分離レベルと異常</h2></div>
+    <div class="oneliner"><p>分離レベルを下げるほど速くなるが、防げなくなる「並行性の異常」が増える。どの異常を許容できるかで選ぶ。</p></div>
+
+    <div class="tbl">
+      <table>
+        <tr><th>分離レベル</th><th>防げるもの</th><th>残る危険</th></tr>
+        <tr><td>リードコミッティド</td><td>ダーティリード/ダーティライト</td><td>非反復読み取り（リードスキュー）</td></tr>
+        <tr><td>スナップショット分離<br>(リピータブルリード)</td><td>リードスキュー（一貫した断面を読む）</td><td>更新のロスト・書き込みスキュー</td></tr>
+        <tr><td>直列化可能</td><td>すべての並行性異常</td><td>（なし）ただし高コスト</td></tr>
+      </table>
+    </div>
+
+    <p><strong>スナップショット分離</strong>は、各トランザクションが「ある時点の一貫した断面」を読む方式で、多くのDBで <strong>MVCC（多版型同時実行制御）</strong> により実現されます。しかしこれでも防げない厄介な異常が2つあります。</p>
+
+    <h3>更新のロスト と 書き込みスキュー</h3>
+    <p><strong>更新のロスト</strong>は「読んで→変えて→書く」を2者が同時に行い、片方の更新が上書きで消える現象（カウンタの加算など）。対策は不可分操作・明示ロック・<span class="mono">compare-and-set</span>・自動検出です。より巧妙なのが<strong>書き込みスキュー</strong>です。</p>
+
+    <div class="fig">
+      <svg viewBox="0 0 560 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="書き込みスキューの例（オンコール医師）">
+        <g font-family="'Red Hat Mono',monospace" font-size="11">
+          <text x="280" y="20" text-anchor="middle" font-family="'Noto Serif JP',serif" font-weight="700" font-size="13" fill="#41b6e6">「当直は最低1人」という不変条件が壊れる</text>
+          <text x="70" y="58" fill="#8b95a6">T1(Alice)</text>
+          <text x="70" y="138" fill="#8b95a6">T2(Bob)</text>
+          <line x1="140" y1="50" x2="540" y2="50" stroke="#26303d"/>
+          <line x1="140" y1="130" x2="540" y2="130" stroke="#26303d"/>
+          <rect x="160" y="38" width="150" height="24" rx="5" fill="#10202c" stroke="#41b6e6"/><text x="235" y="54" text-anchor="middle" fill="#cfd6e2">当直は2人と読む</text>
+          <rect x="160" y="118" width="150" height="24" rx="5" fill="#10202c" stroke="#41b6e6"/><text x="235" y="134" text-anchor="middle" fill="#cfd6e2">当直は2人と読む</text>
+          <rect x="360" y="38" width="170" height="24" rx="5" fill="rgba(232,115,106,.18)" stroke="#e8736a"/><text x="445" y="54" text-anchor="middle" fill="#e8736a">自分をオフにする</text>
+          <rect x="360" y="118" width="170" height="24" rx="5" fill="rgba(232,115,106,.18)" stroke="#e8736a"/><text x="445" y="134" text-anchor="middle" fill="#e8736a">自分をオフにする</text>
+          <text x="280" y="180" text-anchor="middle" fill="#e8736a" font-size="12">→ 両方コミット成功 → 当直が0人に！</text>
+        </g>
+      </svg>
+      <div class="cap">図: 書き込みスキュー ― 2者が同じ前提を読み、別々の行を更新。各々は正しいが、合わさると不変条件が壊れる</div>
+    </div>
+
+    <div class="panel danger">
+      <span class="pt">danger ― スナップショット分離では防げない</span>
+      <p>上の例で2人の医師が同時に当直を外れると、各トランザクションは「まだもう1人いる」という<strong>古い前提</strong>のまま正しく動き、両方成功して当直が0人になります。スナップショット分離は「読んだ断面」は守りますが、<strong>その前提を別のトランザクションが覆すこと</strong>は防げません（関連: 検索結果が変わるファントム）。確実に防ぐには、次の直列化可能性が要ります。</p>
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section id="s03" class="reveal">
+    <div class="sec-head"><span class="sec-num">03</span><h2 class="sec-title">直列化可能性 ― 最強の分離</h2></div>
+    <div class="oneliner"><p>「まるで1件ずつ順番に実行したかのように」見える保証。これがあれば、並行性の異常はすべて消える。</p></div>
+
+    <p><strong>直列化可能性（serializability）</strong>は、実際は並行に走っていても、結果が「どれか1つの順番で逐次実行したのと同じ」になることを保証します。最も安全で、開発者は並行性を気にしなくてよくなります。実装は主に3通り。</p>
+
+    <div class="cards">
+      <div class="card"><span class="tag">serial</span><h4>本当に逐次実行</h4><p>1スレッドで1件ずつ。データが小さくメモリに載るなら有効。並行性の問題が原理的に消える。</p></div>
+      <div class="card"><span class="tag">2PL</span><h4>2相ロック（悲観的）</h4><p>読み書きするデータをロックで囲う。安全だが競合時に待ちが増え、デッドロックも。</p></div>
+      <div class="card"><span class="tag">SSI</span><h4>直列化スナップショット分離（楽観的）</h4><p>まず走らせ、コミット時に「直列順に矛盾しないか」を検査。競合が少なければ高速。</p></div>
+    </div>
+
+    <div class="panel point">
+      <span class="pt">要点 ― トランザクションのまとめ</span>
+      <p>分離レベルは<strong>速さと正しさのダイヤル</strong>です。多くのDBの既定は直列化可能ではない（=異常が起こりうる）ことを知り、扱うデータの重要度で選ぶ。ここまでは「1つのDB（あるいは論理的に1ノード）」の話。<strong>ここからは、その前提すら崩れる分散の現実</strong>へ進みます。</p>
+    </div>
+  </section>
+
+  <!-- PART B -->
+  <div class="part reveal">
+    <div class="pl">PART B</div>
+    <h2>分散システムの困難</h2>
+    <p>1台なら「動くか落ちるか」の二択。分散では「一部だけ・非決定的に壊れる」。しかも相手の生死も自分の時刻も確かめられない。まずこの現実を直視します。</p>
+  </div>
+
+  <!-- 04 -->
+  <section id="s04" class="reveal">
+    <div class="sec-head"><span class="sec-num">04</span><h2 class="sec-title">部分障害と、信頼できないネットワーク</h2></div>
+    <div class="oneliner"><p>返事が来ない時、相手が死んだのか・遅いのか・返事が消えたのか、原理的に区別できない。頼れるのはタイムアウトだけ。</p></div>
+
+    <p>分散システムの本質的な難しさは<strong>部分障害</strong>です ― 全体は動いているのに一部だけ壊れ、しかもどこが壊れたか非決定的。とりわけネットワークは、メッセージを失い・遅らせ・並べ替え・重複させます。</p>
+
+    <div class="fig">
+      <svg viewBox="0 0 540 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ネットワークの不確かさ">
+        <defs><marker id="aq" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#e0a458"/></marker></defs>
+        <g font-family="'Red Hat Mono',monospace" font-size="11">
+          <rect x="30" y="64" width="90" height="40" rx="8" fill="#10202c" stroke="#41b6e6"/><text x="75" y="88" text-anchor="middle" fill="#cfd6e2">あなた</text>
+          <rect x="420" y="64" width="90" height="40" rx="8" fill="#0b1017" stroke="#26303d"/><text x="465" y="88" text-anchor="middle" fill="#8b95a6">相手</text>
+          <line x1="120" y1="78" x2="418" y2="78" stroke="#e0a458" stroke-width="2" marker-end="url(#aq)"/><text x="270" y="70" text-anchor="middle" fill="#e0a458">リクエスト</text>
+          <line x1="418" y1="98" x2="122" y2="98" stroke="#5d6776" stroke-width="2" stroke-dasharray="6 4"/><text x="270" y="118" text-anchor="middle" fill="#e8736a">応答が来ない…？</text>
+          <text x="270" y="145" text-anchor="middle" fill="#8b95a6" font-size="10">① 要求が消えた ② 相手が死んだ ③ 処理が遅い ④ 応答が消えた ― 区別不能</text>
+        </g>
+      </svg>
+      <div class="cap">図: 「応答が来ない」の原因は4通りあり、送り手からは見分けられない</div>
+    </div>
+
+    <div class="panel why">
+      <span class="pt">なぜ重要か ― 完全な故障検知器は存在しない</span>
+      <p>「相手は生きているか?」を確実に判定する方法はありません。唯一の道具が<strong>タイムアウト</strong>ですが、これも不完全 ― 短すぎれば生きている相手を死亡扱いし（第2巻の誤フェイルオーバー）、長すぎれば障害対応が遅れます。<strong>「相手の生死は確実には分からない」を前提に設計する</strong>のが、分散の出発点です。</p>
+    </div>
+  </section>
+
+  <!-- 05 -->
+  <section id="s05" class="reveal">
+    <div class="sec-head"><span class="sec-num">05</span><h2 class="sec-title">信頼できない時計</h2></div>
+    <div class="oneliner"><p>各マシンの時計は微妙にずれている。だから「タイムスタンプの大小」で出来事の順序を決めるのは危険。</p></div>
+
+    <p>時計には2種類あります。壁時計（時刻を表すが、NTP同期で<strong>飛んだり巻き戻ったりする</strong>）と、単調増加する時計（経過時間の計測用、時刻は表さない）。問題は、マシン間で壁時計が必ずずれること（<strong>クロックスキュー</strong>）です。</p>
+
+    <div class="panel danger">
+      <span class="pt">danger ― LWWの落とし穴（第2巻の伏線回収）</span>
+      <p>第2巻の「最後の書き込みが勝つ（LWW）」は、タイムスタンプの大小で勝者を決めます。しかし時計がずれていれば、<strong>実際には後から来た更新が「古い」と判定されて捨てられる</strong>ことが起こります。物理時計に順序付けを頼ると、こうして黙ってデータが失われます。だから出来事の順序には、時刻ではなく<strong>論理的な順序</strong>（08節）が要るのです。</p>
+    </div>
+
+    <h3>プロセスの一時停止 と フェンシングトークン</h3>
+    <p>さらに厄介なのが、プロセスが<strong>任意のタイミングで長時間止まりうる</strong>こと（GCの停止、仮想マシンの一時退避など）。「10ms前にロックを確認したから今も自分が持っているはず」という思い込みは危険です ― その10msの間に自分が1分間停止していたかもしれません。</p>
+
+    <div class="fig">
+      <svg viewBox="0 0 560 180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="フェンシングトークン">
+        <g font-family="'Red Hat Mono',monospace" font-size="11">
+          <line x1="120" y1="40" x2="540" y2="40" stroke="#26303d"/><text x="60" y="44" fill="#8b95a6">Client1</text>
+          <line x1="120" y1="100" x2="540" y2="100" stroke="#26303d"/><text x="60" y="104" fill="#8b95a6">Client2</text>
+          <rect x="130" y="28" width="120" height="24" rx="5" fill="#10202c" stroke="#41b6e6"/><text x="190" y="44" text-anchor="middle" fill="#cfd6e2">ロック取得 t=33</text>
+          <rect x="270" y="28" width="120" height="24" rx="5" fill="rgba(224,181,78,.18)" stroke="#e0b54e"/><text x="330" y="44" text-anchor="middle" fill="#e0b54e">長い停止(GC)…</text>
+          <rect x="300" y="88" width="120" height="24" rx="5" fill="#10202c" stroke="#41b6e6"/><text x="360" y="104" text-anchor="middle" fill="#cfd6e2">ロック取得 t=34</text>
+          <rect x="430" y="28" width="100" height="24" rx="5" fill="rgba(232,115,106,.18)" stroke="#e8736a"/><text x="480" y="44" text-anchor="middle" fill="#e8736a">書込 t=33</text>
+          <text x="300" y="150" text-anchor="middle" fill="#5bc88a" font-size="11">ストレージは「33 &lt; 既に見た34」を理由に t=33 の書込を拒否 → 安全</text>
+        </g>
+      </svg>
+      <div class="cap">図: フェンシングトークン ― 単調増加する番号を付け、古い番号の書き込みを拒否することで、停止からの寝ぼけた書き込みを防ぐ</div>
+    </div>
+  </section>
+
+  <!-- 06 -->
+  <section id="s06" class="reveal">
+    <div class="sec-head"><span class="sec-num">06</span><h2 class="sec-title">真実は多数決で決まる</h2></div>
+    <div class="oneliner"><p>個々のノードの判断は当てにならない。だから「真実」はノードの多数派（クォーラム）の合意で定義する。</p></div>
+
+    <p>1つのノードが「自分はまだリーダーだ」と思っても、それは真実ではありません。他のノードから切り離されていれば、皆はもうそのノードを見限っているかもしれない。だから分散システムでは、<strong>真実をノードの多数派で定義</strong>します（第2巻のクォーラムと同じ精神）。少数派は、たとえ自分が正しいと「思って」いても従わねばなりません。</p>
+
+    <div class="panel tip">
+      <span class="pt">tip ― ビザンチン障害は今は脇に</span>
+      <p>ノードが嘘をついたり矛盾した振る舞いをする故障を<strong>ビザンチン障害</strong>と呼びます（ブロックチェーン等で重要）。が、多くのデータセンター内システムは「ノードは正直に動くがクラッシュや遅延はする」前提（非ビザンチン）で設計され、その方がずっと簡単で効率的です。本書も基本この前提に立ちます。</p>
+    </div>
+
+    <div class="panel point">
+      <span class="pt">第C部への橋</span>
+      <p>「ネットワークも時計も信用できない」「真実は多数決」 ― この厳しい現実の上で、それでも<strong>複数ノードが1つの値に合意する</strong>にはどうするか。次の最終パートが、その答え（線形化可能性・順序・合意アルゴリズム）です。</p>
+    </div>
+  </section>
+
+  <!-- PART C -->
+  <div class="part reveal">
+    <div class="pl">PART C</div>
+    <h2>一貫性と合意</h2>
+    <p>不確かさの中で「強い保証」を作る方法。最強の一貫性=線形化可能性から始め、その代償（CAP）、順序の作り方、そして合意アルゴリズムへ。シリーズの頂上です。</p>
+  </div>
+
+  <!-- 07 -->
+  <section id="s07" class="reveal">
+    <div class="sec-head"><span class="sec-num">07</span><h2 class="sec-title">線形化可能性 と CAP定理</h2></div>
+    <div class="oneliner"><p>線形化可能性とは「コピーは複数あっても、1つしかないように見える」最新性の保証。だが分断時には可用性と引き換えになる。</p></div>
+
+    <p><strong>線形化可能性（linearizability）</strong>は、複数の複製があっても、利用者には<strong>あたかも単一のコピーがあり、すべての操作がある瞬間に起きた</strong>かのように見せる保証です。誰かが新しい値を読んだら、それ以降の読み取りも必ず新しい値を返す（最新性の保証）。</p>
+
+    <div class="fig">
+      <svg viewBox="0 0 560 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="線形化可能性のレジスタ">
+        <g font-family="'Red Hat Mono',monospace" font-size="11">
+          <line x1="40" y1="100" x2="540" y2="100" stroke="#26303d" stroke-width="1.5"/>
+          <text x="290" y="128" text-anchor="middle" fill="#8b95a6">時間 →</text>
+          <rect x="120" y="40" width="120" height="22" rx="5" fill="rgba(224,164,88,.18)" stroke="#e0a458"/><text x="180" y="56" text-anchor="middle" fill="#e0a458">write x=1</text>
+          <line x1="180" y1="62" x2="180" y2="100" stroke="#e0a458" stroke-dasharray="3 3"/>
+          <circle cx="180" cy="100" r="4" fill="#41b6e6"/><text x="180" y="92" text-anchor="middle" fill="#41b6e6" font-size="10">効力発生点</text>
+          <rect x="260" y="68" width="90" height="22" rx="5" fill="#10202c" stroke="#5bc88a"/><text x="305" y="84" text-anchor="middle" fill="#5bc88a">read→1</text>
+          <rect x="400" y="68" width="90" height="22" rx="5" fill="#10202c" stroke="#5bc88a"/><text x="445" y="84" text-anchor="middle" fill="#5bc88a">read→1</text>
+        </g>
+      </svg>
+      <div class="cap">図: 書き込みがある一点で効力を持ち、それ以降の読み取りは皆その新しい値を見る</div>
+    </div>
+
+    <div class="panel warn">
+      <span class="pt">warn ― 直列化可能性と混同しない</span>
+      <p>名前が似ていますが別物です。<strong>直列化可能性</strong>はトランザクション（複数オブジェクト）の分離の話。<strong>線形化可能性</strong>は単一オブジェクトの「最新性」の話。両方を兼ねるのが厳密直列化可能性です。</p>
+    </div>
+
+    <h3>CAP定理 ― 分断のときの二択</h3>
+    <p>ネットワーク<strong>分断（Partition）</strong>が起きたとき、システムは <strong>一貫性（線形化可能性, C）</strong> と <strong>可用性（Availability, A）</strong> のどちらかを諦めねばならない、というのが <strong>CAP定理</strong> です。分断は避けられない（P）ので、実質「分断時にCを取るか(CP)、Aを取るか(AP)」の選択になります。</p>
+    <div class="panel point">
+      <span class="pt">要点</span>
+      <p>CAP定理はよく誤用されますが、扱う範囲は狭く「線形化可能性 vs 可用性、分断という1種の障害下で」だけ。それでも示唆は強烈です ―<strong>線形化可能性はタダではなく、分断耐性や速度と引き換え</strong>。だから「本当に最新性が要る所」にだけ使い、多くは弱い保証で十分、という設計判断につながります。</p>
+    </div>
+  </section>
+
+  <!-- 08 -->
+  <section id="s08" class="reveal">
+    <div class="sec-head"><span class="sec-num">08</span><h2 class="sec-title">順序と因果</h2></div>
+    <div class="oneliner"><p>「原因は結果より先」という因果順序が守られれば、多くの一貫性は保てる。しかも分断に強い。</p></div>
+
+    <p>一貫性の問題の多くは、突き詰めると<strong>順序</strong>の問題です。とりわけ<strong>因果順序</strong>（原因→結果。質問が回答より先、など）を保つことが重要。因果一貫性は、<strong>分断中でも維持できる最も強い一貫性</strong>として知られ、線形化可能性ほど高くつきません。</p>
+
+    <p>因果順序を数値で表す古典的な方法が<strong>ランポートタイムスタンプ</strong>で、因果関係と矛盾しない全順序を作れます。さらに「全ノードに同じ順序でメッセージを届ける」<strong>全順序ブロードキャスト</strong>を実現できれば、複製を完全に揃えられます。</p>
+
+    <div class="panel why">
+      <span class="pt">なぜ重要か ― すべては合意に通じる</span>
+      <p>驚くべきことに、<strong>全順序ブロードキャスト・線形化可能な比較交換(CAS)・合意(consensus)は、互いに変換可能</strong>な「同じ難しさ」の問題だと分かっています。つまり「全ノードで順序を1つに揃える」=「1つの値に合意する」。次節の合意アルゴリズムは、これらすべての土台になります。</p>
+    </div>
+  </section>
+
+  <!-- 09 -->
+  <section id="s09" class="reveal">
+    <div class="sec-head"><span class="sec-num">09</span><h2 class="sec-title">2相コミット と 合意</h2></div>
+    <div class="oneliner"><p>合意(consensus)とは、複数ノードが1つの値に同意すること。リーダー選出も分散トランザクションも、突き詰めればこれ。</p></div>
+
+    <h3>2相コミット（2PC）― 分散トランザクションのアトミックさ</h3>
+    <p>複数ノードにまたがる更新を「全部コミットか全部アボートか」にする古典が<strong>2相コミット</strong>です。調整役（コーディネータ）が、まず全員に「準備OK?」と尋ね（準備フェーズ）、全員Yesなら「コミットせよ」と指示します（コミットフェーズ）。</p>
+
+    <div class="fig">
+      <svg viewBox="0 0 560 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="2相コミット">
+        <defs><marker id="a2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#41b6e6"/></marker></defs>
+        <g font-family="'Red Hat Mono',monospace" font-size="11">
+          <rect x="220" y="20" width="130" height="30" rx="7" fill="#10202c" stroke="#e0a458" stroke-width="2"/><text x="285" y="40" text-anchor="middle" fill="#e0a458">コーディネータ</text>
+          <rect x="60" y="150" width="120" height="30" rx="7" fill="#0b1017" stroke="#41b6e6"/><text x="120" y="170" text-anchor="middle" fill="#cfd6e2">参加者A</text>
+          <rect x="390" y="150" width="120" height="30" rx="7" fill="#0b1017" stroke="#41b6e6"/><text x="450" y="170" text-anchor="middle" fill="#cfd6e2">参加者B</text>
+          <line x1="250" y1="50" x2="130" y2="148" stroke="#41b6e6" marker-end="url(#a2)"/><text x="150" y="95" fill="#8b95a6" font-size="9">①準備OK?</text>
+          <line x1="320" y1="50" x2="445" y2="148" stroke="#41b6e6" marker-end="url(#a2)"/><text x="420" y="95" fill="#8b95a6" font-size="9">①準備OK?</text>
+          <line x1="135" y1="150" x2="255" y2="52" stroke="#5bc88a" marker-end="url(#a2)"/><text x="205" y="120" fill="#5bc88a" font-size="9">②Yes</text>
+          <line x1="448" y1="150" x2="328" y2="52" stroke="#5bc88a" marker-end="url(#a2)"/><text x="360" y="120" fill="#5bc88a" font-size="9">②Yes</text>
+          <text x="285" y="135" text-anchor="middle" fill="#e0a458" font-size="10">③全員Yes → 「コミットせよ」</text>
+        </g>
+      </svg>
+      <div class="cap">図: 2相コミット ― 準備フェーズで全員の同意を取り、コミットフェーズで確定させる</div>
+    </div>
+
+    <div class="panel danger">
+      <span class="pt">danger ― 2PCはブロックする</span>
+      <p>2PCの弱点は<strong>コーディネータが落ちると参加者が宙づり</strong>になること。「コミットせよ」を待つ参加者は、決着がつくまでロックを握ったまま動けません。これが2PCが「ブロッキング」な原子的コミットと呼ばれる所以で、単一障害点を持ちます。</p>
+    </div>
+
+    <h3>合意アルゴリズム ― 多数決で前進する</h3>
+    <p>より堅牢なのが<strong>合意アルゴリズム</strong>（<strong>Raft・Paxos</strong> など）です。<strong>過半数（クォーラム）が同意すれば前進でき、少数の故障に耐えます</strong>。合意は、リーダー選出・全順序ブロードキャスト・アトミックコミット・分散ロックなど、分散の難問のほぼすべての土台です。</p>
+
+    <div class="panel tip">
+      <span class="pt">tip ― 合意は「サービス」として使う（第2巻の回収）</span>
+      <p>合意アルゴリズムは自前実装が極めて難しいため、実務では <strong>ZooKeeper や etcd</strong> のような調整サービスに任せます。第2巻で触れた「クラスタの構成・リクエストルーティング・リーダー選出」は、まさにこれらが裏で合意を取って実現していました。分散ロックに<strong>フェンシングトークン</strong>(05節)を組み合わせるのも定石です。なお理論上、完全非同期では決定的な合意は不可能(FLP)ですが、実務はタイムアウト等で現実的に回避します。</p>
+    </div>
+  </section>
+
+  <!-- CHEAT -->
+  <section id="cheat" class="reveal">
+    <div class="sec-head"><span class="sec-num">★</span><h2 class="sec-title">チートシート（第3巻）</h2></div>
+
+    <h3>分離レベルと防げる異常</h3>
+    <div class="tbl mini">
+      <table>
+        <tr><th>レベル</th><th>防ぐ / 残る危険</th></tr>
+        <tr><td>リードコミッティド</td><td>ダーティ読み書きを防ぐ / リードスキューは残る</td></tr>
+        <tr><td>スナップショット分離</td><td>リードスキューを防ぐ / 更新ロスト・書込スキューは残る</td></tr>
+        <tr><td>直列化可能</td><td>すべて防ぐ / 高コスト（逐次・2PL・SSI）</td></tr>
+      </table>
+    </div>
+
+    <h3>分散の現実と対処</h3>
+    <div class="tbl mini">
+      <table>
+        <tr><th>現実</th><th>対処</th></tr>
+        <tr><td>相手の生死は不明</td><td>タイムアウト（不完全と知って使う）</td></tr>
+        <tr><td>時計はずれる</td><td>順序付けに物理時計を信用しない／論理順序</td></tr>
+        <tr><td>プロセスは突然止まる</td><td>フェンシングトークンで寝ぼけた書込を拒否</td></tr>
+        <tr><td>個々のノードは当てにならない</td><td>真実は多数派（クォーラム）で定義</td></tr>
+      </table>
+    </div>
+
+    <h3>一貫性と合意</h3>
+    <div class="tbl mini">
+      <table>
+        <tr><th>用語</th><th>一言</th></tr>
+        <tr><td>線形化可能性</td><td>「単一コピーに見える」最新性。分断時は可用性と引換(CAP)</td></tr>
+        <tr><td>因果一貫性</td><td>分断に強い最強の一貫性。原因→結果を守る</td></tr>
+        <tr><td>全順序ブロードキャスト</td><td>全ノードに同順で配信＝合意と等価</td></tr>
+        <tr><td>2相コミット</td><td>分散トランザクションの原子性。だがブロックする</td></tr>
+        <tr><td>合意(Raft/Paxos)</td><td>過半数で1値に合意。ZooKeeper等に委ねる</td></tr>
+      </table>
+    </div>
+    <div class="panel point">
+      <span class="pt">本巻の核心</span>
+      <p><strong>強い保証ほど高くつく。不確かさを直視し、本当に必要な所にだけ最強の保証（線形化可能性・合意）を、それ以外は弱い保証で賢く済ませる。</strong></p>
+    </div>
+  </section>
+
+  <!-- GLOSSARY -->
+  <section id="gloss" class="reveal">
+    <div class="sec-head"><span class="sec-num">＃</span><h2 class="sec-title">用語集（第3巻）</h2></div>
+    <dl class="gloss">
+      <dt>トランザクション</dt><dd>複数の操作を1単位として扱う仕組み。全成功か全取消。</dd>
+      <dt>ACID</dt><dd>原子性・一貫性・分離性・永続性。実質的に効くのはA・I・D。</dd>
+      <dt>原子性 / 永続性</dt><dd>途中失敗で全取消（アボート可能）/ コミット後は失われない。</dd>
+      <dt>分離性</dt><dd>並行実行されても独立に動いたように見える性質。</dd>
+      <dt>分離レベル</dt><dd>分離の強さの段階。下げると速いが異常が増える。</dd>
+      <dt>ダーティリード/ライト</dt><dd>未コミットのデータを読む/上書きしてしまう異常。</dd>
+      <dt>スナップショット分離 / MVCC</dt><dd>一貫した断面を読む方式 / それを支える多版型同時実行制御。</dd>
+      <dt>更新のロスト</dt><dd>read-modify-writeの競合で片方の更新が消える異常。</dd>
+      <dt>書き込みスキュー / ファントム</dt><dd>同じ前提を読み別々に書いて不変条件を壊す / 検索結果が他の書込で変わる異常。</dd>
+      <dt>直列化可能性</dt><dd>逐次実行と同じ結果を保証する最強の分離。逐次/2PL/SSIで実装。</dd>
+      <dt>部分障害</dt><dd>システムの一部だけが非決定的に壊れること。分散特有の難しさ。</dd>
+      <dt>タイムアウト</dt><dd>故障検知の唯一の手段だが不完全。短/長どちらも害がある。</dd>
+      <dt>クロックスキュー</dt><dd>マシン間の時計のずれ。物理時計での順序付けを危うくする。</dd>
+      <dt>フェンシングトークン</dt><dd>単調増加する番号で、古いロック保持者の書込を拒否する仕組み。</dd>
+      <dt>ビザンチン障害</dt><dd>ノードが嘘や矛盾した振る舞いをする故障。多くの社内系は非ビザンチン前提。</dd>
+      <dt>線形化可能性</dt><dd>単一コピーに見える最新性の保証。単一オブジェクトの話。</dd>
+      <dt>CAP定理</dt><dd>分断時は一貫性(線形化可能性)と可用性のどちらかを諦める、という主張。</dd>
+      <dt>因果一貫性 / 因果順序</dt><dd>原因→結果の順序を守る一貫性。分断に強い。</dd>
+      <dt>ランポートタイムスタンプ</dt><dd>因果と矛盾しない全順序を作る論理時計。</dd>
+      <dt>全順序ブロードキャスト</dt><dd>全ノードへ同じ順序で配信。合意と等価。</dd>
+      <dt>2相コミット(2PC)</dt><dd>分散トランザクションの原子的コミット。コーディネータ障害でブロックする。</dd>
+      <dt>合意(consensus)</dt><dd>複数ノードが1つの値に同意すること。Raft/Paxos等。過半数で前進。</dd>
+      <dt>ZooKeeper / etcd</dt><dd>合意をサービスとして提供する調整基盤。リーダー選出・構成・ロックに使う。</dd>
+    </dl>
+  </section>
+
+  <!-- NEXT -->
+  <div class="nextvol reveal">
+    <div class="nl">NEXT — 第4巻（最終巻）</div>
+    <h3>派生データ：バッチとストリーム</h3>
+    <p>正しさの土台を固めた最後は、データを「流して・束ねて・作り直す」世界へ。バッチ処理（MapReduceの発想）とストリーム処理、そして両者を統合するデータシステムの将来像で、シリーズを締めくくります。</p>
+  </div>
+
+  <div class="foot reveal">
+    <p><b>このガイドについて：</b> 書籍『データ指向アプリケーションデザイン』（Martin Kleppmann 著、原題 <em>Designing Data-Intensive Applications</em>）の主要テーマを、コードを少し書ける初学者〜中級者向けに自分の言葉で再構成した独立教材です。原書の逐語引用は含みません。本巻は全4巻シリーズの第3巻（原書 第2部・7〜9章に対応）。</p>
+    <p style="margin-top:10px"><b>注記：</b> 図やアルゴリズムの説明は概念理解のため大幅に簡略化しています。各分離レベルの厳密な定義や合意アルゴリズムの挙動は製品・実装・バージョンで異なり、仕様は将来変わり得ます。設計時は各公式ドキュメントと原典をご確認ください。</p>
+  </div>
+</main>
+</div>
+
+<button id="top-btn" aria-label="トップへ戻る">↑</button>
+
+<script>
+const progress=document.getElementById('progress'),topBtn=document.getElementById('top-btn');
+function onScroll(){const h=document.documentElement,sc=h.scrollTop,max=h.scrollHeight-h.clientHeight;progress.style.width=(max>0?(sc/max*100):0)+'%';if(sc>500)topBtn.classList.add('show');else topBtn.classList.remove('show');}
+window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+topBtn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+const revObs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');revObs.unobserve(e.target);}});},{threshold:0.08});
+document.querySelectorAll('.reveal').forEach(el=>revObs.observe(el));
+const tocLinks=[...document.querySelectorAll('#toc a')];
+const sections=tocLinks.map(a=>document.querySelector(a.getAttribute('href'))).filter(Boolean);
+const linkFor=id=>tocLinks.find(a=>a.getAttribute('href')==='#'+id);
+const secObs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){tocLinks.forEach(a=>a.classList.remove('active'));const l=linkFor(e.target.id);if(l){l.classList.add('active');l.scrollIntoView({block:'nearest'});}}});},{rootMargin:'-18% 0px -72% 0px',threshold:0});
+sections.forEach(s=>secObs.observe(s));
+document.querySelectorAll('.copy').forEach(btn=>{btn.addEventListener('click',()=>{const code=btn.closest('.code').querySelector('code');navigator.clipboard.writeText(code.innerText).then(()=>{const o=btn.textContent;btn.textContent='copied ✓';setTimeout(()=>btn.textContent=o,1400);}).catch(()=>btn.textContent='error');});});
+</script>
+</body>
+</html>

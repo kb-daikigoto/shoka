@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GraphQL 完全学習ガイド — 初級から中級まで一冊で</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FBF7FA;--surface:#FFFFFF;--surface-2:#FBF4F8;--ink:#1F1A26;--muted:#675E70;--faint:#9C90A6;
+    --line:#EEE3EC;--line-2:#E2D2DD;
+    --pink:#D81B8C;--pink-soft:#FBE6F2;--pink-dark:#A30E68;
+    --indigo:#5B57C6;--indigo-soft:#ECECFB;--indigo-dark:#3F3C99;
+    --green:#3F7A2E;--green-soft:#EAF3E1;
+    --amber:#9A6606;--amber-soft:#FBEFD9;
+    --term-bg:#241E2C;--term-ink:#EDE7F2;--term-dim:#9D92A8;
+    --radius:14px;--maxw:830px;
+    --fh:"Zen Maru Gothic",sans-serif;--fb:"Zen Kaku Gothic New",sans-serif;--fm:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--fb);line-height:1.85;font-size:16.5px;-webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(#F0DDEA .7px,transparent .7px);background-size:24px 24px}
+  ::selection{background:var(--pink);color:#fff}
+  #progress{position:fixed;top:0;left:0;height:3px;width:0%;background:var(--pink);z-index:100;transition:width .12s linear}
+  .layout{max-width:1250px;margin:0 auto;display:grid;grid-template-columns:256px minmax(0,1fr);gap:46px;padding:0 28px}
+  .content{max-width:var(--maxw);padding:0 0 120px}
+  nav.toc{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding:32px 0 40px}
+  nav.toc .tt{font-family:var(--fm);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin:0 0 12px;font-weight:600}
+  nav.toc ol{list-style:none;margin:0;padding:0;counter-reset:t}nav.toc li{counter-increment:t}
+  nav.toc a{display:flex;gap:9px;align-items:baseline;text-decoration:none;color:var(--muted);font-size:13px;line-height:1.38;padding:5px 10px 5px 13px;border-left:2px solid transparent;transition:all .15s;font-weight:500}
+  nav.toc a::before{content:counter(t,decimal-leading-zero);font-family:var(--fm);font-size:10.5px;color:var(--faint)}
+  nav.toc a:hover{color:var(--ink)}
+  nav.toc a.active{color:var(--pink);border-left-color:var(--pink)}nav.toc a.active::before{color:var(--pink)}
+  header.hero{padding:62px 0 32px}
+  .badge{display:inline-flex;align-items:center;gap:8px;font-family:var(--fm);font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:var(--pink);padding:6px 12px;border-radius:999px;margin-bottom:20px}
+  .kicker{font-family:var(--fm);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--pink);font-weight:600;margin-bottom:14px}
+  h1{font-family:var(--fh);font-weight:900;font-size:clamp(30px,5vw,48px);line-height:1.2;margin:0 0 20px;letter-spacing:.005em}
+  h1 .ac{color:var(--pink)}
+  .lede{font-size:18.5px;color:var(--muted);margin:0 0 26px;max-width:43em}
+  .meta{display:flex;flex-wrap:wrap;gap:9px}
+  .chip{font-family:var(--fm);font-size:12px;font-weight:500;padding:7px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--line-2);color:var(--muted)}.chip b{color:var(--ink);font-weight:600}
+  .part{font-family:var(--fm);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pink);margin:8px 0 0}
+  section{padding:42px 0 6px;scroll-margin-top:24px;border-top:1px solid var(--line)}section:first-of-type{border-top:none}
+  .sn{font-family:var(--fm);font-size:13px;color:var(--pink);letter-spacing:.08em;font-weight:600}
+  h2{font-family:var(--fh);font-weight:700;font-size:clamp(22px,3.4vw,29px);line-height:1.3;margin:7px 0 16px}
+  h3{font-family:var(--fh);font-weight:700;font-size:18.5px;margin:26px 0 9px}
+  p{margin:0 0 16px}strong{font-weight:700}
+  a.inline{color:var(--pink);text-decoration:none;border-bottom:1.5px solid var(--pink-soft);font-weight:500}a.inline:hover{border-bottom-color:var(--pink)}
+  code.k{font-family:var(--fm);font-size:.83em;background:var(--surface);border:1px solid var(--line-2);padding:1px 6px;border-radius:6px;color:var(--pink-dark);font-weight:500;white-space:nowrap}
+  .mark{background:linear-gradient(transparent 60%,var(--pink-soft) 60%);padding:0 1px}
+  ul.list,ol.list{margin:0 0 16px;padding-left:1.35em}ul.list li,ol.list li{margin:0 0 8px}
+  .panel{border-radius:var(--radius);padding:18px 20px;margin:20px 0;border:1px solid var(--line-2);background:var(--surface)}
+  .panel .lb{font-family:var(--fm);font-size:11px;letter-spacing:.13em;text-transform:uppercase;font-weight:600;display:inline-block;margin-bottom:8px}
+  .panel p:last-child{margin-bottom:0}
+  .note{background:var(--indigo-soft);border-color:#D2D1F4;border-left:4px solid var(--indigo)}.note .lb{color:var(--indigo-dark)}
+  .key{background:var(--pink-soft);border-color:#F2CBE2;border-left:4px solid var(--pink)}.key .lb{color:var(--pink-dark)}
+  .tip{background:var(--surface-2)}.tip .lb{color:var(--amber)}
+  .warn{background:var(--amber-soft);border-color:#EAD9B4;border-left:4px solid var(--amber)}.warn .lb{color:var(--amber)}
+  figure.dgm{margin:24px 0;padding:20px 14px;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius)}
+  figure.dgm svg{width:100%;height:auto;display:block}figure.dgm figcaption{font-size:13.5px;color:var(--muted);text-align:center;margin-top:12px}
+  .codecap{font-family:var(--fm);font-size:11px;color:var(--muted);margin:16px 0 -8px;letter-spacing:.03em}
+  .codecap.gql::before{content:"GraphQL · ";color:var(--pink)}
+  .codecap.json::before{content:"JSON · ";color:var(--green)}
+  .codecap.js::before{content:"JavaScript · ";color:var(--amber)}
+  pre{margin:14px 0;background:var(--term-bg);border:1px solid #3A3245;border-radius:10px;padding:15px 17px;overflow-x:auto}
+  pre code{font-family:var(--fm);font-size:12.7px;line-height:1.65;color:var(--term-ink);white-space:pre;display:block}
+  pre code .cm{color:var(--term-dim)}pre code .kw{color:#F48FC0}pre code .ty{color:#7FC7DE}pre code .st{color:#9BD27E}pre code .fn{color:#E9C46A}
+  .duo{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}@media(max-width:760px){.duo{grid-template-columns:1fr}}
+  .duo pre{margin:0}
+  table.tb{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius);overflow:hidden}
+  table.tb th,table.tb td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+  table.tb th{font-family:var(--fm);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);font-weight:600;background:var(--surface-2)}
+  table.tb tr:last-child td{border-bottom:none}table.tb td code{font-family:var(--fm);font-size:12.3px;color:var(--pink-dark)}
+  footer{border-top:1px solid var(--line);padding:36px 0 70px;color:var(--muted);font-size:13.5px}footer a{color:var(--pink);text-decoration:none;font-weight:500}
+  .totop{position:fixed;right:22px;bottom:22px;width:44px;height:44px;border-radius:12px;background:var(--ink);color:#fff;border:none;cursor:pointer;font-size:18px;opacity:0;transform:translateY(10px);transition:all .25s;z-index:60}.totop.show{opacity:1;transform:translateY(0)}
+  @media (max-width:900px){.layout{grid-template-columns:1fr;gap:0}nav.toc{display:none}header.hero{padding:48px 0 22px}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+  .reveal{opacity:0;transform:translateY(12px);animation:rise .65s cubic-bezier(.2,.7,.2,1) forwards}@keyframes rise{to{opacity:1;transform:none}}
+  .d1{animation-delay:.04s}.d2{animation-delay:.12s}.d3{animation-delay:.2s}.d4{animation-delay:.28s}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="layout">
+  <nav class="toc" aria-label="目次">
+    <p class="tt">目次</p>
+    <ol id="toc-list">
+      <li><a href="#what">GraphQL とは</a></li>
+      <li><a href="#rest">REST との違い</a></li>
+      <li><a href="#query">クエリの基本</a></li>
+      <li><a href="#args">引数・エイリアス</a></li>
+      <li><a href="#var">変数・ディレクティブ</a></li>
+      <li><a href="#frag">フラグメント</a></li>
+      <li><a href="#mutation">ミューテーション</a></li>
+      <li><a href="#sub">サブスクリプション</a></li>
+      <li><a href="#schema">スキーマと型システム</a></li>
+      <li><a href="#abstract">Enum・抽象型・入力型</a></li>
+      <li><a href="#resolver">リゾルバと実行</a></li>
+      <li><a href="#introspect">検証とイントロスペクション</a></li>
+      <li><a href="#graph">グラフで考える</a></li>
+      <li><a href="#pagination">ページネーションと Relay</a></li>
+      <li><a href="#typesafe">型安全なスキーマ設計</a></li>
+      <li><a href="#ops">運用の勘所</a></li>
+      <li><a href="#evolve">進化とベストプラクティス</a></li>
+      <li><a href="#cheat">まとめ・用語集</a></li>
+    </ol>
+  </nav>
+  <main class="content">
+    <header class="hero">
+      <div class="badge reveal d1">GraphQL Learning Guide</div>
+      <div class="kicker reveal d1">初級 → 中級 / 一冊で完結</div>
+      <h1 class="reveal d2"><span class="ac">GraphQL</span> 完全学習ガイド</h1>
+      <p class="lede reveal d3">「API のためのクエリ言語」である GraphQL を、基礎の考え方から、スキーマ設計・実行のしくみ・ページネーション・型安全な設計といった中級トピックまで、これ一本で学べるようにまとめました。公式の学習内容に、実務で効くスキーマ設計の指針を加えています。</p>
+      <div class="meta reveal d4">
+        <span class="chip">対象 <b>初学〜中級</b></span>
+        <span class="chip">前提 <b>HTTP / JSON の基礎</b></span>
+        <span class="chip">読了 <b>約 60 分</b></span>
+        <span class="chip">範囲 <b>クエリ〜設計指針</b></span>
+      </div>
+    </header>
+
+    <!-- 1 -->
+    <section id="what">
+      <p class="part">Part 1 — 基礎</p>
+      <div class="sn">01</div>
+      <h2>GraphQL とは</h2>
+      <p>GraphQL は <strong>API のためのクエリ言語</strong>であり、同時に、あなたが定義した<strong>型システム</strong>を使ってクエリを実行する<strong>サーバー側のランタイム</strong>でもあります。特定の DB やストレージに縛られず、あなたの既存のコードとデータに後ろから支えられて動きます。</p>
+      <p>GraphQL サービスは、<strong>型とそのフィールドを定義</strong>し、<strong>各型の各フィールドに対する関数（リゾルバ）を用意</strong>することで作ります。たとえば「ログイン中のユーザー（<code class="k">me</code>）と、その名前」を返すサービスはこう書けます。</p>
+      <p class="codecap gql">スキーマ（型の定義）</p>
+      <pre><code><span class="kw">type</span> <span class="ty">Query</span> {
+  me: <span class="ty">User</span>
+}
+
+<span class="kw">type</span> <span class="ty">User</span> {
+  id: <span class="ty">ID</span>
+  name: <span class="ty">String</span>
+}</code></pre>
+      <p class="codecap js">各フィールドの関数（リゾルバ）</p>
+      <pre><code><span class="kw">function</span> <span class="fn">Query_me</span>(request) {
+  <span class="kw">return</span> request.auth.user
+}
+<span class="kw">function</span> <span class="fn">User_name</span>(user) {
+  <span class="kw">return</span> user.getName()
+}</code></pre>
+      <p>サービスが起動したら（多くは Web の 1 つの URL で待ち受けます）、GraphQL クエリを受け取って<strong>検証して実行</strong>します。まず「定義された型とフィールドだけを参照しているか」を検査し、問題なければ関数を呼んで結果を組み立てます。</p>
+      <div class="duo">
+        <div><p class="codecap gql">クエリ</p><pre><code>{
+  me {
+    name
+  }
+}</code></pre></div>
+        <div><p class="codecap json">結果</p><pre><code>{
+  <span class="st">"data"</span>: {
+    <span class="st">"me"</span>: {
+      <span class="st">"name"</span>: <span class="st">"Luke Skywalker"</span>
+    }
+  }
+}</code></pre></div>
+      </div>
+      <div class="panel key"><span class="lb">最重要の直感</span><p><span class="mark">レスポンスの形は、あなたが書いたクエリの形とそっくり同じになる</span>。欲しいフィールドを書けば、その形のまま返ってくる。これが GraphQL の全ての出発点です。</p></div>
+    </section>
+
+    <!-- 2 -->
+    <section id="rest">
+      <div class="sn">02</div>
+      <h2>REST との違い</h2>
+      <p>REST では URL（エンドポイント）ごとに、サーバーが決めた形のデータが返ります。すると 2 つの困りごとが起きがちです。<strong>過剰取得（over-fetching）</strong>＝要らない項目までついてくる。<strong>過少取得（under-fetching）</strong>＝足りなくて何度も叩く（N 回の往復）。</p>
+      <p>GraphQL は<strong>単一のエンドポイント</strong>に対し、クライアントが「欲しい形」を 1 回のクエリで指定します。必要なものを、必要なだけ、1 往復で。</p>
+      <figure class="dgm">
+        <svg viewBox="0 0 720 250" role="img" aria-label="RESTとGraphQLの比較図">
+          <defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#8A7E92" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+          <g font-family="Zen Kaku Gothic New, sans-serif">
+            <text x="175" y="26" text-anchor="middle" font-family="Zen Maru Gothic, sans-serif" font-size="14" font-weight="700" fill="#675E70">REST</text>
+            <line x1="350" y1="14" x2="350" y2="236" stroke="#EEE3EC" stroke-width="1.5"/>
+            <text x="540" y="26" text-anchor="middle" font-family="Zen Maru Gothic, sans-serif" font-size="14" font-weight="700" fill="#A30E68">GraphQL</text>
+            <rect x="22" y="100" width="92" height="50" rx="10" fill="#FBF4F8" stroke="#E2D2DD"/>
+            <text x="68" y="130" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1F1A26">クライアント</text>
+            <rect x="232" y="48" width="104" height="34" rx="8" fill="#FFF" stroke="#E2D2DD"/><text x="284" y="70" text-anchor="middle" font-size="11" fill="#675E70">/user</text>
+            <rect x="232" y="108" width="104" height="34" rx="8" fill="#FFF" stroke="#E2D2DD"/><text x="284" y="130" text-anchor="middle" font-size="11" fill="#675E70">/user/posts</text>
+            <rect x="232" y="168" width="104" height="34" rx="8" fill="#FFF" stroke="#E2D2DD"/><text x="284" y="190" text-anchor="middle" font-size="11" fill="#675E70">/followers</text>
+            <line x1="114" y1="120" x2="230" y2="66" stroke="#8A7E92" stroke-width="1.4" marker-end="url(#ar)"/>
+            <line x1="114" y1="125" x2="230" y2="125" stroke="#8A7E92" stroke-width="1.4" marker-end="url(#ar)"/>
+            <line x1="114" y1="130" x2="230" y2="184" stroke="#8A7E92" stroke-width="1.4" marker-end="url(#ar)"/>
+            <text x="175" y="226" text-anchor="middle" font-size="11.5" fill="#8A7E92">複数往復・過不足が出やすい</text>
+            <rect x="392" y="100" width="92" height="50" rx="10" fill="#FBF4F8" stroke="#E2D2DD"/>
+            <text x="438" y="130" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1F1A26">クライアント</text>
+            <rect x="566" y="100" width="128" height="50" rx="10" fill="#FBE6F2" stroke="#D81B8C"/>
+            <text x="630" y="123" text-anchor="middle" font-size="12" font-weight="700" fill="#A30E68">/graphql</text>
+            <text x="630" y="141" text-anchor="middle" font-size="10.5" fill="#D81B8C">単一エンドポイント</text>
+            <line x1="484" y1="118" x2="564" y2="118" stroke="#D81B8C" stroke-width="1.7" marker-end="url(#ar)"/>
+            <text x="525" y="110" text-anchor="middle" font-size="10.5" fill="#A30E68">1 クエリ</text>
+            <line x1="564" y1="134" x2="486" y2="134" stroke="#8A7E92" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#ar)"/>
+            <text x="540" y="226" text-anchor="middle" font-size="11.5" fill="#A30E68">1 往復・過不足なし</text>
+          </g>
+        </svg>
+        <figcaption>「客（クライアント）が欲しい形を指定する」のが GraphQL の発想。</figcaption>
+      </figure>
+      <div class="panel note"><span class="lb">誤解しやすい点</span><p>GraphQL は REST の上位互換でも、万能の置き換えでもありません。<strong>関係が深いデータを 1 回で柔軟に取りたい</strong>用途で輝きます。単純なファイル配信やキャッシュ最優先の用途では REST が素直なこともあります。</p></div>
+    </section>
+
+    <!-- 3 -->
+    <section id="query">
+      <div class="sn">03</div>
+      <h2>クエリの基本 — フィールドとネスト</h2>
+      <p>クエリは「欲しいフィールドを書き並べる」だけ。フィールドはネストでき、オブジェクトの中の項目をさらに掘れます。返ってくる JSON は、そのネスト構造をそのまま映します。</p>
+      <div class="duo">
+        <div><p class="codecap gql">クエリ</p><pre><code>{
+  hero {
+    name
+    friends {
+      name
+    }
+  }
+}</code></pre></div>
+        <div><p class="codecap json">結果</p><pre><code>{
+  <span class="st">"data"</span>: { <span class="st">"hero"</span>: {
+    <span class="st">"name"</span>: <span class="st">"R2-D2"</span>,
+    <span class="st">"friends"</span>: [
+      { <span class="st">"name"</span>: <span class="st">"Luke"</span> },
+      { <span class="st">"name"</span>: <span class="st">"Leia"</span> }
+    ]
+  }}
+}</code></pre></div>
+      </div>
+      <p><code class="k">name</code> は文字列を返すフィールド、<code class="k">friends</code> はリストを返すフィールド。<span class="mark">クエリの形＝レスポンスの形</span>なので、何が返るか書いた時点で分かります。これが REST のドキュメントとの大きな違いです。</p>
+    </section>
+
+    <!-- 4 -->
+    <section id="args">
+      <div class="sn">04</div>
+      <h2>引数とエイリアス</h2>
+      <p>各フィールドには<strong>引数</strong>を渡せます。REST のようにクエリ文字列を一本に詰め込むのではなく、フィールドごとに引数を持てるのが特徴です。</p>
+      <p class="codecap gql">引数つきクエリ</p>
+      <pre><code>{
+  human(id: <span class="st">"1000"</span>) {
+    name
+    height(unit: FOOT)   <span class="cm"># 入れ子のフィールドにも引数</span>
+  }
+}</code></pre>
+      <p>同じフィールドを違う引数で 2 回呼びたいときは<strong>エイリアス</strong>で名前を付け替えます。そのままだと JSON のキーが衝突するためです。</p>
+      <p class="codecap gql">エイリアス</p>
+      <pre><code>{
+  empireHero: hero(episode: EMPIRE) { name }
+  jediHero:   hero(episode: JEDI)   { name }
+}</code></pre>
+      <p>結果は <code class="k">empireHero</code> / <code class="k">jediHero</code> という別々のキーで返ります。</p>
+    </section>
+
+    <!-- 5 -->
+    <section id="var">
+      <div class="sn">05</div>
+      <h2>変数とディレクティブ</h2>
+      <p>引数の値をクエリ本文に直書きすると再利用しづらいので、<strong>変数</strong>に切り出します。クエリに名前と変数定義を付け、値は別の JSON で渡します。</p>
+      <div class="duo">
+        <div><p class="codecap gql">クエリ（変数つき）</p><pre><code><span class="kw">query</span> <span class="fn">HeroName</span>($episode: <span class="ty">Episode</span>) {
+  hero(episode: $episode) {
+    name
+  }
+}</code></pre></div>
+        <div><p class="codecap json">変数</p><pre><code>{
+  <span class="st">"episode"</span>: <span class="st">"JEDI"</span>
+}</code></pre></div>
+      </div>
+      <p><strong>ディレクティブ</strong>を使うと、変数の値に応じてフィールドを動的に出し入れできます。<code class="k">@include(if:)</code> と <code class="k">@skip(if:)</code> が基本です。</p>
+      <p class="codecap gql">ディレクティブ</p>
+      <pre><code><span class="kw">query</span> <span class="fn">Hero</span>($withFriends: <span class="ty">Boolean</span>!) {
+  hero {
+    name
+    friends @include(if: $withFriends) {  <span class="cm"># true のときだけ取得</span>
+      name
+    }
+  }
+}</code></pre>
+    </section>
+
+    <!-- 6 -->
+    <section id="frag">
+      <div class="sn">06</div>
+      <h2>フラグメント</h2>
+      <p>同じフィールドの組を何度も書くなら<strong>フラグメント</strong>で部品化します。「どの型に対するフィールド集合か」を <code class="k">on</code> で示し、<code class="k">...名前</code> で展開します。</p>
+      <p class="codecap gql">フラグメント定義と利用</p>
+      <pre><code><span class="kw">fragment</span> <span class="fn">heroFields</span> <span class="kw">on</span> <span class="ty">Character</span> {
+  name
+  appearsIn
+}
+
+{
+  empireHero: hero(episode: EMPIRE) { ...heroFields }
+  jediHero:   hero(episode: JEDI)   { ...heroFields }
+}</code></pre>
+      <div class="panel tip"><span class="lb">中級メモ</span><p>抽象型（インターフェース／ユニオン）に対しては<strong>インラインフラグメント</strong> <code class="k">... on Droid { ... }</code> で「この具体型のときだけ取りたいフィールド」を書きます。後述の抽象型と合わせて使います。</p></div>
+    </section>
+
+    <!-- 7 -->
+    <section id="mutation">
+      <div class="sn">07</div>
+      <h2>ミューテーション（書き込み）</h2>
+      <p>データの取得は <code class="k">query</code>、<strong>変更（作成・更新・削除）は <code class="k">mutation</code></strong> で行います。書き方はクエリと同じで、頭に <code class="k">mutation</code> を付けるだけ。<span class="mark">変更後の状態をそのまま問い合わせて返せる</span>のが便利な点です。</p>
+      <p class="codecap gql">ミューテーション</p>
+      <pre><code><span class="kw">mutation</span> <span class="fn">CreateReview</span>($ep: <span class="ty">Episode</span>!, $review: <span class="ty">ReviewInput</span>!) {
+  createReview(episode: $ep, review: $review) {
+    stars        <span class="cm"># 変更結果をそのまま取得できる</span>
+    commentary
+  }
+}</code></pre>
+      <div class="panel note"><span class="lb">クエリとの違い</span><p>クエリのトップレベルのフィールドは<strong>並行</strong>に解決され得ますが、ミューテーションのトップレベルは<strong>記述順に直列</strong>で実行されます。「在庫を減らす→注文を作る」のような順序依存の操作を 1 リクエストにまとめても安全です。</p></div>
+    </section>
+
+    <!-- 8 -->
+    <section id="sub">
+      <div class="sn">08</div>
+      <h2>サブスクリプション（概要）</h2>
+      <p>3 つ目のオペレーションが <code class="k">subscription</code>。サーバー側の変化を<strong>リアルタイムで push</strong> し続けてもらう仕組みで、多くは WebSocket 上で動きます。チャットの新着、通知、ライブな数値などに使います。</p>
+      <p class="codecap gql">サブスクリプション</p>
+      <pre><code><span class="kw">subscription</span> <span class="fn">OnNewMessage</span>($roomId: <span class="ty">ID</span>!) {
+  messageAdded(roomId: $roomId) {
+    id
+    body
+    author { name }
+  }
+}</code></pre>
+      <p>クエリ・ミューテーションが「1 リクエスト＝1 レスポンス」なのに対し、サブスクリプションは「1 リクエスト＝イベントが起きるたびに繰り返しレスポンス」。まずは「そういう 3 つ目がある」と押さえれば十分です。</p>
+    </section>
+
+    <!-- 9 -->
+    <section id="schema">
+      <p class="part">Part 2 — スキーマと型システム</p>
+      <div class="sn">09</div>
+      <h2>スキーマと型システム</h2>
+      <p>GraphQL の心臓はスキーマです。<strong>SDL（Schema Definition Language）</strong>で型を宣言します。土台になるのが <strong>スカラー型</strong>（これ以上分解できない値）。組み込みは <code class="k">Int</code> / <code class="k">Float</code> / <code class="k">String</code> / <code class="k">Boolean</code> / <code class="k">ID</code> の 5 つです。</p>
+      <p><strong>オブジェクト型</strong>はフィールドの集まり。各フィールドは型を持ち、引数やデフォルト値も持てます。</p>
+      <p class="codecap gql">オブジェクト型と引数・デフォルト値</p>
+      <pre><code><span class="kw">type</span> <span class="ty">Starship</span> {
+  id: <span class="ty">ID</span>!
+  name: <span class="ty">String</span>!
+  length(unit: <span class="ty">LengthUnit</span> = METER): <span class="ty">Float</span>
+}</code></pre>
+      <h3>リストと Non-Null</h3>
+      <p>2 つの修飾子が型の意味を決めます。<code class="k">!</code> は <strong>Non-Null</strong>（null を返さない＝必ず値がある）、<code class="k">[ ]</code> は <strong>リスト</strong>。組み合わせで意味が変わります。</p>
+      <table class="tb">
+        <thead><tr><th>記法</th><th>意味</th></tr></thead>
+        <tbody>
+          <tr><td><code>String</code></td><td>文字列、または null</td></tr>
+          <tr><td><code>String!</code></td><td>必ず文字列（null 不可）</td></tr>
+          <tr><td><code>[String!]</code></td><td>リスト自体は null 可。要素は null 不可</td></tr>
+          <tr><td><code>[String!]!</code></td><td>リストも要素も null 不可</td></tr>
+        </tbody>
+      </table>
+      <div class="panel tip"><span class="lb">設計のコツ</span><p>「絶対にある」と言い切れるものは <code class="k">!</code> を付けると、クライアントが null チェックを省け、契約が強くなります。逆に将来 null になり得るなら <code class="k">!</code> を外しておくと、後で互換を壊さずに済みます。</p></div>
+    </section>
+
+    <!-- 10 -->
+    <section id="abstract">
+      <div class="sn">10</div>
+      <h2>Enum・インターフェース・ユニオン・入力型</h2>
+      <h3>Enum（列挙型）</h3>
+      <p>取り得る値が決まっているなら <code class="k">String</code> ではなく <code class="k">enum</code> に。タイプミスを型で防げます。</p>
+      <pre><code><span class="kw">enum</span> <span class="ty">Episode</span> { NEWHOPE EMPIRE JEDI }</code></pre>
+      <h3>インターフェース（共通フィールドの契約）</h3>
+      <p>複数の型が共通フィールドを持つなら <code class="k">interface</code> を定義し、各型が <code class="k">implements</code> します。「これらは同じ顔（共通フィールド）を持つ」という抽象型です。</p>
+      <pre><code><span class="kw">interface</span> <span class="ty">Character</span> {
+  id: <span class="ty">ID</span>!
+  name: <span class="ty">String</span>!
+  friends: [<span class="ty">Character</span>]
+}
+
+<span class="kw">type</span> <span class="ty">Human</span> <span class="kw">implements</span> <span class="ty">Character</span> {
+  id: <span class="ty">ID</span>!
+  name: <span class="ty">String</span>!
+  friends: [<span class="ty">Character</span>]
+  starships: [<span class="ty">Starship</span>]   <span class="cm"># Human 固有のフィールド</span>
+}</code></pre>
+      <h3>ユニオン（無関係な型の束）</h3>
+      <p>共通フィールドが無くても「どれかが返る」を表すのが <code class="k">union</code>。検索結果などに。</p>
+      <pre><code><span class="kw">union</span> <span class="ty">SearchResult</span> = <span class="ty">Human</span> | <span class="ty">Droid</span> | <span class="ty">Starship</span></code></pre>
+      <p>抽象型を取得するときは、具体型ごとのフィールドをインラインフラグメントで指定します。</p>
+      <pre><code>{
+  search(text: <span class="st">"an"</span>) {
+    ... <span class="kw">on</span> <span class="ty">Human</span>    { name height }
+    ... <span class="kw">on</span> <span class="ty">Starship</span> { name length }
+  }
+}</code></pre>
+      <h3>入力型（引数用のオブジェクト）</h3>
+      <p>ミューテーションなどに複雑な引数を渡すときは <code class="k">input</code> を使います。出力用のオブジェクト型とは別物として扱うのが GraphQL の流儀です。</p>
+      <pre><code><span class="kw">input</span> <span class="ty">ReviewInput</span> {
+  stars: <span class="ty">Int</span>!
+  commentary: <span class="ty">String</span>
+}</code></pre>
+    </section>
+
+    <!-- 11 -->
+    <section id="resolver">
+      <p class="part">Part 3 — 動作のしくみ</p>
+      <div class="sn">11</div>
+      <h2>リゾルバと実行</h2>
+      <p>スキーマは「形」、<strong>リゾルバ</strong>は「中身をどう取ってくるか」。<span class="mark">フィールド 1 つにつき 1 つの関数</span>が対応し、その値を計算して返します。多くの実装でリゾルバは 4 つの引数を受け取ります。</p>
+      <p class="codecap js">リゾルバの形</p>
+      <pre><code><span class="kw">const</span> resolvers = {
+  <span class="ty">Query</span>: {
+    <span class="cm">// parent, args, context, info</span>
+    human(parent, args, context) {
+      <span class="kw">return</span> context.db.getHuman(args.id)
+    }
+  },
+  <span class="ty">Human</span>: {
+    starships(human, args, context) {
+      <span class="kw">return</span> context.db.getStarships(human.starshipIds)
+    }
+  }
+}</code></pre>
+      <ul class="list">
+        <li><strong>parent</strong>：親フィールドのリゾルバが返した値（<code class="k">Human.starships</code> なら、その <code class="k">human</code>）。</li>
+        <li><strong>args</strong>：そのフィールドに渡された引数。</li>
+        <li><strong>context</strong>：リクエスト全体で共有する箱（DB 接続、ログインユーザーなど）。</li>
+        <li><strong>info</strong>：実行中のクエリに関するメタ情報。</li>
+      </ul>
+      <p>実行は<strong>クエリを上から下へたどり、フィールドごとにリゾルバを呼ぶ</strong>だけ。親が返した値が子の <code class="k">parent</code> に渡り、葉まで降りて値が揃うと、クエリと同じ形の JSON に組み上がります。フィールドが構造体のプロパティをそのまま返すだけのときは、書かなくても動く<strong>デフォルトリゾルバ</strong>が使われます。</p>
+      <figure class="dgm">
+        <svg viewBox="0 0 720 150" role="img" aria-label="GraphQL実行の流れ図">
+          <defs><marker id="ax" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#8A7E92" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+          <g font-family="Zen Kaku Gothic New, sans-serif">
+            <rect x="14" y="52" width="138" height="46" rx="10" fill="#FBF4F8" stroke="#E2D2DD"/>
+            <text x="83" y="73" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1F1A26">クエリ受信</text>
+            <text x="83" y="90" text-anchor="middle" font-size="10.5" fill="#675E70">文字列を解析</text>
+            <rect x="196" y="52" width="138" height="46" rx="10" fill="#ECECFB" stroke="#5B57C6"/>
+            <text x="265" y="73" text-anchor="middle" font-size="12.5" font-weight="700" fill="#3F3C99">検証</text>
+            <text x="265" y="90" text-anchor="middle" font-size="10.5" fill="#5B57C6">スキーマと照合</text>
+            <rect x="378" y="52" width="148" height="46" rx="10" fill="#FBE6F2" stroke="#D81B8C"/>
+            <text x="452" y="73" text-anchor="middle" font-size="12.5" font-weight="700" fill="#A30E68">実行</text>
+            <text x="452" y="90" text-anchor="middle" font-size="10.5" fill="#D81B8C">フィールド毎にリゾルバ</text>
+            <rect x="570" y="52" width="138" height="46" rx="10" fill="#EAF3E1" stroke="#3F7A2E"/>
+            <text x="639" y="73" text-anchor="middle" font-size="12.5" font-weight="700" fill="#2F5B22">JSON 応答</text>
+            <text x="639" y="90" text-anchor="middle" font-size="10.5" fill="#3F7A2E">クエリと同じ形</text>
+            <line x1="152" y1="75" x2="194" y2="75" stroke="#8A7E92" stroke-width="1.5" marker-end="url(#ax)"/>
+            <line x1="334" y1="75" x2="376" y2="75" stroke="#8A7E92" stroke-width="1.5" marker-end="url(#ax)"/>
+            <line x1="526" y1="75" x2="568" y2="75" stroke="#8A7E92" stroke-width="1.5" marker-end="url(#ax)"/>
+          </g>
+        </svg>
+        <figcaption>受信 → 検証 → 実行（リゾルバ）→ クエリと同じ形の JSON。</figcaption>
+      </figure>
+    </section>
+
+    <!-- 12 -->
+    <section id="introspect">
+      <div class="sn">12</div>
+      <h2>検証とイントロスペクション</h2>
+      <p>GraphQL は実行<strong>前</strong>にクエリをスキーマと突き合わせて<strong>検証</strong>します。存在しないフィールド、型の合わない引数、必須変数の欠落などは、実行されずにエラーになります。型システムのおかげで「壊れたクエリ」を走らせずに弾けるわけです。</p>
+      <p>さらに GraphQL は<strong>イントロスペクション</strong>＝「スキーマ自身に問い合わせる」機能を標準で持ちます。これが GraphiQL や各種クライアントの自動補完・ドキュメント生成を支えています。</p>
+      <p class="codecap gql">スキーマに問い合わせる</p>
+      <pre><code>{
+  __type(name: <span class="st">"Droid"</span>) {
+    name
+    fields {
+      name
+      type { name kind }
+    }
+  }
+}</code></pre>
+      <div class="panel tip"><span class="lb">中級メモ</span><p>本番ではイントロスペクションを<strong>無効化</strong>して攻撃面を減らす運用もあります（スキーマを外部に晒したくない場合）。開発では有効、公開 API では要検討、と覚えておきましょう。</p></div>
+    </section>
+
+    <!-- 13 -->
+    <section id="graph">
+      <p class="part">Part 4 — 中級・設計と実践</p>
+      <div class="sn">13</div>
+      <h2>グラフで考える</h2>
+      <p>GraphQL の「Graph」は、データを<strong>グラフ（ノードとエッジ）</strong>として捉える発想から来ています。<code class="k">User</code> が <code class="k">posts</code> を持ち、<code class="k">Post</code> が <code class="k">author</code> を持つ……というように、型同士がフィールドで結ばれてグラフを成します。</p>
+      <p>設計のコツは、<span class="mark">エンドポイントではなく「ビジネス上のオブジェクトと、その関係」からスキーマを描く</span>こと。「画面 A 用の API」ではなく「ドメインの型と関係」を定義すれば、新しい画面が来てもクエリを変えるだけで対応でき、スキーマを作り直さずに済みます。</p>
+      <div class="panel note"><span class="lb">考え方の転換</span><p>REST は「どんな URL を生やすか」を考えますが、GraphQL は「<strong>どんな型が、どう繋がっているか</strong>」を考えます。グラフを正しく描ければ、クライアントは欲しい経路を自由にたどれます。</p></div>
+    </section>
+
+    <!-- 14 -->
+    <section id="pagination">
+      <div class="sn">14</div>
+      <h2>ページネーションと Relay 接続</h2>
+      <p>一覧を返すとき、全件返すのは非現実的。<strong>ページネーション</strong>が要ります。素朴には <code class="k">offset</code> / <code class="k">limit</code> ですが、件数が動くとズレる弱点があります。そこで業界標準になっているのが、Meta の <strong>Relay 仕様の「接続（Connection）」</strong>パターンです。</p>
+      <p>「カーソルベース」で、<code class="k">edges</code>（各要素＝<code class="k">node</code>＋その位置を示す <code class="k">cursor</code>）と、ページ状態を表す <code class="k">pageInfo</code> を返します。</p>
+      <p class="codecap gql">Relay スタイルの接続</p>
+      <pre><code><span class="kw">type</span> <span class="ty">Query</span> {
+  users(first: <span class="ty">Int</span>, after: <span class="ty">String</span>): <span class="ty">UserConnection</span>!
+}
+<span class="kw">type</span> <span class="ty">UserConnection</span> {
+  edges: [<span class="ty">UserEdge</span>!]!
+  pageInfo: <span class="ty">PageInfo</span>!
+}
+<span class="kw">type</span> <span class="ty">UserEdge</span> {
+  cursor: <span class="ty">String</span>!
+  node: <span class="ty">User</span>!
+}
+<span class="kw">type</span> <span class="ty">PageInfo</span> {
+  hasNextPage: <span class="ty">Boolean</span>!
+  endCursor: <span class="ty">String</span>
+}</code></pre>
+      <p>「次のページは <code class="k">after: endCursor</code> で <code class="k">first: 20</code>」と辿ります。さらに Relay 仕様では<strong>グローバルに一意な ID（Global Object Identification）</strong>と、ID から再取得する <code class="k">node</code> フィールドを定義します。</p>
+      <p class="codecap gql">グローバル ID と node 再取得</p>
+      <pre><code><span class="kw">interface</span> <span class="ty">Node</span> { id: <span class="ty">ID</span>! }
+
+<span class="kw">type</span> <span class="ty">User</span> <span class="kw">implements</span> <span class="ty">Node</span> {
+  id: <span class="ty">ID</span>!        <span class="cm"># 全型で一意な ID</span>
+  name: <span class="ty">String</span>!
+}
+
+<span class="kw">type</span> <span class="ty">Query</span> {
+  node(id: <span class="ty">ID</span>!): <span class="ty">Node</span>   <span class="cm"># どの型でも ID から引ける</span>
+}</code></pre>
+      <div class="panel key"><span class="lb">なぜ Relay 仕様に従うのか</span><p>Relay 接続は<strong>主要な GraphQL ライブラリがサポートする事実上の標準</strong>で、クライアントや CDN のキャッシュ管理がこの形を前提にしています。独自のページネーションを発明する前に、まずこの仕様に則るのが安全です。グローバル ID は、後述のクライアントキャッシュの要にもなります。</p></div>
+    </section>
+
+    <!-- 15 -->
+    <section id="typesafe">
+      <div class="sn">15</div>
+      <h2>型安全なスキーマ設計</h2>
+      <p>中級の核心。原則は<strong>「曖昧な型を避け、型で意味を表す」</strong>こと。<code class="k">String</code> を多用せず、決まった値は <code class="k">enum</code>、特別な値は <code class="k">scalar</code>、種類で構造が変わるものは <code class="k">interface</code> で<strong>型自体を分ける</strong>。</p>
+      <h3>「種別 enum ＋ 空フィールド」を避け、型を分ける</h3>
+      <p>たとえばチャットルームに「マイチャット・ダイレクト・グループ」があり、種類で取れるデータが違うとします。<span class="mark">1 つの型に <code class="k">type: enum</code> を持たせ、使わないフィールドを null にするのは悪手</span>。代わりに <code class="k">interface</code> を実装して型を分けます。</p>
+      <div class="duo">
+        <div><p class="codecap gql">✗ 避けたい設計</p><pre><code><span class="kw">type</span> <span class="ty">ChatRoom</span> {
+  id: <span class="ty">ID</span>!
+  type: <span class="ty">RoomType</span>!
+  members: [<span class="ty">User</span>!]   <span class="cm"># Group以外ではnull?</span>
+  peer: <span class="ty">User</span>          <span class="cm"># Direct以外ではnull?</span>
+}</code></pre></div>
+        <div><p class="codecap gql">○ 型で分ける</p><pre><code><span class="kw">interface</span> <span class="ty">ChatRoom</span> {
+  id: <span class="ty">ID</span>!
+  name: <span class="ty">String</span>!
+}
+<span class="kw">type</span> <span class="ty">GroupChat</span> <span class="kw">implements</span> <span class="ty">ChatRoom</span> {
+  id: <span class="ty">ID</span>! name: <span class="ty">String</span>!
+  members: [<span class="ty">User</span>!]!
+}
+<span class="kw">type</span> <span class="ty">DirectChat</span> <span class="kw">implements</span> <span class="ty">ChatRoom</span> {
+  id: <span class="ty">ID</span>! name: <span class="ty">String</span>!
+  peer: <span class="ty">User</span>!
+}</code></pre></div>
+      </div>
+      <p>こうすると「Group には必ず <code class="k">members</code>、Direct には必ず <code class="k">peer</code>」を型で保証でき、クライアントは <code class="k">... on GroupChat</code> で安全に取得できます。</p>
+      <h3>ミューテーションには専用のエラー型を</h3>
+      <p>失敗を「null ＋ 後述の errors 配列」で表すより、<strong>結果をユニオンで型として表現</strong>すると、クライアントが成功・失敗を型で分岐できます。</p>
+      <pre><code><span class="kw">type</span> <span class="ty">CreateTodoSuccess</span> { todo: <span class="ty">Todo</span>! }
+<span class="kw">type</span> <span class="ty">ValidationError</span>   { field: <span class="ty">String</span>! message: <span class="ty">String</span>! }
+
+<span class="kw">union</span> <span class="ty">CreateTodoResult</span> = <span class="ty">CreateTodoSuccess</span> | <span class="ty">ValidationError</span>
+
+<span class="kw">type</span> <span class="ty">Mutation</span> {
+  createTodo(input: <span class="ty">CreateTodoInput</span>!): <span class="ty">CreateTodoResult</span>!
+}</code></pre>
+      <div class="panel key"><span class="lb">実務の指針</span><p>迷ったら<strong>GitHub の公開スキーマ</strong>を参照するのが近道です。あなたがやりたい“独自の工夫”は、たいてい GitHub の優れたエンジニアが検討の末に採用しなかった方法かもしれません。やるなら、なぜ採用されていないのかを推察し、利点と欠点を評価した上で決めましょう。</p></div>
+    </section>
+
+    <!-- 16 -->
+    <section id="ops">
+      <div class="sn">16</div>
+      <h2>運用の勘所 — エラー・N+1・キャッシュ・認可</h2>
+      <h3>エラー</h3>
+      <p>GraphQL の応答は <code class="k">data</code> と <code class="k">errors</code> が<strong>同居</strong>できます。一部のフィールドが失敗しても、成功した部分は <code class="k">data</code> に入り、失敗は <code class="k">errors</code> 配列に積まれます。</p>
+      <pre><code>{
+  <span class="st">"data"</span>: { <span class="st">"hero"</span>: { <span class="st">"name"</span>: <span class="kw">null</span> } },
+  <span class="st">"errors"</span>: [{ <span class="st">"message"</span>: <span class="st">"..."</span>, <span class="st">"path"</span>: [<span class="st">"hero"</span>, <span class="st">"name"</span>] }]
+}</code></pre>
+      <p>「業務上のエラー（バリデーション失敗など）」は、前章のように<strong>スキーマの型として</strong>表す方がクライアントに優しいことが多いです。</p>
+      <h3>N+1 問題と DataLoader</h3>
+      <p>リストの各要素で関連データをリゾルバが取りに行くと、<span class="mark">一覧 1 回＋要素ごとに N 回</span>のクエリが飛ぶ「N+1 問題」が起きます。対策は <strong>DataLoader</strong>：同じ実行サイクル内の取得要求を溜め、<strong>まとめて 1 回</strong>で解決します（DB 側は <code class="k">WHERE id IN (...)</code> でバッチ取得）。</p>
+      <h3>キャッシュ</h3>
+      <p>単一エンドポイント・POST が基本なので、HTTP レベルの URL キャッシュは効きにくい。代わりに <strong>クライアント側の正規化キャッシュ</strong>（Apollo / Relay）が主役です。各オブジェクトを<strong>グローバルに一意な ID</strong> でキャッシュに格納するため、前章のグローバル ID 設計がここで効きます。</p>
+      <h3>認可（Authorization）</h3>
+      <p>「誰が何を見てよいか」は、GraphQL 層ではなく<strong>その下のビジネスロジック層</strong>で判断するのが定石です。リゾルバから呼ぶサービス側で権限を確認し、GraphQL はあくまで「形」を扱う、と役割を分けます。</p>
+    </section>
+
+    <!-- 17 -->
+    <section id="evolve">
+      <div class="sn">17</div>
+      <h2>スキーマの進化とベストプラクティス</h2>
+      <p>GraphQL は<strong>バージョニング（/v1, /v2）を避ける</strong>のが思想です。型システムと「クライアントが欲しいフィールドだけ取る」性質のおかげで、<span class="mark">フィールドを足しても既存クライアントは壊れません</span>。古いフィールドは消さずに <code class="k">@deprecated</code> で非推奨にし、移行を促します。</p>
+      <pre><code><span class="kw">type</span> <span class="ty">User</span> {
+  fullName: <span class="ty">String</span>
+  name: <span class="ty">String</span> @deprecated(reason: <span class="st">"Use fullName"</span>)
+}</code></pre>
+      <h3>まとめ：設計の 4 指針</h3>
+      <ol class="list">
+        <li><strong>GitHub のスキーマに則る</strong>：迷ったら実績ある公開スキーマを手本にする。</li>
+        <li><strong>Relay 仕様に則る</strong>：接続（ページネーション）とグローバル ID。クライアント／CDN のキャッシュ前提に合う。</li>
+        <li><strong>型安全に扱えるようにする</strong>：<code class="k">String</code> 乱用を避け、enum / scalar / interface / 専用エラー型で意味を型に込める。</li>
+        <li><strong>Relay と Apollo の 2 クライアントを確認する</strong>：この 2 大クライアントに対応できれば、他のクライアントでも問題なく扱える。挙動に迷ったら両者のドキュメントと実挙動を確認。</li>
+      </ol>
+      <div class="panel note"><span class="lb">なぜこの 4 つか</span><p>GraphQL は仕様の自由度が高いぶん、「我流」で設計するとクライアントのキャッシュやツールが噛み合わなくなりがち。<strong>実績ある型（GitHub・Relay）と 2 大クライアントに合わせる</strong>ことが、結局いちばん遠回りしない道になります。</p></div>
+    </section>
+
+    <!-- 18 -->
+    <section id="cheat">
+      <p class="part">Part 5 — まとめ</p>
+      <div class="sn">18</div>
+      <h2>まとめ・用語集</h2>
+      <table class="tb">
+        <thead><tr><th>用語</th><th>意味</th></tr></thead>
+        <tbody>
+          <tr><td><code>query</code></td><td>データ取得のオペレーション</td></tr>
+          <tr><td><code>mutation</code></td><td>データ変更（直列実行）</td></tr>
+          <tr><td><code>subscription</code></td><td>変化をリアルタイム push</td></tr>
+          <tr><td>スキーマ / SDL</td><td>型とフィールドの定義（API の契約）</td></tr>
+          <tr><td>スカラー</td><td>Int / Float / String / Boolean / ID と独自 scalar</td></tr>
+          <tr><td><code>!</code> / <code>[ ]</code></td><td>Non-Null / リスト</td></tr>
+          <tr><td>enum / interface / union</td><td>列挙 / 共通契約 / 無関係な型の束</td></tr>
+          <tr><td>input</td><td>引数用のオブジェクト型</td></tr>
+          <tr><td>リゾルバ</td><td>フィールドの値を返す関数（parent/args/context/info）</td></tr>
+          <tr><td>フラグメント</td><td>フィールド集合の再利用部品</td></tr>
+          <tr><td>イントロスペクション</td><td>スキーマ自身への問い合わせ（ツールの基盤）</td></tr>
+          <tr><td>Connection</td><td>Relay 流のカーソルページネーション</td></tr>
+          <tr><td>グローバル ID / node</td><td>全型一意の ID と ID 再取得（キャッシュの要）</td></tr>
+          <tr><td>N+1 / DataLoader</td><td>関連取得の多発 / バッチ解決で対策</td></tr>
+        </tbody>
+      </table>
+      <div class="panel key">
+        <span class="lb">学習の地図（ここまでで身についたこと）</span>
+        <p><strong>初級</strong>：クエリ／引数／変数／フラグメント／ミューテーションで「欲しい形を取る・変える」。<strong>型</strong>：スカラー・オブジェクト・enum・interface・union・input でスキーマを書く。<strong>しくみ</strong>：検証→リゾルバ実行→同形 JSON。<strong>中級</strong>：グラフで設計し、Relay 接続とグローバル ID、型安全な設計、N+1・キャッシュ・認可・スキーマ進化まで。<span class="mark">ここまで来れば、実務のスキーマ設計とレビューに入っていけます。</span></p>
+      </div>
+    </section>
+
+    <footer>
+      <p>本記事は <a href="https://graphql.org/learn/">GraphQL 公式「Introduction to GraphQL」</a>の学習内容と、スキーマ設計の実践指針（GitHub スキーマ準拠・Relay 仕様・型安全・Relay/Apollo クライアント確認）をもとに、初級〜中級を一冊にまとめたものです。仕様や各ライブラリの作法は更新され得るため、実装時は <a href="https://relay.dev/">Relay</a> / <a href="https://www.apollographql.com/docs/react/">Apollo</a> の公式ドキュメントも参照してください。</p>
+    </footer>
+  </main>
+</div>
+<button class="totop" id="totop" aria-label="トップへ戻る">↑</button>
+<script>
+  var prog=document.getElementById('progress'),totop=document.getElementById('totop');
+  function s(){var h=document.documentElement,m=h.scrollHeight-h.clientHeight;prog.style.width=(m>0?h.scrollTop/m*100:0)+'%';if(h.scrollTop>600)totop.classList.add('show');else totop.classList.remove('show');}
+  document.addEventListener('scroll',s,{passive:true});s();
+  totop.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  var links=[].slice.call(document.querySelectorAll('nav.toc a')),map={};
+  links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(l){l.classList.remove('active');});var a=map[e.target.id];if(a)a.classList.add('active');}});},{rootMargin:'-22% 0px -70% 0px',threshold:0});
+  document.querySelectorAll('main section').forEach(function(x){io.observe(x);});
+</script>
+</body>
+</html>

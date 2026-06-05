@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>データ指向アプリケーションデザイン 第4巻 ― 派生データ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@600;700;900&family=Zen+Kaku+Gothic+Antique:wght@400;500;700&family=Red+Hat+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f141c;--bg2:#151c26;--card:#172029;--ink:#cfd6e2;--ink-soft:#8b95a6;--ink-dim:#5d6776;--line:#26303d;
+  --accent:#41b6e6;--accent-deep:#2c87b4;--accent-soft:rgba(65,182,230,.13);
+  --amber:#e0a458;--amber-soft:rgba(224,164,88,.13);
+  --ok:#5bc88a;--ok-soft:rgba(91,200,138,.13);--warn:#e0b54e;--warn-soft:rgba(224,181,78,.13);--danger:#e8736a;--danger-soft:rgba(232,115,106,.13);
+  --code-bg:#0b1017;--code-bg2:#080c12;--code-line:#1f2935;
+  --mono:'Red Hat Mono',ui-monospace,monospace;--disp:'Noto Serif JP',serif;--sans:'Zen Kaku Gothic Antique',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+body{font-family:var(--sans);color:var(--ink);background-color:var(--bg);background-image:linear-gradient(rgba(65,182,230,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(65,182,230,.035) 1px,transparent 1px);background-size:30px 30px;line-height:1.9;font-size:16px;-webkit-font-smoothing:antialiased;letter-spacing:.01em;}
+#progress{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--accent),var(--amber));z-index:1000;transition:width .12s ease-out;box-shadow:0 0 10px var(--accent);}
+.wrap{display:grid;grid-template-columns:280px 1fr;max-width:1280px;margin:0 auto;}
+#toc{position:sticky;top:0;height:100vh;overflow-y:auto;padding:36px 22px 60px 30px;border-right:1px solid var(--line);background:rgba(15,20,28,.85);backdrop-filter:blur(3px);}
+#toc .toc-brand{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:5px;}
+#toc .toc-vol{font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:.1em;margin-bottom:6px;}
+#toc .toc-title{font-family:var(--disp);font-weight:700;font-size:17px;line-height:1.5;margin-bottom:20px;color:#e8edf4;}
+#toc .part-label{font-family:var(--mono);font-size:10px;letter-spacing:.13em;color:var(--amber);text-transform:uppercase;margin:18px 0 7px;display:block;}
+#toc a{display:flex;gap:9px;align-items:baseline;text-decoration:none;color:var(--ink-soft);font-size:13px;padding:4px 8px;border-radius:7px;line-height:1.45;transition:all .15s;margin-bottom:1px;}
+#toc a .n{font-family:var(--mono);font-size:11px;color:var(--accent);flex:0 0 auto;opacity:.8;}
+#toc a:hover{background:var(--accent-soft);color:#e8edf4;}
+#toc a.active{background:var(--accent);color:#07111a;font-weight:700;}
+#toc a.active .n{color:#07111a;opacity:.9;}
+main{padding:0 clamp(20px,5vw,72px) 120px;min-width:0;}
+.hero{padding:74px 0 50px;border-bottom:1px solid var(--line);position:relative;}
+.badge{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:#07111a;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.08em;padding:5px 12px;border-radius:30px;text-transform:uppercase;}
+.kicker{font-family:var(--mono);font-size:13px;letter-spacing:.04em;color:var(--accent);margin:22px 0 14px;}
+.hero h1{font-family:var(--disp);font-weight:900;font-size:clamp(32px,5.4vw,56px);line-height:1.25;color:#eef2f8;}
+.hero h1 em{font-style:normal;color:var(--accent);}
+.lede{font-size:18px;color:var(--ink-soft);margin-top:24px;max-width:660px;line-height:2;}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:30px;}
+.chip{font-family:var(--mono);font-size:12px;background:var(--bg2);border:1px solid var(--line);padding:6px 13px;border-radius:8px;color:var(--ink-soft);}
+.chip b{color:var(--accent);font-weight:600;}
+.recap{margin:34px 0 0;background:var(--bg2);border:1px solid var(--line);border-left:4px solid var(--ink-dim);border-radius:12px;padding:16px 20px;}
+.recap .rl{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--ink-soft);text-transform:uppercase;display:block;margin-bottom:5px;}
+.recap p{margin:0;font-size:14.5px;color:var(--ink-soft);}
+.map{margin:40px 0 10px;}
+.map h3{font-family:var(--disp);font-size:18px;color:#e8edf4;border:none;padding:0;margin:0 0 14px;}
+.volgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;}
+.vol{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;position:relative;}
+.vol.done{opacity:.62;}
+.vol.cur{border-color:var(--accent);background:linear-gradient(160deg,var(--accent-soft),var(--card));}
+.vol .vn{font-family:var(--mono);font-size:11px;color:var(--amber);letter-spacing:.08em;}
+.vol.cur .vn{color:var(--accent);}
+.vol h4{font-family:var(--disp);font-size:16px;color:#e8edf4;margin:5px 0 6px;}
+.vol p{font-size:13px;color:var(--ink-soft);margin:0;}
+.vol .now{position:absolute;top:14px;right:14px;font-family:var(--mono);font-size:10px;background:var(--accent);color:#07111a;padding:2px 7px;border-radius:20px;font-weight:600;}
+.vol .ck{position:absolute;top:14px;right:14px;font-family:var(--mono);font-size:11px;color:var(--ok);}
+.part{margin:72px 0 8px;padding:26px 30px;border-radius:16px;position:relative;background:linear-gradient(135deg,#10202c,#16323f);border:1px solid var(--accent-deep);overflow:hidden;}
+.part::after{content:"";position:absolute;right:-50px;top:-50px;width:200px;height:200px;border:1px solid rgba(65,182,230,.25);border-radius:50%;}
+.part::before{content:"";position:absolute;right:20px;bottom:-60px;width:130px;height:130px;border:1px solid rgba(65,182,230,.18);border-radius:50%;}
+.part .pl{font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--accent);}
+.part h2{font-family:var(--disp);font-size:26px;font-weight:700;margin-top:6px;color:#eef2f8;}
+.part p{margin-top:8px;font-size:14.5px;color:var(--ink-soft);max-width:600px;}
+section{padding:48px 0 8px;scroll-margin-top:24px;}
+.sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:8px;}
+.sec-num{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--accent);background:var(--bg2);border:1px solid var(--accent-deep);padding:3px 10px;border-radius:7px;flex:0 0 auto;}
+h2.sec-title{font-family:var(--disp);font-size:clamp(23px,3.3vw,31px);font-weight:700;line-height:1.34;color:#eef2f8;}
+h3{font-family:var(--disp);font-size:20px;font-weight:700;margin:34px 0 12px;color:var(--accent);padding-left:13px;border-left:3px solid var(--amber);}
+p{margin:14px 0;}
+strong{color:#e8edf4;font-weight:700;}
+.mono{font-family:var(--mono);font-size:.85em;background:var(--bg2);padding:1px 6px;border-radius:5px;border:1px solid var(--line);color:var(--accent);}
+.oneliner{background:linear-gradient(135deg,#0c1622,#10202c);border:1px solid var(--accent-deep);border-radius:14px;padding:24px 28px;margin:26px 0;}
+.oneliner::before{content:"一言でいうと";font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--accent);display:block;margin-bottom:8px;}
+.oneliner p{margin:0;font-family:var(--disp);font-size:20px;line-height:1.7;font-weight:700;color:#eef2f8;}
+.panel{border-radius:12px;padding:18px 22px;margin:22px 0;border:1px solid;border-left-width:4px;background:var(--bg2);}
+.panel .pt{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;display:block;margin-bottom:6px;}
+.panel p{margin:6px 0;font-size:15px;}
+.panel.why{border-color:var(--accent);background:var(--accent-soft);}.panel.why .pt{color:var(--accent);}
+.panel.point{border-color:var(--amber);background:var(--amber-soft);}.panel.point .pt{color:var(--amber);}
+.panel.tip{border-color:var(--ok);background:var(--ok-soft);}.panel.tip .pt{color:var(--ok);}
+.panel.warn{border-color:var(--warn);background:var(--warn-soft);}.panel.warn .pt{color:var(--warn);}
+.panel.danger{border-color:var(--danger);background:var(--danger-soft);}.panel.danger .pt{color:var(--danger);}
+.code{background:var(--code-bg);border-radius:12px;margin:22px 0;overflow:hidden;border:1px solid var(--code-line);}
+.code-top{display:flex;justify-content:space-between;align-items:center;background:var(--code-bg2);padding:9px 14px;border-bottom:1px solid var(--code-line);}
+.code-top .fn{font-family:var(--mono);font-size:12px;color:var(--ink-soft);letter-spacing:.03em;}
+.copy{font-family:var(--mono);font-size:11px;color:var(--accent);background:transparent;border:1px solid var(--code-line);border-radius:6px;padding:3px 10px;cursor:pointer;transition:.15s;}
+.copy:hover{background:var(--accent);color:#07111a;border-color:var(--accent);}
+.code pre{padding:16px 18px;overflow-x:auto;}
+.code code{font-family:var(--mono);font-size:13px;line-height:1.8;color:#c6d0dd;white-space:pre;}
+.tok-k{color:#5fb6e8;font-weight:500;}.tok-f{color:#e0a458;}.tok-s{color:#8fcf96;}.tok-n{color:#e58fb0;}.tok-c{color:#566273;font-style:italic;}.tok-v{color:#c6d0dd;}
+.tbl{margin:24px 0;overflow-x:auto;border-radius:12px;border:1px solid var(--line);}
+table{border-collapse:collapse;width:100%;font-size:14px;background:var(--card);}
+th{background:#10202c;color:var(--accent);font-weight:700;text-align:left;padding:11px 14px;font-size:13px;border-bottom:1px solid var(--accent-deep);}
+td{padding:10px 14px;border-top:1px solid var(--line);vertical-align:top;color:var(--ink);}
+tr:nth-child(even) td{background:var(--bg2);}
+.tbl.mini td:first-child{font-family:var(--mono);color:var(--accent);font-weight:500;white-space:nowrap;}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:24px 0;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;border-top:3px solid var(--accent);}
+.card h4{font-family:var(--disp);font-size:16px;color:#e8edf4;margin-bottom:7px;}
+.card p{font-size:14px;margin:4px 0;color:var(--ink-soft);}
+.card .tag{font-family:var(--mono);font-size:11px;color:var(--amber);}
+.fig{margin:30px 0;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;text-align:center;}
+.fig svg{max-width:100%;height:auto;}
+.fig .cap{font-family:var(--mono);font-size:12px;color:var(--ink-soft);margin-top:14px;}
+#top-btn{position:fixed;right:24px;bottom:24px;width:48px;height:48px;border-radius:50%;background:var(--accent);color:#07111a;border:none;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.25s;box-shadow:0 6px 18px rgba(0,0,0,.4);z-index:900;}
+#top-btn.show{opacity:1;pointer-events:auto;}
+#top-btn:hover{transform:translateY(-3px);}
+.gloss dt{font-family:var(--disp);font-weight:700;color:var(--accent);font-size:16px;margin-top:16px;}
+.gloss dd{margin:3px 0 0;color:var(--ink-soft);font-size:14.5px;}
+.nextvol{margin:50px 0 0;background:linear-gradient(135deg,#10202c,#16323f);border:1px solid var(--accent-deep);border-radius:16px;padding:30px 32px;}
+.nextvol .nl{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--accent);}
+.nextvol h3{border:none;padding:0;margin:6px 0 14px;color:#eef2f8;font-size:23px;}
+.nextvol p{margin:10px 0;font-size:14.5px;color:var(--ink-soft);}
+.arc{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:18px 0 4px;}
+.arc div{background:rgba(65,182,230,.08);border:1px solid var(--accent-deep);border-radius:10px;padding:12px 14px;}
+.arc .an{font-family:var(--mono);font-size:11px;color:var(--accent);}
+.arc h5{font-family:var(--disp);font-size:15px;color:#e8edf4;margin:3px 0 4px;}
+.arc p{font-size:12.5px;color:var(--ink-soft);margin:0;}
+.foot{margin-top:60px;padding-top:30px;border-top:1px solid var(--line);font-size:13.5px;color:var(--ink-soft);}
+.foot b{color:#e8edf4;}
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .7s ease,transform .7s ease;}
+.reveal.in{opacity:1;transform:none;}
+@media(max-width:880px){.wrap{grid-template-columns:1fr;}#toc{display:none;}body{font-size:15.5px;}.hero{padding:52px 0 38px;}}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="wrap">
+
+<nav id="toc">
+  <div class="toc-brand">Data-Intensive Apps</div>
+  <div class="toc-vol">第4巻(最終) / 全4巻</div>
+  <div class="toc-title">データ指向<br>アプリケーション<br>デザイン 完全ガイド</div>
+
+  <a href="#map"><span class="n">◈</span>シリーズ地図</a>
+  <a href="#s00"><span class="n">00</span>派生データの世界</a>
+
+  <span class="part-label">A — バッチ処理</span>
+  <a href="#s01"><span class="n">01</span>3つの処理形態</a>
+  <a href="#s02"><span class="n">02</span>Unix哲学とMapReduce</a>
+  <a href="#s03"><span class="n">03</span>不変な入力・作れる出力</a>
+
+  <span class="part-label">B — ストリーム処理</span>
+  <a href="#s04"><span class="n">04</span>イベントと無界ストリーム</a>
+  <a href="#s05"><span class="n">05</span>ログ・CDC・イベントソーシング</a>
+  <a href="#s06"><span class="n">06</span>時間・ウィンドウ・正確性</a>
+
+  <span class="part-label">C — 将来像</span>
+  <a href="#s07"><span class="n">07</span>データ統合とログの背骨</a>
+  <a href="#s08"><span class="n">08</span>統合と正しさ</a>
+  <a href="#s09"><span class="n">09</span>正しいことをする</a>
+
+  <span class="part-label">Reference</span>
+  <a href="#cheat"><span class="n">★</span>チートシート</a>
+  <a href="#gloss"><span class="n">＃</span>用語集</a>
+  <a href="#fin"><span class="n">✦</span>シリーズ総括</a>
+</nav>
+
+<main>
+  <header class="hero reveal">
+    <span class="badge">▣ Vol.4 / Derived Data — Final</span>
+    <div class="kicker">データ指向アプリケーションデザイン ― 完全理解ガイド 第4巻（最終巻）</div>
+    <h1>真実はログにある。<br>状態は<em>そこから導く</em>。</h1>
+    <p class="lede">最後のテーマは「派生データ」。生のデータを束ね（バッチ）、流し（ストリーム）、そこから検索インデックスや集計や機械学習モデルを作り直す世界です。鍵は<strong>イミュータブルなイベントログ</strong>。これがバッチとストリームを1つの世界観へ統合し、本シリーズ全体を貫く思想へとつながります。</p>
+    <div class="chips">
+      <span class="chip">本巻 <b>第3部 / 10〜12章</b></span>
+      <span class="chip">主題 <b>バッチ・ストリーム・将来</b></span>
+      <span class="chip">難度 <b>中級〜上級</b></span>
+    </div>
+    <div class="recap">
+      <span class="rl">前巻のおさらい</span>
+      <p>第3巻では、トランザクションの分離、信頼できないネットワークと時計、そして多数決による合意 ― 「正しさをどう守るか」を見ました。本巻は守った正しさの上で、データを<strong>派生・変換</strong>させる仕組みへ進みます。</p>
+    </div>
+  </header>
+
+  <!-- MAP -->
+  <div class="map reveal" id="map">
+    <h3>◈ シリーズ地図（全4巻・完結）</h3>
+    <div class="volgrid">
+      <div class="vol done"><span class="ck">✓ 読了</span><div class="vn">第1巻 ― 土台</div><h4>Foundations</h4><p>三つの関心事／データモデル／ストレージ／エンコーディング（1〜4章）</p></div>
+      <div class="vol done"><span class="ck">✓ 読了</span><div class="vn">第2巻 ― 複製と分割</div><h4>Distributed Data ①</h4><p>レプリケーション／パーティショニング（5〜6章）</p></div>
+      <div class="vol done"><span class="ck">✓ 読了</span><div class="vn">第3巻 ― 分散の難所</div><h4>Distributed Data ②</h4><p>トランザクション／障害／一貫性と合意（7〜9章）</p></div>
+      <div class="vol cur"><span class="now">今ここ</span><div class="vn">第4巻 ― 派生データ</div><h4>Derived Data</h4><p>バッチ処理／ストリーム処理／将来像（10〜12章）</p></div>
+    </div>
+  </div>
+
+  <!-- 00 -->
+  <section id="s00" class="reveal">
+    <div class="sec-head"><span class="sec-num">00</span><h2 class="sec-title">派生データの世界</h2></div>
+    <div class="oneliner"><p>システムには「記録のための真実(システム・オブ・レコード)」と、そこから導いた「派生データ」がある。派生は何度でも作り直せる。</p></div>
+
+    <p>本巻を貫く区別がこれです。<strong>真実の源（システム・オブ・レコード）</strong>は、新しいデータが最初に書かれる正本。<strong>派生データ</strong>は、その真実を変換・加工して作られたもの ― 検索インデックス、キャッシュ、集計表、機械学習モデルなど。</p>
+
+    <div class="panel why">
+      <span class="pt">なぜこの区別が効くか</span>
+      <p>派生データは<strong>失っても真実から作り直せる</strong>。だから派生は気楽に変えられ、壊れても復旧でき、複数のビューを同じ真実から起こせます。この「真実は1つ、ビューは派生」という発想が、バッチ・ストリーム・そして将来像のすべてを貫きます。処理の形態は3つあります。</p>
+    </div>
+  </section>
+
+  <!-- PART A -->
+  <div class="part reveal">
+    <div class="pl">PART A</div>
+    <h2>バッチ処理 ― 束ねて作り直す</h2>
+    <p>有界（量が決まっている）な大量データを、まとめて処理する世界。Unixの小道具の哲学が、MapReduceという分散処理へと拡張されます。</p>
+  </div>
+
+  <!-- 01 -->
+  <section id="s01" class="reveal">
+    <div class="sec-head"><span class="sec-num">01</span><h2 class="sec-title">3つの処理形態</h2></div>
+    <div class="oneliner"><p>オンライン(サービス)・バッチ・ストリームは、応答の速さと入力の性質が違う3つの処理スタイル。</p></div>
+
+    <div class="cards">
+      <div class="card"><span class="tag">online</span><h4>サービス（オンライン）</h4><p>リクエストに即応答。応答時間が命（第1巻のp99）。第1〜3巻の主舞台。</p></div>
+      <div class="card"><span class="tag">batch</span><h4>バッチ（オフライン）</h4><p>大量データをまとめて処理。応答時間より<strong>スループット</strong>重視。入力は有界。</p></div>
+      <div class="card"><span class="tag">stream</span><h4>ストリーム（準リアルタイム）</h4><p>イベントを到着次第処理。バッチと online の中間。入力は<strong>無界</strong>。</p></div>
+    </div>
+    <p>本巻は<strong>バッチ → ストリーム → 両者の統合</strong>という順で進みます。まずバッチの原型、Unixの思想から。</p>
+  </section>
+
+  <!-- 02 -->
+  <section id="s02" class="reveal">
+    <div class="sec-head"><span class="sec-num">02</span><h2 class="sec-title">Unix哲学 と MapReduce</h2></div>
+    <div class="oneliner"><p>「小さな道具を、統一された入出力でつなぐ」Unixの思想を、何千台ものマシンへ拡張したのがMapReduce。</p></div>
+
+    <p>バッチ処理の原型はUnixのパイプにあります。<span class="mono">grep | sort | uniq</span> のように、<strong>1つのことをうまくやる小さな道具</strong>を、統一インターフェース（標準入出力＝テキストの行）でつなぐ。入力は変更せず、出力を次へ流す。この組み合わせ可能性が強さの源でした。</p>
+
+    <p><strong>MapReduce</strong>は、この発想をクラスタ規模に持ち上げたものです。3段階で動きます。</p>
+
+    <div class="fig">
+      <svg viewBox="0 0 600 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="MapReduceのデータフロー">
+        <defs><marker id="am" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#41b6e6"/></marker></defs>
+        <g font-family="'Red Hat Mono',monospace" font-size="10">
+          <text x="65" y="20" text-anchor="middle" fill="#e0a458" font-size="11">入力分割</text>
+          <rect x="20" y="34" width="90" height="22" rx="4" fill="#0b1017" stroke="#26303d"/><text x="65" y="49" text-anchor="middle" fill="#cfd6e2">分割1</text>
+          <rect x="20" y="64" width="90" height="22" rx="4" fill="#0b1017" stroke="#26303d"/><text x="65" y="79" text-anchor="middle" fill="#cfd6e2">分割2</text>
+          <rect x="20" y="94" width="90" height="22" rx="4" fill="#0b1017" stroke="#26303d"/><text x="65" y="109" text-anchor="middle" fill="#cfd6e2">分割3</text>
+
+          <text x="220" y="20" text-anchor="middle" fill="#e0a458" font-size="11">Map（抽出）</text>
+          <rect x="170" y="34" width="100" height="22" rx="4" fill="#10202c" stroke="#41b6e6"/><text x="220" y="49" text-anchor="middle" fill="#cfd6e2">(key,val)化</text>
+          <rect x="170" y="64" width="100" height="22" rx="4" fill="#10202c" stroke="#41b6e6"/><text x="220" y="79" text-anchor="middle" fill="#cfd6e2">(key,val)化</text>
+          <rect x="170" y="94" width="100" height="22" rx="4" fill="#10202c" stroke="#41b6e6"/><text x="220" y="109" text-anchor="middle" fill="#cfd6e2">(key,val)化</text>
+
+          <text x="385" y="20" text-anchor="middle" fill="#e0a458" font-size="11">Shuffle（キーで集約）</text>
+          <rect x="330" y="48" width="110" height="56" rx="6" fill="#16323f" stroke="#e0a458"/><text x="385" y="72" text-anchor="middle" fill="#e0a458">同じkeyを</text><text x="385" y="88" text-anchor="middle" fill="#e0a458">1か所に集める</text>
+
+          <text x="525" y="20" text-anchor="middle" fill="#e0a458" font-size="11">Reduce（集計）</text>
+          <rect x="480" y="48" width="100" height="22" rx="4" fill="#10202c" stroke="#5bc88a"/><text x="530" y="63" text-anchor="middle" fill="#5bc88a">key毎に集計</text>
+          <rect x="480" y="82" width="100" height="22" rx="4" fill="#10202c" stroke="#5bc88a"/><text x="530" y="97" text-anchor="middle" fill="#5bc88a">key毎に集計</text>
+
+          <line x1="110" y1="45" x2="168" y2="45" stroke="#41b6e6" marker-end="url(#am)"/>
+          <line x1="110" y1="75" x2="168" y2="75" stroke="#41b6e6" marker-end="url(#am)"/>
+          <line x1="110" y1="105" x2="168" y2="105" stroke="#41b6e6" marker-end="url(#am)"/>
+          <line x1="270" y1="60" x2="328" y2="68" stroke="#41b6e6" marker-end="url(#am)"/>
+          <line x1="270" y1="90" x2="328" y2="80" stroke="#41b6e6" marker-end="url(#am)"/>
+          <line x1="440" y1="68" x2="478" y2="62" stroke="#41b6e6" marker-end="url(#am)"/>
+          <line x1="440" y1="84" x2="478" y2="92" stroke="#41b6e6" marker-end="url(#am)"/>
+          <text x="300" y="150" text-anchor="middle" fill="#8b95a6" font-size="10">SQLのGROUP BYに似た流れを、多数のマシンに分散して実行する</text>
+        </g>
+      </svg>
+      <div class="cap">図: MapReduce ― Mapでキー値に変換、Shuffleで同じキーを集め、Reduceで集計</div>
+    </div>
+
+    <div class="panel tip">
+      <span class="pt">tip ― 後継のデータフローエンジン</span>
+      <p>MapReduceは段ごとに中間結果をディスクに書くため遅くなりがち。後継の <strong>Spark・Flink・Tez</strong> などは、処理を演算子のDAG（有向非巡回グラフ）として表し、中間結果をなるべくメモリに保ち高速化します。考え方の根は同じ ― <strong>入力は不変、変換を組み合わせて出力を作る</strong>。第1巻の「宣言的に書けば最適化できる」とも響き合います。</p>
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section id="s03" class="reveal">
+    <div class="sec-head"><span class="sec-num">03</span><h2 class="sec-title">不変な入力、作り直せる出力</h2></div>
+    <div class="oneliner"><p>バッチの強さは「入力を変えない」こと。だからジョブは何度でも安全に再実行でき、障害にも強い。</p></div>
+
+    <p>バッチ処理は入力ファイルを<strong>読むだけで書き換えません</strong>。出力は新しい場所に作ります。この性質が大きな恩恵を生みます。</p>
+
+    <div class="cards">
+      <div class="card"><span class="tag">retry</span><h4>再実行が安全</h4><p>失敗しても、入力は無傷なので最初からやり直すだけ。途中状態の心配が要らない。</p></div>
+      <div class="card"><span class="tag">recover</span><h4>バグからの復旧</h4><p>処理にバグがあっても、コードを直して<strong>同じ入力で作り直せばよい</strong>。</p></div>
+      <div class="card"><span class="tag">build</span><h4>派生物の生成</h4><p>検索インデックス・MLモデル・KVS など、出力をまるごとビルドして差し替える。</p></div>
+    </div>
+
+    <div class="panel point">
+      <span class="pt">要点 ― この巻のキーアイデア</span>
+      <p><strong>「入力は不変、出力は派生」</strong> ― この一点がバッチの信頼性の正体であり、次のストリームでは「不変なイベントの<strong>ログ</strong>」として、さらに強力な形で再登場します。</p>
+    </div>
+  </section>
+
+  <!-- PART B -->
+  <div class="part reveal">
+    <div class="pl">PART B</div>
+    <h2>ストリーム処理 ― 流れを処理する</h2>
+    <p>バッチは「いつか終わる入力」を前提にします。が、現実のデータは止まりません。終わりのない無界のデータを、到着しながら処理するのがストリームです。</p>
+  </div>
+
+  <!-- 04 -->
+  <section id="s04" class="reveal">
+    <div class="sec-head"><span class="sec-num">04</span><h2 class="sec-title">イベントと無界ストリーム</h2></div>
+    <div class="oneliner"><p>ストリームとは、終わりなく流れてくる「イベント（起きた事実の不変な記録）」の連なり。</p></div>
+
+    <p>バッチが扱うのは<strong>有界</strong>（量が確定した）データ。対してストリームは<strong>無界</strong> ― いつ終わるとも知れず流れ続けます。基本単位は<strong>イベント</strong>：「いつ、何が起きたか」を表す小さく不変な記録です。それを生む側（プロデューサ）と受け取る側（コンシューマ）がいます。「結果を一晩待つ」のではなく「起きた端から反応する」のがストリームの動機です。</p>
+  </section>
+
+  <!-- 05 -->
+  <section id="s05" class="reveal">
+    <div class="sec-head"><span class="sec-num">05</span><h2 class="sec-title">ログ・CDC・イベントソーシング</h2></div>
+    <div class="oneliner"><p>追記専用のログを「真実」に据えると、消えない・巻き戻せる・何通りにも派生できる、強力な基盤になる。</p></div>
+
+    <p>イベントを運ぶ仕組み（メッセージング）には2系統あります。違いは決定的です。</p>
+
+    <div class="fig">
+      <svg viewBox="0 0 580 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="従来キューとログベースの比較">
+        <defs><marker id="al4" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#41b6e6"/></marker></defs>
+        <g font-family="'Red Hat Mono',monospace" font-size="10">
+          <text x="140" y="20" text-anchor="middle" font-family="'Noto Serif JP',serif" font-weight="700" font-size="13" fill="#41b6e6">従来のキュー</text>
+          <rect x="40" y="34" width="100" height="26" rx="6" fill="#10202c" stroke="#41b6e6"/><text x="90" y="51" text-anchor="middle" fill="#cfd6e2">メッセージ</text>
+          <text x="90" y="78" text-anchor="middle" fill="#e8736a" font-size="9">配信したら消える</text>
+          <rect x="180" y="34" width="70" height="22" rx="4" fill="#0b1017" stroke="#26303d"/><text x="215" y="49" text-anchor="middle" fill="#cfd6e2">受信者</text>
+          <line x1="140" y1="47" x2="178" y2="47" stroke="#41b6e6" marker-end="url(#al4)"/>
+          <text x="140" y="110" text-anchor="middle" fill="#8b95a6" font-size="9">処理後に削除・読み直せない</text>
+
+          <text x="430" y="20" text-anchor="middle" font-family="'Noto Serif JP',serif" font-weight="700" font-size="13" fill="#41b6e6">ログベース（Kafka等）</text>
+          <rect x="320" y="34" width="40" height="22" rx="3" fill="#10202c" stroke="#41b6e6"/><rect x="360" y="34" width="40" height="22" rx="3" fill="#10202c" stroke="#41b6e6"/><rect x="400" y="34" width="40" height="22" rx="3" fill="#10202c" stroke="#41b6e6"/><rect x="440" y="34" width="40" height="22" rx="3" fill="#10202c" stroke="#41b6e6"/>
+          <text x="400" y="78" text-anchor="middle" fill="#5bc88a" font-size="9">追記専用・消さずに保持</text>
+          <text x="500" y="49" fill="#e0a458">→ 続く</text>
+          <rect x="340" y="100" width="80" height="20" rx="4" fill="#0b1017" stroke="#26303d"/><text x="380" y="114" text-anchor="middle" fill="#cfd6e2">読み手A(offset)</text>
+          <rect x="430" y="100" width="80" height="20" rx="4" fill="#0b1017" stroke="#26303d"/><text x="470" y="114" text-anchor="middle" fill="#cfd6e2">読み手B(offset)</text>
+          <text x="400" y="142" text-anchor="middle" fill="#8b95a6" font-size="9">各自の位置を持ち、何度でも・複数で読める</text>
+        </g>
+      </svg>
+      <div class="cap">図: 従来キューは配信後に消す／ログベースは追記して残し、各コンシューマが自分の位置(offset)で読む</div>
+    </div>
+
+    <p>ログベース（<strong>Apache Kafka</strong> が代表）は、メッセージを消さずに<strong>追記専用のログ</strong>として残します。これにより、後から参加した読み手が過去を読み直せ、複数の派生システムを同じログから起こせます。ここから2つの強力な応用が生まれます。</p>
+
+    <div class="cards">
+      <div class="card"><span class="tag">CDC</span><h4>変更データキャプチャ</h4><p>DBへの変更を1つずつイベント化してログに流す。検索インデックスやキャッシュ、DWHを<strong>常に同期</strong>させ続けられる。</p></div>
+      <div class="card"><span class="tag">event sourcing</span><h4>イベントソーシング</h4><p>「現在の状態」ではなく<strong>起きたイベントの履歴そのもの</strong>を真実として保存。現状はログを再生して導く。</p></div>
+    </div>
+
+    <div class="panel why">
+      <span class="pt">なぜイミュータブルなログが効くのか</span>
+      <p>不変な履歴があれば ―① 同じログから検索用・分析用など<strong>複数のビューを派生</strong>できる、② バグを直して<strong>再生し作り直せる</strong>（バッチの利点がそのまま！）、③ 「いつ何が起きたか」が残り<strong>監査</strong>できる。第3巻の「真実をどう定義するか」に、本巻は「<strong>真実とは出来事の不変なログである</strong>」という1つの答えを与えます。</p>
+    </div>
+  </section>
+
+  <!-- 06 -->
+  <section id="s06" class="reveal">
+    <div class="sec-head"><span class="sec-num">06</span><h2 class="sec-title">時間・ウィンドウ・正確性</h2></div>
+    <div class="oneliner"><p>ストリームの難しさは「時間」。遅れて届くイベントをどう数え、どう一度だけ正しく処理するか。</p></div>
+
+    <h3>イベント時刻 と 処理時刻</h3>
+    <p>「いつ起きたか（イベント時刻）」と「いつ処理されたか（処理時刻）」はずれます。ネットワーク遅延やオフラインで、イベントは<strong>遅れて・順序が乱れて</strong>届きます。「過去1分の件数」を処理時刻で数えると、遅延したイベントを取りこぼします。だから多くは<strong>イベント時刻</strong>で集計し、「どこまで揃ったか」を示す<strong>ウォーターマーク</strong>で締めのタイミングを判断します。</p>
+
+    <h3>ウィンドウ</h3>
+    <p>無界のストリームを区切って集計する単位が<strong>ウィンドウ</strong>です（固定長のタンブリング、重なるホッピング、活動の切れ目で区切るセッションなど）。第1巻のウィンドウ集計の発想を、終わりなき流れに適用したものと言えます。</p>
+
+    <div class="panel point">
+      <span class="pt">要点 ― 一度だけ正しく（exactly-once）</span>
+      <p>ストリームでも障害は起きます。再送で<strong>二重に数えてしまわない</strong>ために、チェックポイントや、操作を冪等（何度実行しても同じ結果）にする工夫、原子的なコミットを使い、実質「<strong>一度だけ</strong>」処理されたのと同じ結果を得ます。これは第3巻の正しさの議論を、流れの世界へ持ち込んだものです。</p>
+    </div>
+  </section>
+
+  <!-- PART C -->
+  <div class="part reveal">
+    <div class="pl">PART C</div>
+    <h2>データシステムの将来</h2>
+    <p>個々の道具を見てきた最後に、それらをどう組み上げるか ― そして、私たちが作るものへの責任について。シリーズの結びです。</p>
+  </div>
+
+  <!-- 07 -->
+  <section id="s07" class="reveal">
+    <div class="sec-head"><span class="sec-num">07</span><h2 class="sec-title">データ統合 ― ログを背骨にする</h2></div>
+    <div class="oneliner"><p>万能の1製品はない。専門の道具を組み合わせ、中心のイベントログで全体を同期させる。</p></div>
+
+    <p>「これ1つで全部」というデータベースは存在しません。OLTP用DB、検索エンジン、キャッシュ、分析基盤 ― それぞれ得意が違う（第1巻のトレードオフ）。問題は、これらを<strong>どう食い違いなく同期させるか</strong>。本書の答えは明快です ―<strong>中心に1本のイベントログを置き、すべての派生システムをそこから更新する</strong>。</p>
+
+    <div class="fig">
+      <svg viewBox="0 0 560 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ログを背骨にしたデータ統合">
+        <defs><marker id="al7" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#41b6e6"/></marker></defs>
+        <g font-family="'Red Hat Mono',monospace" font-size="10">
+          <rect x="180" y="20" width="200" height="30" rx="6" fill="#0b1017" stroke="#26303d"/><text x="280" y="39" text-anchor="middle" fill="#cfd6e2">書き込み（真実の源）</text>
+          <rect x="120" y="78" width="320" height="34" rx="8" fill="#16323f" stroke="#e0a458" stroke-width="2"/><text x="280" y="100" text-anchor="middle" fill="#e0a458" font-weight="600">中心イベントログ（例: Kafka）</text>
+          <line x1="280" y1="50" x2="280" y2="76" stroke="#41b6e6" marker-end="url(#al7)"/>
+          <rect x="40" y="150" width="100" height="30" rx="6" fill="#10202c" stroke="#5bc88a"/><text x="90" y="169" text-anchor="middle" fill="#5bc88a">検索インデックス</text>
+          <rect x="160" y="150" width="80" height="30" rx="6" fill="#10202c" stroke="#5bc88a"/><text x="200" y="169" text-anchor="middle" fill="#5bc88a">キャッシュ</text>
+          <rect x="260" y="150" width="110" height="30" rx="6" fill="#10202c" stroke="#5bc88a"/><text x="315" y="169" text-anchor="middle" fill="#5bc88a">データウェアハウス</text>
+          <rect x="390" y="150" width="120" height="30" rx="6" fill="#10202c" stroke="#5bc88a"/><text x="450" y="169" text-anchor="middle" fill="#5bc88a">MLモデル等</text>
+          <line x1="160" y1="112" x2="95" y2="148" stroke="#41b6e6" marker-end="url(#al7)"/>
+          <line x1="220" y1="112" x2="200" y2="148" stroke="#41b6e6" marker-end="url(#al7)"/>
+          <line x1="320" y1="112" x2="315" y2="148" stroke="#41b6e6" marker-end="url(#al7)"/>
+          <line x1="400" y1="112" x2="450" y2="148" stroke="#41b6e6" marker-end="url(#al7)"/>
+        </g>
+      </svg>
+      <div class="cap">図: 「データベースの分解」― 中心のログを唯一の真実とし、各専門システムをそこから派生・同期させる</div>
+    </div>
+
+    <div class="panel why">
+      <span class="pt">「データベースを内側から裏返す」</span>
+      <p>従来は1つのDBの中に隠れていた「書き込みログ → インデックス更新」という仕組みを、<strong>システム全体のスケールに引き出した</strong>のがこの構図です（データベースのアンバンドル）。各システムは中心ログの<strong>派生ビュー</strong>にすぎず、いつでも作り直せる ― 第3巻までの「真実は1つ」「派生は何度でも」が、アーキテクチャ全体の設計思想になります。</p>
+    </div>
+  </section>
+
+  <!-- 08 -->
+  <section id="s08" class="reveal">
+    <div class="sec-head"><span class="sec-num">08</span><h2 class="sec-title">バッチとストリームの統合、そして正しさ</h2></div>
+    <div class="oneliner"><p>バッチとストリームは別物ではなく地続き。同じログを、まとめて読むか流して読むかの違いにすぎない。</p></div>
+
+    <p>不変なログを中心に据えると、<strong>バッチとストリームの境界が溶けます</strong>。過去ぶんをまとめて読めばバッチ、新着を追って読めばストリーム ― 入力は同じログです。両者を別系統で二重に書く構成（ラムダアーキテクチャ）から、1本に統合する方向へと進んでいます。</p>
+
+    <div class="panel point">
+      <span class="pt">正しさを作り込む ― 冪等性とエンドツーエンド</span>
+      <p>分散では「ちょうど一度」は難しい。そこで<strong>同じ操作を何度実行しても結果が変わらない冪等性</strong>を設計に組み込み、再送や再処理を安全にします。さらに、途中の各段でなく<strong>端から端（エンドツーエンド）で正しさを保証する</strong>視点を持つ。第3巻の合意・トランザクションの議論が、ここで実践的な指針に結実します。なお速報性(timeliness)と完全性(integrity)も天秤 ― やはりトレードオフです。</p>
+    </div>
+  </section>
+
+  <!-- 09 -->
+  <section id="s09" class="reveal">
+    <div class="sec-head"><span class="sec-num">09</span><h2 class="sec-title">そして、正しいことをする</h2></div>
+    <div class="oneliner"><p>技術的に正しいだけでは足りない。データの力には責任が伴う ― これが本書の最後のメッセージ。</p></div>
+
+    <p>原著は技術論で終わりません。最終章は<strong>倫理</strong>を扱います。データシステムを作る私たちには、技術的な正しさを超えた責任がある、という呼びかけです。</p>
+
+    <div class="cards">
+      <div class="card" style="border-top-color:var(--warn)"><span class="tag" style="color:var(--warn)">bias</span><h4>予測と偏り</h4><p>データに基づく自動判断は、過去の偏りを<strong>増幅・固定化</strong>しうる。誰かを不当に分類していないか。</p></div>
+      <div class="card" style="border-top-color:var(--warn)"><span class="tag" style="color:var(--warn)">privacy</span><h4>プライバシーと監視</h4><p>蓄積したデータは力であると同時に、監視と濫用の手段にもなる。集める正当性を問う。</p></div>
+      <div class="card" style="border-top-color:var(--warn)"><span class="tag" style="color:var(--warn)">responsibility</span><h4>つくり手の責任</h4><p>同意・透明性・忘れられる権利。「できるか」だけでなく「すべきか」を考える。</p></div>
+    </div>
+
+    <div class="panel why">
+      <span class="pt">本書が最後に残すもの</span>
+      <p>信頼性・拡張性・保守性を技術で追求してきた長い旅の終点が「倫理」であることには、深い意味があります。<strong>私たちが設計するシステムは、現実の人々に影響を及ぼす</strong>。だから本シリーズ冒頭の問い ―「どう組み合わせれば信頼でき・伸ばせて・保てるか」― には、最後に「<strong>そして、人に対して誠実か</strong>」が加わります。</p>
+    </div>
+  </section>
+
+  <!-- CHEAT -->
+  <section id="cheat" class="reveal">
+    <div class="sec-head"><span class="sec-num">★</span><h2 class="sec-title">チートシート（第4巻）</h2></div>
+
+    <h3>処理形態と性質</h3>
+    <div class="tbl mini">
+      <table>
+        <tr><th>形態</th><th>入力</th><th>重視</th></tr>
+        <tr><td>サービス</td><td>リクエスト</td><td>応答時間(p99)</td></tr>
+        <tr><td>バッチ</td><td>有界</td><td>スループット</td></tr>
+        <tr><td>ストリーム</td><td>無界</td><td>低遅延の継続処理</td></tr>
+      </table>
+    </div>
+
+    <h3>覚える要点</h3>
+    <div class="tbl mini">
+      <table>
+        <tr><th>テーマ</th><th>核心</th></tr>
+        <tr><td>真実 vs 派生</td><td>真実は1つ、派生(索引/キャッシュ/集計)は作り直せる</td></tr>
+        <tr><td>MapReduce</td><td>Map→Shuffle(キー集約)→Reduce。分散版GROUP BY</td></tr>
+        <tr><td>不変入力</td><td>再実行・バグ復旧・派生生成が安全</td></tr>
+        <tr><td>ログベースMQ</td><td>消さず追記。各自offsetで再読・複数読み</td></tr>
+        <tr><td>CDC / イベントソーシング</td><td>変更をログ化 / 履歴を真実にして状態を再生</td></tr>
+        <tr><td>時間</td><td>イベント時刻で集計、ウォーターマークで締める</td></tr>
+        <tr><td>exactly-once</td><td>冪等性＋チェックポイントで二重処理を防ぐ</td></tr>
+        <tr><td>データ統合</td><td>中心ログを背骨に派生システムを同期(DB分解)</td></tr>
+        <tr><td>倫理</td><td>偏り・プライバシー・つくり手の責任</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- GLOSSARY -->
+  <section id="gloss" class="reveal">
+    <div class="sec-head"><span class="sec-num">＃</span><h2 class="sec-title">用語集（第4巻）</h2></div>
+    <dl class="gloss">
+      <dt>システム・オブ・レコード / 派生データ</dt><dd>新規データが最初に書かれる正本 / それを変換して作った二次データ。</dd>
+      <dt>バッチ処理</dt><dd>有界な大量データをまとめて処理する形態。スループット重視。</dd>
+      <dt>ストリーム処理</dt><dd>無界のイベントを到着しながら処理する形態。準リアルタイム。</dd>
+      <dt>Unix哲学</dt><dd>小さな道具を統一入出力でつなぐ思想。バッチ処理の原型。</dd>
+      <dt>MapReduce</dt><dd>Map・Shuffle・Reduceで分散集計するバッチ処理モデル。</dd>
+      <dt>データフローエンジン</dt><dd>処理をDAGで表し中間結果をメモリ保持する後継基盤（Spark/Flink等）。</dd>
+      <dt>イベント</dt><dd>「いつ何が起きたか」を表す、小さく不変な記録。</dd>
+      <dt>有界 / 無界</dt><dd>量が確定したデータ / 終わりなく流れ続けるデータ。</dd>
+      <dt>ログベースメッセージング</dt><dd>メッセージを消さず追記保持し、offsetで読む方式（Kafka等）。</dd>
+      <dt>オフセット</dt><dd>各コンシューマがログのどこまで読んだかを示す位置。</dd>
+      <dt>CDC（変更データキャプチャ）</dt><dd>DBの変更をイベント列として取り出し派生系を同期する手法。</dd>
+      <dt>イベントソーシング</dt><dd>出来事の履歴を真実とし、現在状態は再生で導く設計。</dd>
+      <dt>イベント時刻 / 処理時刻</dt><dd>事が起きた時刻 / 処理された時刻。両者はずれる。</dd>
+      <dt>ウォーターマーク</dt><dd>「この時刻までは出揃った」と見なす目印。締めの判断に使う。</dd>
+      <dt>ウィンドウ</dt><dd>無界ストリームを集計のために区切る単位（固定/重なり/セッション）。</dd>
+      <dt>exactly-once（実質一度）</dt><dd>再送があっても結果が一度の処理と同じになる保証。冪等性で実現。</dd>
+      <dt>冪等性</dt><dd>同じ操作を何度実行しても結果が変わらない性質。</dd>
+      <dt>データベースのアンバンドル</dt><dd>DB内部の機能を全体規模に展開し、中心ログで各専門系を同期させる発想。</dd>
+      <dt>ラムダアーキテクチャ</dt><dd>バッチ系とストリーム系を併走させる構成。統合の流れの前段。</dd>
+    </dl>
+  </section>
+
+  <!-- FINALE -->
+  <div class="nextvol reveal" id="fin">
+    <div class="nl">✦ SERIES COMPLETE — 全4巻 完結</div>
+    <h3>シリーズ総括 ― 旅の地図</h3>
+    <p>『データ指向アプリケーションデザイン』完全ガイド、全4巻の旅が完結しました。4巻を貫いていたのは、いくつかの一貫した思想です。</p>
+    <div class="arc">
+      <div><div class="an">VOL.1</div><h5>土台</h5><p>信頼性・拡張性・保守性。すべての判断はトレードオフ。</p></div>
+      <div><div class="an">VOL.2</div><h5>複製と分割</h5><p>分割で広げ、複製で守る。代償は一貫性。</p></div>
+      <div><div class="an">VOL.3</div><h5>分散の難所</h5><p>不確かさを直視し、多数決で合意する。</p></div>
+      <div><div class="an">VOL.4</div><h5>派生データ</h5><p>真実は不変なログ。状態はそこから導く。</p></div>
+    </div>
+    <p style="margin-top:16px"><strong>貫く3つの思想：</strong>①「銀の弾丸はない、あるのはトレードオフの理解だけ」②「真実は1つ、ビューは派生 ― 不変なログを中心に据える」③「強い保証ほど高くつく。本当に必要な所にだけ使う」。そして最後に ―「技術的な正しさの先に、人への誠実さがある」。</p>
+    <p style="margin-top:10px;color:var(--ink-soft)">姉妹編「達人に学ぶDB設計／SQL」「ちょうぜつソフトウェア設計入門」と合わせ、データとソフトウェアの設計を、原理から実装、そして分散の極北まで一望できる学習セットになりました。お疲れさまでした。</p>
+  </div>
+
+  <div class="foot reveal">
+    <p><b>このガイドについて：</b> 書籍『データ指向アプリケーションデザイン』（Martin Kleppmann 著、原題 <em>Designing Data-Intensive Applications</em>）の主要テーマを、コードを少し書ける初学者〜中級者向けに自分の言葉で再構成した独立教材です。原書の逐語引用は含みません。本巻は全4巻シリーズの第4巻・最終巻（原書 第3部・10〜12章に対応）。</p>
+    <p style="margin-top:10px"><b>注記：</b> 図やツール名（MapReduce/Spark/Flink/Kafka 等）は概念理解のための簡略化・代表例です。各システムの機能・保証は製品やバージョンで異なり、仕様は将来変わり得ます。設計時は各公式ドキュメントと原典をご確認ください。</p>
+  </div>
+</main>
+</div>
+
+<button id="top-btn" aria-label="トップへ戻る">↑</button>
+
+<script>
+const progress=document.getElementById('progress'),topBtn=document.getElementById('top-btn');
+function onScroll(){const h=document.documentElement,sc=h.scrollTop,max=h.scrollHeight-h.clientHeight;progress.style.width=(max>0?(sc/max*100):0)+'%';if(sc>500)topBtn.classList.add('show');else topBtn.classList.remove('show');}
+window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+topBtn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+const revObs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');revObs.unobserve(e.target);}});},{threshold:0.08});
+document.querySelectorAll('.reveal').forEach(el=>revObs.observe(el));
+const tocLinks=[...document.querySelectorAll('#toc a')];
+const sections=tocLinks.map(a=>document.querySelector(a.getAttribute('href'))).filter(Boolean);
+const linkFor=id=>tocLinks.find(a=>a.getAttribute('href')==='#'+id);
+const secObs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){tocLinks.forEach(a=>a.classList.remove('active'));const l=linkFor(e.target.id);if(l){l.classList.add('active');l.scrollIntoView({block:'nearest'});}}});},{rootMargin:'-18% 0px -72% 0px',threshold:0});
+sections.forEach(s=>secObs.observe(s));
+document.querySelectorAll('.copy').forEach(btn=>{btn.addEventListener('click',()=>{const code=btn.closest('.code').querySelector('code');navigator.clipboard.writeText(code.innerText).then(()=>{const o=btn.textContent;btn.textContent='copied ✓';setTimeout(()=>btn.textContent=o,1400);}).catch(()=>btn.textContent='error');});});
+</script>
+</body>
+</html>

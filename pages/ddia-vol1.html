@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>データ指向アプリケーションデザイン 第1巻 ― 土台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@600;700;900&family=Zen+Kaku+Gothic+Antique:wght@400;500;700&family=Red+Hat+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f141c;
+  --bg2:#151c26;
+  --card:#172029;
+  --ink:#cfd6e2;
+  --ink-soft:#8b95a6;
+  --ink-dim:#5d6776;
+  --line:#26303d;
+  --accent:#41b6e6;        /* signature cyan */
+  --accent-deep:#2c87b4;
+  --accent-soft:rgba(65,182,230,.13);
+  --amber:#e0a458;         /* secondary */
+  --amber-soft:rgba(224,164,88,.13);
+  --ok:#5bc88a;--ok-soft:rgba(91,200,138,.13);
+  --warn:#e0b54e;--warn-soft:rgba(224,181,78,.13);
+  --danger:#e8736a;--danger-soft:rgba(232,115,106,.13);
+  --code-bg:#0b1017;--code-bg2:#080c12;--code-line:#1f2935;
+  --mono:'Red Hat Mono',ui-monospace,monospace;
+  --disp:'Noto Serif JP',serif;
+  --sans:'Zen Kaku Gothic Antique',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+body{
+  font-family:var(--sans);color:var(--ink);background-color:var(--bg);
+  background-image:linear-gradient(rgba(65,182,230,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(65,182,230,.035) 1px,transparent 1px);
+  background-size:30px 30px;
+  line-height:1.9;font-size:16px;-webkit-font-smoothing:antialiased;letter-spacing:.01em;
+}
+#progress{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--accent),var(--amber));z-index:1000;transition:width .12s ease-out;box-shadow:0 0 10px var(--accent);}
+.wrap{display:grid;grid-template-columns:280px 1fr;max-width:1280px;margin:0 auto;}
+#toc{position:sticky;top:0;height:100vh;overflow-y:auto;padding:36px 22px 60px 30px;border-right:1px solid var(--line);background:rgba(15,20,28,.85);backdrop-filter:blur(3px);}
+#toc .toc-brand{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:5px;}
+#toc .toc-vol{font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:.1em;margin-bottom:6px;}
+#toc .toc-title{font-family:var(--disp);font-weight:700;font-size:17px;line-height:1.5;margin-bottom:20px;color:#e8edf4;}
+#toc .part-label{font-family:var(--mono);font-size:10px;letter-spacing:.13em;color:var(--amber);text-transform:uppercase;margin:18px 0 7px;display:block;}
+#toc a{display:flex;gap:9px;align-items:baseline;text-decoration:none;color:var(--ink-soft);font-size:13px;padding:4px 8px;border-radius:7px;line-height:1.45;transition:all .15s;margin-bottom:1px;}
+#toc a .n{font-family:var(--mono);font-size:11px;color:var(--accent);flex:0 0 auto;opacity:.8;}
+#toc a:hover{background:var(--accent-soft);color:#e8edf4;}
+#toc a.active{background:var(--accent);color:#07111a;font-weight:700;}
+#toc a.active .n{color:#07111a;opacity:.9;}
+main{padding:0 clamp(20px,5vw,72px) 120px;min-width:0;}
+.hero{padding:74px 0 50px;border-bottom:1px solid var(--line);position:relative;}
+.badge{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:#07111a;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.08em;padding:5px 12px;border-radius:30px;text-transform:uppercase;}
+.kicker{font-family:var(--mono);font-size:13px;letter-spacing:.04em;color:var(--accent);margin:22px 0 14px;}
+.hero h1{font-family:var(--disp);font-weight:900;font-size:clamp(32px,5.4vw,56px);line-height:1.25;color:#eef2f8;}
+.hero h1 em{font-style:normal;color:var(--accent);}
+.lede{font-size:18px;color:var(--ink-soft);margin-top:24px;max-width:660px;line-height:2;}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:30px;}
+.chip{font-family:var(--mono);font-size:12px;background:var(--bg2);border:1px solid var(--line);padding:6px 13px;border-radius:8px;color:var(--ink-soft);}
+.chip b{color:var(--accent);font-weight:600;}
+/* series map */
+.map{margin:40px 0 10px;}
+.map h3{font-family:var(--disp);font-size:18px;color:#e8edf4;border:none;padding:0;margin:0 0 14px;}
+.volgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;}
+.vol{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;position:relative;}
+.vol.cur{border-color:var(--accent);background:linear-gradient(160deg,var(--accent-soft),var(--card));}
+.vol .vn{font-family:var(--mono);font-size:11px;color:var(--amber);letter-spacing:.08em;}
+.vol.cur .vn{color:var(--accent);}
+.vol h4{font-family:var(--disp);font-size:16px;color:#e8edf4;margin:5px 0 6px;}
+.vol p{font-size:13px;color:var(--ink-soft);margin:0;}
+.vol .now{position:absolute;top:14px;right:14px;font-family:var(--mono);font-size:10px;background:var(--accent);color:#07111a;padding:2px 7px;border-radius:20px;font-weight:600;}
+.part{margin:72px 0 8px;padding:26px 30px;border-radius:16px;position:relative;background:linear-gradient(135deg,#10202c,#16323f);border:1px solid var(--accent-deep);overflow:hidden;}
+.part::after{content:"";position:absolute;right:-50px;top:-50px;width:200px;height:200px;border:1px solid rgba(65,182,230,.25);border-radius:50%;}
+.part::before{content:"";position:absolute;right:20px;bottom:-60px;width:130px;height:130px;border:1px solid rgba(65,182,230,.18);border-radius:50%;}
+.part .pl{font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--accent);}
+.part h2{font-family:var(--disp);font-size:26px;font-weight:700;margin-top:6px;color:#eef2f8;}
+.part p{margin-top:8px;font-size:14.5px;color:var(--ink-soft);max-width:600px;}
+section{padding:48px 0 8px;scroll-margin-top:24px;}
+.sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:8px;}
+.sec-num{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--accent);background:var(--bg2);border:1px solid var(--accent-deep);padding:3px 10px;border-radius:7px;flex:0 0 auto;}
+h2.sec-title{font-family:var(--disp);font-size:clamp(23px,3.3vw,31px);font-weight:700;line-height:1.34;color:#eef2f8;}
+h3{font-family:var(--disp);font-size:20px;font-weight:700;margin:34px 0 12px;color:var(--accent);padding-left:13px;border-left:3px solid var(--amber);}
+p{margin:14px 0;}
+strong{color:#e8edf4;font-weight:700;}
+.mono{font-family:var(--mono);font-size:.85em;background:var(--bg2);padding:1px 6px;border-radius:5px;border:1px solid var(--line);color:var(--accent);}
+.oneliner{background:linear-gradient(135deg,#0c1622,#10202c);border:1px solid var(--accent-deep);border-radius:14px;padding:24px 28px;margin:26px 0;}
+.oneliner::before{content:"一言でいうと";font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--accent);display:block;margin-bottom:8px;}
+.oneliner p{margin:0;font-family:var(--disp);font-size:20px;line-height:1.7;font-weight:700;color:#eef2f8;}
+.panel{border-radius:12px;padding:18px 22px;margin:22px 0;border:1px solid;border-left-width:4px;background:var(--bg2);}
+.panel .pt{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;display:block;margin-bottom:6px;}
+.panel p{margin:6px 0;font-size:15px;}
+.panel.why{border-color:var(--accent);background:var(--accent-soft);}.panel.why .pt{color:var(--accent);}
+.panel.point{border-color:var(--amber);background:var(--amber-soft);}.panel.point .pt{color:var(--amber);}
+.panel.tip{border-color:var(--ok);background:var(--ok-soft);}.panel.tip .pt{color:var(--ok);}
+.panel.warn{border-color:var(--warn);background:var(--warn-soft);}.panel.warn .pt{color:var(--warn);}
+.panel.danger{border-color:var(--danger);background:var(--danger-soft);}.panel.danger .pt{color:var(--danger);}
+.code{background:var(--code-bg);border-radius:12px;margin:22px 0;overflow:hidden;border:1px solid var(--code-line);}
+.code-top{display:flex;justify-content:space-between;align-items:center;background:var(--code-bg2);padding:9px 14px;border-bottom:1px solid var(--code-line);}
+.code-top .fn{font-family:var(--mono);font-size:12px;color:var(--ink-soft);letter-spacing:.03em;}
+.copy{font-family:var(--mono);font-size:11px;color:var(--accent);background:transparent;border:1px solid var(--code-line);border-radius:6px;padding:3px 10px;cursor:pointer;transition:.15s;}
+.copy:hover{background:var(--accent);color:#07111a;border-color:var(--accent);}
+.code pre{padding:16px 18px;overflow-x:auto;}
+.code code{font-family:var(--mono);font-size:13px;line-height:1.8;color:#c6d0dd;white-space:pre;}
+.tok-k{color:#5fb6e8;font-weight:500;}.tok-f{color:#e0a458;}.tok-s{color:#8fcf96;}.tok-n{color:#e58fb0;}.tok-c{color:#566273;font-style:italic;}.tok-v{color:#c6d0dd;}
+.tbl{margin:24px 0;overflow-x:auto;border-radius:12px;border:1px solid var(--line);}
+table{border-collapse:collapse;width:100%;font-size:14px;background:var(--card);}
+th{background:#10202c;color:var(--accent);font-weight:700;text-align:left;padding:11px 14px;font-size:13px;border-bottom:1px solid var(--accent-deep);}
+td{padding:10px 14px;border-top:1px solid var(--line);vertical-align:top;color:var(--ink);}
+tr:nth-child(even) td{background:var(--bg2);}
+.tbl.mini td:first-child{font-family:var(--mono);color:var(--accent);font-weight:500;white-space:nowrap;}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:24px 0;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;border-top:3px solid var(--accent);}
+.card h4{font-family:var(--disp);font-size:16px;color:#e8edf4;margin-bottom:7px;}
+.card p{font-size:14px;margin:4px 0;color:var(--ink-soft);}
+.card .tag{font-family:var(--mono);font-size:11px;color:var(--amber);}
+.fig{margin:30px 0;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;text-align:center;}
+.fig svg{max-width:100%;height:auto;}
+.fig .cap{font-family:var(--mono);font-size:12px;color:var(--ink-soft);margin-top:14px;}
+#top-btn{position:fixed;right:24px;bottom:24px;width:48px;height:48px;border-radius:50%;background:var(--accent);color:#07111a;border:none;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.25s;box-shadow:0 6px 18px rgba(0,0,0,.4);z-index:900;}
+#top-btn.show{opacity:1;pointer-events:auto;}
+#top-btn:hover{transform:translateY(-3px);}
+.gloss dt{font-family:var(--disp);font-weight:700;color:var(--accent);font-size:16px;margin-top:16px;}
+.gloss dd{margin:3px 0 0;color:var(--ink-soft);font-size:14.5px;}
+.nextvol{margin:50px 0 0;background:linear-gradient(135deg,#10202c,#16323f);border:1px solid var(--accent-deep);border-radius:16px;padding:26px 30px;}
+.nextvol .nl{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--accent);}
+.nextvol h3{border:none;padding:0;margin:6px 0 6px;color:#eef2f8;font-size:20px;}
+.nextvol p{margin:0;font-size:14.5px;color:var(--ink-soft);}
+.foot{margin-top:60px;padding-top:30px;border-top:1px solid var(--line);font-size:13.5px;color:var(--ink-soft);}
+.foot b{color:#e8edf4;}
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .7s ease,transform .7s ease;}
+.reveal.in{opacity:1;transform:none;}
+@media(max-width:880px){.wrap{grid-template-columns:1fr;}#toc{display:none;}body{font-size:15.5px;}.hero{padding:52px 0 38px;}}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="wrap">
+
+<nav id="toc">
+  <div class="toc-brand">Data-Intensive Apps</div>
+  <div class="toc-vol">第1巻 / 全4巻</div>
+  <div class="toc-title">データ指向<br>アプリケーション<br>デザイン 完全ガイド</div>
+
+  <a href="#map"><span class="n">◈</span>シリーズ地図</a>
+  <a href="#s00"><span class="n">00</span>データ指向とは</a>
+
+  <span class="part-label">A — 三つの関心事</span>
+  <a href="#s01"><span class="n">01</span>信頼性</a>
+  <a href="#s02"><span class="n">02</span>拡張性</a>
+  <a href="#s03"><span class="n">03</span>保守性</a>
+
+  <span class="part-label">B — データモデル</span>
+  <a href="#s04"><span class="n">04</span>3つのモデル</a>
+  <a href="#s05"><span class="n">05</span>クエリとスキーマ</a>
+
+  <span class="part-label">C — ストレージエンジン</span>
+  <a href="#s06"><span class="n">06</span>LSMツリーとBツリー</a>
+  <a href="#s07"><span class="n">07</span>OLTPとOLAP</a>
+
+  <span class="part-label">D — エンコーディング</span>
+  <a href="#s08"><span class="n">08</span>互換性とスキーマ進化</a>
+  <a href="#s09"><span class="n">09</span>データフローの経路</a>
+
+  <span class="part-label">Reference</span>
+  <a href="#cheat"><span class="n">★</span>チートシート</a>
+  <a href="#gloss"><span class="n">＃</span>用語集</a>
+</nav>
+
+<main>
+  <header class="hero reveal">
+    <span class="badge">▣ Vol.1 / Foundations</span>
+    <div class="kicker">データ指向アプリケーションデザイン ― 完全理解ガイド 第1巻</div>
+    <h1>信頼性・拡張性・保守性は、<br><em>トレードオフ</em>で決まる。</h1>
+    <p class="lede">現代のアプリの難所は、計算速度ではなく「データ」です ― その量、複雑さ、変化の速さ。本書はDB・キャッシュ・検索・ストリーム処理といった部品をどう組み合わせれば、信頼でき・伸ばせて・保ち続けられるシステムになるかを、原理から解き明かします。第1巻はその土台を扱います。</p>
+    <div class="chips">
+      <span class="chip">原著 <b>M. Kleppmann</b></span>
+      <span class="chip">本巻 <b>第1部 / 1〜4章</b></span>
+      <span class="chip">焦点 <b>原理とトレードオフ</b></span>
+      <span class="chip">難度 <b>中級</b></span>
+    </div>
+  </header>
+
+  <!-- SERIES MAP -->
+  <div class="map reveal" id="map">
+    <h3>◈ シリーズ地図（全4巻）</h3>
+    <div class="volgrid">
+      <div class="vol cur">
+        <span class="now">今ここ</span>
+        <div class="vn">第1巻 ― 土台</div>
+        <h4>Foundations</h4>
+        <p>三つの関心事／データモデル／ストレージ／エンコーディング（1〜4章）</p>
+      </div>
+      <div class="vol">
+        <div class="vn">第2巻 ― 複製と分割</div>
+        <h4>Distributed Data ①</h4>
+        <p>レプリケーション／パーティショニング（5〜6章）</p>
+      </div>
+      <div class="vol">
+        <div class="vn">第3巻 ― 分散の難所</div>
+        <h4>Distributed Data ②</h4>
+        <p>トランザクション／分散システムの問題／一貫性と合意（7〜9章）</p>
+      </div>
+      <div class="vol">
+        <div class="vn">第4巻 ― 派生データ</div>
+        <h4>Derived Data</h4>
+        <p>バッチ処理／ストリーム処理／将来像（10〜12章）</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 00 -->
+  <section id="s00" class="reveal">
+    <div class="sec-head"><span class="sec-num">00</span><h2 class="sec-title">データ指向とは何か</h2></div>
+    <div class="oneliner"><p>処理速度(CPU)よりも、データの量・複雑さ・変化の速さが主な難しさになるアプリ ― それが「データ指向」アプリである。</p></div>
+
+    <p>かつてアプリの限界はCPU能力でした（計算指向）。今は違います。多くのアプリの限界は<strong>データ側</strong>にあります ― 膨大なデータ量、複雑に絡む関係、そして絶えず変わる要求。こうしたアプリを<strong>データ指向（data-intensive）</strong>と呼びます。</p>
+
+    <p>そして現代のアプリは、ゼロから作るのではなく、標準化された<strong>データシステムの部品</strong>を組み合わせて作ります。</p>
+
+    <div class="cards">
+      <div class="card"><span class="tag">store</span><h4>データベース</h4><p>データを保存し、後で取り出す。</p></div>
+      <div class="card"><span class="tag">speed</span><h4>キャッシュ</h4><p>重い処理の結果を覚えておく。</p></div>
+      <div class="card"><span class="tag">search</span><h4>検索インデックス</h4><p>キーワードやフィルタで素早く探す。</p></div>
+      <div class="card"><span class="tag">flow</span><h4>ストリーム / バッチ処理</h4><p>メッセージを流す／大量データを定期処理する。</p></div>
+    </div>
+
+    <div class="panel why">
+      <span class="pt">本書が一貫して問うこと</span>
+      <p>これらの部品をどう組み合わせれば、<strong>信頼でき・伸ばせて・保ち続けられる</strong>システムになるか。そして、どの選択にも必ず代償（トレードオフ）があること。<strong>「銀の弾丸はない。あるのはトレードオフの理解だけ」</strong> ― これが全巻を貫く態度です。まずはその評価軸となる三つの関心事から。</p>
+    </div>
+  </section>
+
+  <!-- PART A -->
+  <div class="part reveal">
+    <div class="pl">PART A</div>
+    <h2>設計の三つの関心事</h2>
+    <p>あらゆる設計判断を測る物差し ― 信頼性(Reliability)・拡張性(Scalability)・保守性(Maintainability)。バズワードではなく、具体的な意味を持たせて使えるようにします。</p>
+  </div>
+
+  <!-- 01 -->
+  <section id="s01" class="reveal">
+    <div class="sec-head"><span class="sec-num">01</span><h2 class="sec-title">信頼性 ― 壊れても動き続ける</h2></div>
+    <div class="oneliner"><p>信頼性とは「障害(fault)が起きても、システム全体の停止(failure)に至らせない」こと＝フォールトトレラント。</p></div>
+
+    <p>まず2つの言葉を区別します。<strong>fault（フォールト）</strong>は部品レベルの不具合（ディスク1台の故障など）、<strong>failure（フェイラー）</strong>はシステムが利用者への約束を果たせなくなる全体停止です。faultを完全にゼロにはできないので、設計のゴールは<strong>「faultがfailureに発展しないようにする」</strong>こと。これがフォールトトレランスです。</p>
+
+    <div class="tbl mini">
+      <table>
+        <tr><th>障害の種類</th><th>性質</th><th>主な対処</th></tr>
+        <tr><td>ハードウェア</td><td>個々はランダムに故障</td><td>冗長化（部品を多重に持つ）</td></tr>
+        <tr><td>ソフトウェア</td><td>条件が揃うと一斉に多発しやすい</td><td>テスト・監視・分離・段階的展開</td></tr>
+        <tr><td>人的ミス</td><td>最も多い障害原因</td><td>戻せる仕組み・サンドボックス・自動化</td></tr>
+      </table>
+    </div>
+
+    <div class="panel tip">
+      <span class="pt">tip ― あえて壊して鍛える</span>
+      <p>「いつか壊れる」を前提に、平時から意図的に障害を注入してフォールトトレランスを検証する考え方があります（カオスエンジニアリング）。障害を例外扱いせず、<strong>日常として設計に組み込む</strong>発想が、信頼性の出発点です。</p>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section id="s02" class="reveal">
+    <div class="sec-head"><span class="sec-num">02</span><h2 class="sec-title">拡張性 ― 負荷が増えても保てる</h2></div>
+    <div class="oneliner"><p>「スケーラブル」とは言わない。負荷(load)を数値で定義し、それが増えたとき性能をどう保つかを語る。</p></div>
+
+    <p>拡張性を曖昧な形容詞で語ってはいけません。本書は2段階で具体化します ― まず<strong>負荷を負荷パラメータ（数値）で表す</strong>、次に<strong>負荷が増えたときの性能を測る</strong>。</p>
+
+    <h3>負荷パラメータと、設計が変わる例</h3>
+    <p>負荷パラメータはアプリ次第です（毎秒リクエスト数、読み書き比、同時接続数など）。重要なのは、<strong>同じ機能でも、どのパラメータが大きいかで最適な設計が変わる</strong>こと。たとえばSNSのタイムラインは、「投稿時に各フォロワーの受信箱へ配る（書き込み時に展開）」のか「閲覧時に集めて作る（読み込み時に展開）」のかで、まったく違う設計になります。有名人のフォロワーが膨大な場合、前者は書き込みが爆発します。</p>
+
+    <h3>性能は平均でなくパーセンタイルで見る</h3>
+    <p>性能には<strong>スループット（単位時間の処理量）</strong>と<strong>応答時間（1リクエストの所要時間）</strong>があります。そして応答時間は<strong>平均で見てはいけません</strong>。本当に効くのは、遅い側の裾（テール）です。</p>
+
+    <div class="fig">
+      <svg viewBox="0 0 560 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="応答時間の分布とパーセンタイル">
+        <line x1="50" y1="200" x2="540" y2="200" stroke="#3a4654" stroke-width="1.5"/>
+        <line x1="50" y1="200" x2="50" y2="30" stroke="#3a4654" stroke-width="1.5"/>
+        <text x="295" y="230" text-anchor="middle" font-family="'Red Hat Mono',monospace" font-size="11" fill="#8b95a6">応答時間（遅い →）</text>
+        <text x="28" y="40" text-anchor="middle" font-family="'Red Hat Mono',monospace" font-size="11" fill="#8b95a6" transform="rotate(-90 28 115)">件数</text>
+        <path d="M50 200 Q120 60 170 70 Q230 82 300 140 Q380 188 540 197" fill="rgba(65,182,230,.14)" stroke="#41b6e6" stroke-width="2.5"/>
+        <line x1="150" y1="200" x2="150" y2="72" stroke="#5bc88a" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <text x="150" y="64" text-anchor="middle" font-family="'Red Hat Mono',monospace" font-size="11" fill="#5bc88a">p50 中央値</text>
+        <line x1="330" y1="200" x2="330" y2="120" stroke="#e0b54e" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <text x="330" y="112" text-anchor="middle" font-family="'Red Hat Mono',monospace" font-size="11" fill="#e0b54e">p95</text>
+        <line x1="430" y1="200" x2="430" y2="160" stroke="#e8736a" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <text x="445" y="152" text-anchor="middle" font-family="'Red Hat Mono',monospace" font-size="11" fill="#e8736a">p99</text>
+        <text x="500" y="185" text-anchor="middle" font-family="'Red Hat Mono',monospace" font-size="10" fill="#8b95a6">← ロングテール</text>
+      </svg>
+      <div class="cap">図: 応答時間は右に裾を引く。平均では見えない p95/p99（テールレイテンシ）こそ体験を左右する</div>
+    </div>
+
+    <div class="panel why">
+      <span class="pt">なぜテールが重要か</span>
+      <p>① 最も遅い体験をする利用者は、しばしばデータを多く抱える優良顧客。② 1つの画面表示が内部で何十回もの呼び出しに展開されると、<strong>その中で最も遅い1つに全体が引きずられる</strong>（テールレイテンシ増幅）。だから「平均は速い」では不十分で、p95やp99を目標値に据えます。スケール手段としては、1台を強化する<strong>スケールアップ（垂直）</strong>と台数を増やす<strong>スケールアウト（水平）</strong>があり、万能の自動構成はなく、負荷の形に合わせて設計します。</p>
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section id="s03" class="reveal">
+    <div class="sec-head"><span class="sec-num">03</span><h2 class="sec-title">保守性 ― 未来の自分とチームのために</h2></div>
+    <div class="oneliner"><p>ソフトのコストの大半は開発後の運用・改修。保守性は「運用性・単純性・進化性」の3つで考える。</p></div>
+
+    <div class="cards">
+      <div class="card"><span class="tag">operability</span><h4>運用性</h4><p>運用チームが楽に保てること。良い監視、見通しのよい挙動、定型作業の自動化。</p></div>
+      <div class="card"><span class="tag">simplicity</span><h4>単純性</h4><p>本質的でない<strong>偶発的複雑性</strong>を、適切な抽象化で取り除く。複雑さは事故とコストの源。</p></div>
+      <div class="card"><span class="tag">evolvability</span><h4>進化性</h4><p>要求変化に合わせて変えやすいこと。前作で扱った疎結合・テスト・リファクタリングが効く。</p></div>
+    </div>
+
+    <div class="panel point">
+      <span class="pt">要点 ― 前作とのつながり</span>
+      <p>「進化性」は、姉妹編『ちょうぜつソフトウェア設計入門』の主題そのものです。<strong>結合を弱め、抽象に依存し、テストで守る</strong> ― あの設計原則は、システム規模になっても同じく効きます。本書はそれを「データシステム全体」のスケールへ拡張したもの、と捉えると見通しが効きます。</p>
+    </div>
+  </section>
+
+  <!-- PART B -->
+  <div class="part reveal">
+    <div class="pl">PART B</div>
+    <h2>データモデルとクエリ言語</h2>
+    <p>データを「どんな形」で持つか。リレーショナル・ドキュメント・グラフの3モデルと、その問い合わせ方を、優劣ではなく「データの関係の形」で選びます。</p>
+  </div>
+
+  <!-- 04 -->
+  <section id="s04" class="reveal">
+    <div class="sec-head"><span class="sec-num">04</span><h2 class="sec-title">3つのデータモデル</h2></div>
+    <div class="oneliner"><p>関係の形で選ぶ ― 入れ子ならドキュメント、多対多ならリレーショナル、複雑に絡む網ならグラフ。</p></div>
+
+    <p>アプリのオブジェクトと、保存形式の間にはしばしば溝があります（<strong>インピーダンスミスマッチ</strong>）。それを埋める代表的な3モデルを比べます。</p>
+
+    <div class="fig">
+      <svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="3つのデータモデル">
+        <g font-family="'Red Hat Mono',monospace" font-size="11">
+          <text x="100" y="24" text-anchor="middle" font-family="'Noto Serif JP',serif" font-weight="700" font-size="14" fill="#41b6e6">リレーショナル</text>
+          <rect x="40" y="40" width="120" height="20" fill="#172029" stroke="#41b6e6"/><rect x="40" y="60" width="120" height="20" fill="#0b1017" stroke="#26303d"/><rect x="40" y="80" width="120" height="20" fill="#0b1017" stroke="#26303d"/>
+          <rect x="55" y="120" width="90" height="18" fill="#0b1017" stroke="#26303d"/><rect x="55" y="138" width="90" height="18" fill="#0b1017" stroke="#26303d"/>
+          <line x1="100" y1="100" x2="100" y2="120" stroke="#e0a458" stroke-width="1.5"/>
+          <text x="100" y="166" text-anchor="middle" fill="#8b95a6">表＋結合(JOIN)</text>
+
+          <text x="300" y="24" text-anchor="middle" font-family="'Noto Serif JP',serif" font-weight="700" font-size="14" fill="#41b6e6">ドキュメント</text>
+          <rect x="250" y="40" width="100" height="110" rx="8" fill="#172029" stroke="#41b6e6"/>
+          <rect x="262" y="54" width="76" height="14" fill="#0b1017" stroke="#26303d"/>
+          <rect x="270" y="74" width="68" height="14" fill="#0b1017" stroke="#26303d"/>
+          <rect x="278" y="92" width="60" height="14" fill="#0b1017" stroke="#26303d"/>
+          <rect x="270" y="112" width="68" height="14" fill="#0b1017" stroke="#26303d"/>
+          <text x="300" y="166" text-anchor="middle" fill="#8b95a6">入れ子のJSON</text>
+
+          <text x="500" y="24" text-anchor="middle" font-family="'Noto Serif JP',serif" font-weight="700" font-size="14" fill="#41b6e6">グラフ</text>
+          <circle cx="470" cy="55" r="13" fill="#172029" stroke="#41b6e6"/><circle cx="535" cy="70" r="13" fill="#172029" stroke="#41b6e6"/><circle cx="465" cy="115" r="13" fill="#172029" stroke="#41b6e6"/><circle cx="525" cy="130" r="13" fill="#172029" stroke="#41b6e6"/>
+          <line x1="470" y1="55" x2="535" y2="70" stroke="#e0a458"/><line x1="470" y1="55" x2="465" y2="115" stroke="#e0a458"/><line x1="535" y1="70" x2="525" y2="130" stroke="#e0a458"/><line x1="465" y1="115" x2="525" y2="130" stroke="#e0a458"/>
+          <text x="500" y="166" text-anchor="middle" fill="#8b95a6">ノード＋エッジ</text>
+        </g>
+      </svg>
+      <div class="cap">図: データの「関係の形」が、適したモデルを決める</div>
+    </div>
+
+    <div class="tbl">
+      <table>
+        <tr><th>モデル</th><th>得意</th><th>向くケース</th></tr>
+        <tr><td>ドキュメント</td><td>1対多の入れ子・データの局所性・柔軟なスキーマ</td><td>1件で完結する木構造（1つの記事＋コメント等）</td></tr>
+        <tr><td>リレーショナル</td><td>多対一・多対多・重複排除（正規化）と結合</td><td>多くの実体が相互参照する業務データ</td></tr>
+        <tr><td>グラフ</td><td>多対多が高度に絡み合う関係・経路探索</td><td>SNSの交友、推薦、経路、知識グラフ</td></tr>
+      </table>
+    </div>
+
+    <div class="panel point">
+      <span class="pt">要点</span>
+      <p>「どれが優れているか」という問いは筋が悪い。<strong>データ同士の関係の形に、モデルを合わせる</strong>のが正解です。多対多が増えるほどドキュメントは苦しくなり、関係が網状ならグラフが輝きます。前作『DB設計』の正規化は、まさにこの多対多をリレーショナルで扱う技術でした。</p>
+    </div>
+  </section>
+
+  <!-- 05 -->
+  <section id="s05" class="reveal">
+    <div class="sec-head"><span class="sec-num">05</span><h2 class="sec-title">クエリ言語とスキーマの扱い</h2></div>
+    <div class="oneliner"><p>「何が欲しいか」だけ書く宣言的クエリは、最適化と並列化をエンジンに任せられる。</p></div>
+
+    <h3>宣言的 と 命令的</h3>
+    <p>SQLのような<strong>宣言的</strong>クエリは「欲しい結果」だけを書き、取り出し手順はエンジンに委ねます。手順を逐一書く<strong>命令的</strong>コードと違い、エンジンが裏でインデックスを選び、順序を変え、並列実行できます。<strong>これは姉妹編『達人に学ぶSQL』の「集合で考える」と同じ思想</strong>。宣言的だからこそ、機械が賢く最適化できるのです。</p>
+
+    <h3>スキーマ・オン・ライト と スキーマ・オン・リード</h3>
+    <div class="cards">
+      <div class="card"><span class="tag">write</span><h4>スキーマオンライト</h4><p>書き込み時に構造を検証（RDBの明示スキーマ）。一貫性が高い。「静的型付け」に似る。</p></div>
+      <div class="card"><span class="tag">read</span><h4>スキーマオンリード</h4><p>読み込み時に構造を解釈（ドキュメントの暗黙スキーマ）。多様で変化するデータに柔軟。「動的型付け」に似る。</p></div>
+    </div>
+    <div class="panel tip">
+      <span class="pt">tip</span>
+      <p>データの形が揃っていて長く安定 → 書き込み時検証が安全。形が多様・頻繁に変わる・外部由来 → 読み込み時解釈が柔軟。どちらが上ではなく、データの性質で選びます。</p>
+    </div>
+  </section>
+
+  <!-- PART C -->
+  <div class="part reveal">
+    <div class="pl">PART C</div>
+    <h2>ストレージエンジンの中身</h2>
+    <p>DBは内部でどうデータを保存し、探しているのか。LSMツリーとBツリーという二大方式の違いが、書き込み重視か読み込み重視かを決めます。</p>
+  </div>
+
+  <!-- 06 -->
+  <section id="s06" class="reveal">
+    <div class="sec-head"><span class="sec-num">06</span><h2 class="sec-title">LSMツリー と Bツリー</h2></div>
+    <div class="oneliner"><p>読みを速くするインデックスは、書きを遅くする。この綱引きへの2つの回答がLSMツリーとBツリーである。</p></div>
+
+    <p>最も単純なDBは「追記専用のログ」です。書き込みは末尾に足すだけで爆速ですが、読み出しは全件走査で激遅。そこで<strong>インデックス</strong>を足します。ただしインデックスは読みを速くする代わり、書き込みのたびに更新が必要で<strong>書きを遅くします</strong>。この本質的トレードオフ（姉妹編『DB設計』のインデックス章と同じ綱引き）への、設計の異なる2つの答えがこれです。</p>
+
+    <div class="fig">
+      <svg viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="LSMツリーとBツリーの比較">
+        <defs><marker id="aS" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#41b6e6"/></marker></defs>
+        <g font-family="'Red Hat Mono',monospace" font-size="10">
+          <text x="150" y="22" text-anchor="middle" font-family="'Noto Serif JP',serif" font-weight="700" font-size="14" fill="#41b6e6">LSMツリー（書き込み重視）</text>
+          <rect x="90" y="36" width="120" height="26" rx="6" fill="#10202c" stroke="#41b6e6"/><text x="150" y="53" text-anchor="middle" fill="#cfd6e2">メモリ memtable</text>
+          <line x1="150" y1="62" x2="150" y2="80" stroke="#41b6e6" stroke-width="1.5" marker-end="url(#aS)"/><text x="210" y="74" fill="#8b95a6">あふれたら書出</text>
+          <rect x="60" y="84" width="80" height="22" rx="4" fill="#0b1017" stroke="#26303d"/><text x="100" y="99" text-anchor="middle" fill="#8fcf96">SSTable</text>
+          <rect x="160" y="84" width="80" height="22" rx="4" fill="#0b1017" stroke="#26303d"/><text x="200" y="99" text-anchor="middle" fill="#8fcf96">SSTable</text>
+          <rect x="110" y="116" width="80" height="22" rx="4" fill="#0b1017" stroke="#e0a458"/><text x="150" y="131" text-anchor="middle" fill="#e0a458">統合(compaction)</text>
+          <line x1="100" y1="106" x2="135" y2="115" stroke="#e0a458"/><line x1="200" y1="106" x2="165" y2="115" stroke="#e0a458"/>
+          <text x="150" y="160" text-anchor="middle" fill="#8b95a6">追記中心＝シーケンシャル書込で高速</text>
+
+          <text x="450" y="22" text-anchor="middle" font-family="'Noto Serif JP',serif" font-weight="700" font-size="14" fill="#41b6e6">Bツリー（読み込み重視）</text>
+          <rect x="420" y="40" width="60" height="22" rx="4" fill="#10202c" stroke="#41b6e6"/><text x="450" y="55" text-anchor="middle" fill="#cfd6e2">根</text>
+          <rect x="360" y="86" width="60" height="22" rx="4" fill="#0b1017" stroke="#26303d"/>
+          <rect x="480" y="86" width="60" height="22" rx="4" fill="#0b1017" stroke="#26303d"/>
+          <rect x="330" y="130" width="48" height="20" rx="3" fill="#0b1017" stroke="#26303d"/>
+          <rect x="400" y="130" width="48" height="20" rx="3" fill="#0b1017" stroke="#26303d"/>
+          <rect x="465" y="130" width="48" height="20" rx="3" fill="#0b1017" stroke="#26303d"/>
+          <rect x="520" y="130" width="48" height="20" rx="3" fill="#0b1017" stroke="#26303d"/>
+          <line x1="450" y1="62" x2="390" y2="85" stroke="#41b6e6"/><line x1="450" y1="62" x2="510" y2="85" stroke="#41b6e6"/>
+          <line x1="390" y1="108" x2="354" y2="129" stroke="#41b6e6"/><line x1="390" y1="108" x2="424" y2="129" stroke="#41b6e6"/>
+          <line x1="510" y1="108" x2="489" y2="129" stroke="#41b6e6"/><line x1="510" y1="108" x2="544" y2="129" stroke="#41b6e6"/>
+          <text x="450" y="172" text-anchor="middle" fill="#8b95a6">ページを原地更新＝予測しやすい読み</text>
+        </g>
+      </svg>
+      <div class="cap">図: LSMは「ためて順次書き出し→後で統合」、Bツリーは「決まった場所を直接更新」</div>
+    </div>
+
+    <div class="tbl">
+      <table>
+        <tr><th>観点</th><th>LSMツリー</th><th>Bツリー</th></tr>
+        <tr><td>書き込み</td><td>◎ シーケンシャルで高スループット</td><td>○ ページ単位の更新</td></tr>
+        <tr><td>読み込み</td><td>○ 複数階層を確認（Bloomフィルタで緩和）</td><td>◎ 予測しやすく安定</td></tr>
+        <tr><td>向くワークロード</td><td>書き込みが多い</td><td>読み中心・トランザクション</td></tr>
+        <tr><td>採用例の傾向</td><td>新世代のKVS/分散DB系</td><td>多くの伝統的RDB</td></tr>
+      </table>
+    </div>
+    <div class="panel warn">
+      <span class="pt">warn ― 単純化しています</span>
+      <p>上は本質を掴むための簡略図です。実際にはLSMのコンパクション戦略、Bツリーの先行書き込みログ(WAL)など多くの工夫があり、製品ごとに挙動は異なります。どちらが速いかはワークロード次第で、最後は実測が原則です。</p>
+    </div>
+  </section>
+
+  <!-- 07 -->
+  <section id="s07" class="reveal">
+    <div class="sec-head"><span class="sec-num">07</span><h2 class="sec-title">OLTP と OLAP ― 行指向と列指向</h2></div>
+    <div class="oneliner"><p>少数行をキーで触る業務処理(OLTP)と、大量行を集計する分析(OLAP)では、最適な保存の向きが正反対。</p></div>
+
+    <div class="tbl">
+      <table>
+        <tr><th></th><th>OLTP（業務トランザクション）</th><th>OLAP（分析）</th></tr>
+        <tr><td>アクセス</td><td>少数の行をキーで読み書き</td><td>大量行を走査して集計</td></tr>
+        <tr><td>例</td><td>注文の登録・残高更新</td><td>「先月の地域別売上」</td></tr>
+        <tr><td>保存の向き</td><td>行指向（1行をまとめて）</td><td>列指向（1列をまとめて）</td></tr>
+        <tr><td>置き場所</td><td>本番DB</td><td>データウェアハウス</td></tr>
+      </table>
+    </div>
+
+    <div class="panel why">
+      <span class="pt">なぜ分析は列指向なのか</span>
+      <p>分析は「全行の特定の数列だけ」を集計しがち。<strong>列ごとにまとめて保存すれば、必要な列だけ読めて無駄がなく、同種の値が並ぶので圧縮も猛烈に効きます</strong>。逆にOLTPは1行をまるごと扱うので行指向が有利。同じデータでも、用途で保存の向きを変える ― これが分析基盤を別に建てる理由です。</p>
+    </div>
+  </section>
+
+  <!-- PART D -->
+  <div class="part reveal">
+    <div class="pl">PART D</div>
+    <h2>エンコーディングと進化</h2>
+    <p>データをバイト列に変換して保存・送信する方法と、コードが変わってもデータが壊れない「互換性」の作り方。第2巻（分散）への橋渡しです。</p>
+  </div>
+
+  <!-- 08 -->
+  <section id="s08" class="reveal">
+    <div class="sec-head"><span class="sec-num">08</span><h2 class="sec-title">互換性とスキーマ進化</h2></div>
+    <div class="oneliner"><p>大規模システムでは新旧のコードとデータが必ず共存する。だから前方・後方の両互換が要る。</p></div>
+
+    <p>メモリ上のオブジェクトを、保存・送信できるバイト列に変換するのが<strong>エンコード（シリアライズ）</strong>、戻すのが<strong>デコード</strong>です。形式はテキスト系（JSON/XML：汎用だが冗長）とバイナリ系（Protocol Buffers等：スキーマ前提でコンパクト）があります。ここで本当に重要なのは形式選びより<strong>互換性</strong>です。</p>
+
+    <div class="fig">
+      <svg viewBox="0 0 560 180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="後方互換と前方互換">
+        <defs><marker id="ac" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#5bc88a"/></marker></defs>
+        <g font-family="'Red Hat Mono',monospace" font-size="11">
+          <rect x="40" y="30" width="120" height="36" rx="8" fill="#10202c" stroke="#41b6e6"/><text x="100" y="53" text-anchor="middle" fill="#cfd6e2">新しいコード</text>
+          <rect x="40" y="120" width="120" height="36" rx="8" fill="#0b1017" stroke="#26303d"/><text x="100" y="143" text-anchor="middle" fill="#8b95a6">古いコード</text>
+          <rect x="400" y="30" width="120" height="36" rx="8" fill="#0b1017" stroke="#26303d"/><text x="460" y="53" text-anchor="middle" fill="#8b95a6">古いデータ</text>
+          <rect x="400" y="120" width="120" height="36" rx="8" fill="#10202c" stroke="#41b6e6"/><text x="460" y="143" text-anchor="middle" fill="#cfd6e2">新しいデータ</text>
+          <line x1="160" y1="48" x2="398" y2="48" stroke="#5bc88a" stroke-width="2" marker-end="url(#ac)"/>
+          <text x="280" y="38" text-anchor="middle" fill="#5bc88a">後方互換：新コードが古いデータを読める</text>
+          <line x1="398" y1="138" x2="162" y2="138" stroke="#5bc88a" stroke-width="2" marker-end="url(#ac)"/>
+          <text x="280" y="128" text-anchor="middle" fill="#5bc88a">前方互換：古いコードが新しいデータを読める</text>
+        </g>
+      </svg>
+      <div class="cap">図: 後方互換（新→旧データ）と前方互換（旧→新データ）。両方そろって安全に更新できる</div>
+    </div>
+
+    <div class="panel why">
+      <span class="pt">なぜ両方いるのか ― ローリングアップグレード</span>
+      <p>大規模システムは全サーバーを一瞬で更新できません。新旧バージョンが<strong>同時に動く期間</strong>が必ず生じます。新コードが古いデータを読め（後方互換）、かつ古いコードが新データを読み飛ばせる（前方互換）からこそ、止めずに少しずつ更新できます。スキーマ進化の設計（フィールド追加は任意に、削除や型変更は慎重に）が、この共存を可能にします。</p>
+    </div>
+  </section>
+
+  <!-- 09 -->
+  <section id="s09" class="reveal">
+    <div class="sec-head"><span class="sec-num">09</span><h2 class="sec-title">データフローの3つの経路</h2></div>
+    <div class="oneliner"><p>データはDB経由・サービス呼び出し・非同期メッセージの3経路で流れる。どれも互換性が生命線。</p></div>
+
+    <div class="cards">
+      <div class="card"><span class="tag">via database</span><h4>データベース経由</h4><p>書き手と読み手が時間をまたいで結びつく。今日書いたデータを来年の（別バージョンの）コードが読むことも。</p></div>
+      <div class="card"><span class="tag">via service</span><h4>サービス経由（REST/RPC）</h4><p>同期的に呼び合う。クライアントとサーバーのバージョンがずれても通じるよう互換性が必要。</p></div>
+      <div class="card"><span class="tag">via message</span><h4>非同期メッセージ経由</h4><p>メッセージブローカを挟み、送受信を時間的に切り離す（疎結合）。送り手は受け手の都合を待たない。</p></div>
+    </div>
+
+    <div class="panel point">
+      <span class="pt">第2巻への橋</span>
+      <p>どの経路でも、送り手と受け手は別々に進化します。だから互換性は分散システムの<strong>前提条件</strong>。ここまでが「1台（あるいは論理的に1つ）のデータシステム」の土台でした。次の第2巻からは、データを<strong>複数のマシンに複製・分割</strong>したときに何が起きるか ― 分散データの世界へ進みます。</p>
+    </div>
+  </section>
+
+  <!-- CHEAT -->
+  <section id="cheat" class="reveal">
+    <div class="sec-head"><span class="sec-num">★</span><h2 class="sec-title">チートシート（第1巻）</h2></div>
+
+    <h3>三つの関心事</h3>
+    <div class="tbl mini">
+      <table>
+        <tr><th>関心事</th><th>問い</th></tr>
+        <tr><td>信頼性</td><td>fault が failure にならないか？（フォールトトレラント）</td></tr>
+        <tr><td>拡張性</td><td>負荷パラメータが増えたとき p95/p99 を保てるか？</td></tr>
+        <tr><td>保守性</td><td>運用・単純さ・進化のしやすさは十分か？</td></tr>
+      </table>
+    </div>
+
+    <h3>選択の早見</h3>
+    <div class="tbl mini">
+      <table>
+        <tr><th>判断ポイント</th><th>指針</th></tr>
+        <tr><td>応答時間の評価</td><td>平均でなく p95 / p99（テール）で見る</td></tr>
+        <tr><td>データの関係が入れ子</td><td>ドキュメントモデル</td></tr>
+        <tr><td>多対多・相互参照が多い</td><td>リレーショナル（正規化＋JOIN）</td></tr>
+        <tr><td>網状に絡む関係・経路</td><td>グラフモデル</td></tr>
+        <tr><td>書き込みが多い</td><td>LSMツリー寄り</td></tr>
+        <tr><td>読み中心・安定レイテンシ</td><td>Bツリー寄り</td></tr>
+        <tr><td>大量集計・分析</td><td>列指向 / データウェアハウス</td></tr>
+        <tr><td>段階的にデプロイしたい</td><td>後方＋前方互換を両立させる</td></tr>
+      </table>
+    </div>
+    <div class="panel point">
+      <span class="pt">全巻を貫く合言葉</span>
+      <p><strong>銀の弾丸はない。あるのはトレードオフの理解だけ。</strong></p>
+    </div>
+  </section>
+
+  <!-- GLOSSARY -->
+  <section id="gloss" class="reveal">
+    <div class="sec-head"><span class="sec-num">＃</span><h2 class="sec-title">用語集（第1巻）</h2></div>
+    <dl class="gloss">
+      <dt>データ指向アプリケーション</dt><dd>CPUよりデータの量・複雑さ・変化が主な難しさになるアプリ。</dd>
+      <dt>fault / failure</dt><dd>部品レベルの不具合 / システム全体が約束を果たせない状態。</dd>
+      <dt>フォールトトレランス</dt><dd>faultが起きてもfailureに至らせない性質。</dd>
+      <dt>負荷パラメータ</dt><dd>負荷を数値で表す指標（毎秒リクエスト、読み書き比など）。</dd>
+      <dt>スループット / 応答時間</dt><dd>単位時間の処理量 / 1リクエストの所要時間。</dd>
+      <dt>パーセンタイル / テールレイテンシ</dt><dd>p95やp99など分布上の位置 / 遅い裾の応答時間。体験を左右する。</dd>
+      <dt>スケールアップ / スケールアウト</dt><dd>1台を強化（垂直）/ 台数を増やす（水平）。</dd>
+      <dt>運用性 / 単純性 / 進化性</dt><dd>保守性の3側面。運用の楽さ／偶発的複雑性の除去／変えやすさ。</dd>
+      <dt>インピーダンスミスマッチ</dt><dd>アプリのオブジェクトと保存形式の構造的な食い違い。</dd>
+      <dt>ドキュメント / リレーショナル / グラフ</dt><dd>入れ子に強い / 多対多に強い / 網状の関係に強い、3つのデータモデル。</dd>
+      <dt>宣言的 / 命令的クエリ</dt><dd>欲しい結果だけ書く / 取得手順を書く。前者は最適化・並列化が効く。</dd>
+      <dt>スキーマオンライト / リード</dt><dd>書込時に構造検証 / 読込時に構造解釈。静的型付け的 / 動的型付け的。</dd>
+      <dt>LSMツリー</dt><dd>メモリにため、SSTableとして順次書き出し、後で統合する書込重視の方式。</dd>
+      <dt>SSTable / コンパクション</dt><dd>ソート済みで書き出したファイル / それらを統合・整理する処理。</dd>
+      <dt>Bツリー</dt><dd>ページを原地更新する、読込重視の定番インデックス方式。</dd>
+      <dt>OLTP / OLAP</dt><dd>少数行の業務処理 / 大量行の分析処理。</dd>
+      <dt>行指向 / 列指向</dt><dd>1行をまとめて保存 / 1列をまとめて保存（分析・圧縮に有利）。</dd>
+      <dt>エンコード / デコード</dt><dd>オブジェクト⇄バイト列の変換（シリアライズ／デシリアライズ）。</dd>
+      <dt>後方互換 / 前方互換</dt><dd>新コードが古いデータを読める / 古いコードが新データを読める。</dd>
+      <dt>ローリングアップグレード</dt><dd>全台を一斉でなく順次更新すること。新旧共存のため両互換が必要。</dd>
+    </dl>
+  </section>
+
+  <!-- NEXT -->
+  <div class="nextvol reveal">
+    <div class="nl">NEXT — 第2巻</div>
+    <h3>分散データ：複製と分割</h3>
+    <p>データを複数マシンに「複製（レプリケーション）」し「分割（パーティショニング）」すると、可用性とスケールが上がる一方、一貫性という新たな難問が現れます。第2巻でその入口へ。</p>
+  </div>
+
+  <div class="foot reveal">
+    <p><b>このガイドについて：</b> 書籍『データ指向アプリケーションデザイン ― 信頼性、拡張性、保守性の高い分散システム設計の原理』（Martin Kleppmann 著、原題 <em>Designing Data-Intensive Applications</em>）の主要テーマを、コードを少し書ける初学者〜中級者向けに自分の言葉で再構成した独立教材です。原書の逐語引用は含みません。本巻は全4巻シリーズの第1巻（原書 第1部・1〜4章に対応）。姉妹編「達人に学ぶDB設計／SQL」「ちょうぜつソフトウェア設計入門」と接続する構成です。</p>
+    <p style="margin-top:10px"><b>注記：</b> 図やコード例は概念理解のため簡略化しています。各データシステムの内部実装・性能特性は製品やバージョンで異なり、仕様は将来変わり得ます。導入時は各公式ドキュメントで最新仕様をご確認のうえ、ワークロードでの実測を推奨します。</p>
+  </div>
+</main>
+</div>
+
+<button id="top-btn" aria-label="トップへ戻る">↑</button>
+
+<script>
+const progress=document.getElementById('progress'),topBtn=document.getElementById('top-btn');
+function onScroll(){const h=document.documentElement,sc=h.scrollTop,max=h.scrollHeight-h.clientHeight;progress.style.width=(max>0?(sc/max*100):0)+'%';if(sc>500)topBtn.classList.add('show');else topBtn.classList.remove('show');}
+window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+topBtn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+const revObs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');revObs.unobserve(e.target);}});},{threshold:0.08});
+document.querySelectorAll('.reveal').forEach(el=>revObs.observe(el));
+const tocLinks=[...document.querySelectorAll('#toc a')];
+const sections=tocLinks.map(a=>document.querySelector(a.getAttribute('href'))).filter(Boolean);
+const linkFor=id=>tocLinks.find(a=>a.getAttribute('href')==='#'+id);
+const secObs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){tocLinks.forEach(a=>a.classList.remove('active'));const l=linkFor(e.target.id);if(l){l.classList.add('active');l.scrollIntoView({block:'nearest'});}}});},{rootMargin:'-18% 0px -72% 0px',threshold:0});
+sections.forEach(s=>secObs.observe(s));
+document.querySelectorAll('.copy').forEach(btn=>{btn.addEventListener('click',()=>{const code=btn.closest('.code').querySelector('code');navigator.clipboard.writeText(code.innerText).then(()=>{const o=btn.textContent;btn.textContent='copied ✓';setTimeout(()=>btn.textContent=o,1400);}).catch(()=>btn.textContent='error');});});
+</script>
+</body>
+</html>

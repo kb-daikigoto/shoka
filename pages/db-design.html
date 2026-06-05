@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>達人に学ぶDB設計 ― 完全理解ガイド</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f4efe3;
+  --paper2:#ece5d4;
+  --ink:#23201a;
+  --ink-soft:#544e41;
+  --line:#d8cfb9;
+  --accent:#136b62;       /* petrol teal */
+  --accent-deep:#0c4a44;
+  --accent-soft:#e0ece9;
+  --amber:#b4742a;        /* secondary */
+  --amber-soft:#f3e6cf;
+  --danger:#a23b2e;
+  --danger-soft:#f4dfd9;
+  --warn:#9a7414;
+  --warn-soft:#f6ecca;
+  --code-bg:#1c2b29;
+  --code-bg2:#16201f;
+  --code-line:#2f4744;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --serif:'Shippori Mincho',serif;
+  --sans:'Zen Kaku Gothic New',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+body{
+  font-family:var(--sans);
+  color:var(--ink);
+  background-color:var(--paper);
+  background-image:
+    linear-gradient(rgba(19,107,98,.045) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(19,107,98,.045) 1px,transparent 1px);
+  background-size:26px 26px;
+  line-height:1.85;
+  font-size:16px;
+  -webkit-font-smoothing:antialiased;
+  letter-spacing:.01em;
+}
+/* progress bar */
+#progress{
+  position:fixed;top:0;left:0;height:4px;width:0;
+  background:linear-gradient(90deg,var(--accent),var(--amber));
+  z-index:1000;transition:width .12s ease-out;
+}
+/* layout */
+.wrap{display:grid;grid-template-columns:268px 1fr;max-width:1240px;margin:0 auto;gap:0;}
+/* TOC */
+#toc{
+  position:sticky;top:0;height:100vh;overflow-y:auto;
+  padding:38px 22px 60px 30px;border-right:1px solid var(--line);
+  background:rgba(244,239,227,.6);backdrop-filter:blur(2px);
+}
+#toc .toc-brand{font-family:var(--mono);font-size:11px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--accent);margin-bottom:6px;}
+#toc .toc-title{font-family:var(--serif);font-weight:700;font-size:18px;
+  line-height:1.4;margin-bottom:22px;color:var(--ink);}
+#toc .part-label{font-family:var(--mono);font-size:10px;letter-spacing:.14em;
+  color:var(--amber);text-transform:uppercase;margin:20px 0 8px;display:block;}
+#toc a{display:flex;gap:9px;align-items:baseline;text-decoration:none;
+  color:var(--ink-soft);font-size:13.5px;padding:4px 8px;border-radius:7px;
+  line-height:1.45;transition:all .15s;margin-bottom:1px;}
+#toc a .n{font-family:var(--mono);font-size:11px;color:var(--accent);
+  flex:0 0 auto;opacity:.75;}
+#toc a:hover{background:var(--accent-soft);color:var(--ink);}
+#toc a.active{background:var(--accent);color:#fff;}
+#toc a.active .n{color:#bfe6df;opacity:1;}
+/* main */
+main{padding:0 clamp(20px,5vw,70px) 120px;min-width:0;}
+/* hero */
+.hero{padding:78px 0 54px;border-bottom:2px solid var(--ink);position:relative;}
+.badge{display:inline-flex;align-items:center;gap:7px;
+  background:var(--accent);color:#fff;font-family:var(--mono);font-size:11px;
+  letter-spacing:.12em;padding:5px 12px;border-radius:30px;text-transform:uppercase;}
+.kicker{font-family:var(--mono);font-size:13px;letter-spacing:.06em;
+  color:var(--accent-deep);margin:22px 0 14px;}
+.hero h1{font-family:var(--serif);font-weight:800;font-size:clamp(34px,6vw,60px);
+  line-height:1.18;letter-spacing:.01em;color:var(--ink);}
+.hero h1 em{font-style:normal;color:var(--accent);position:relative;}
+.lede{font-size:18px;color:var(--ink-soft);margin-top:24px;max-width:640px;line-height:1.95;}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:30px;}
+.chip{font-family:var(--mono);font-size:12px;background:var(--paper2);
+  border:1px solid var(--line);padding:6px 13px;border-radius:8px;color:var(--ink-soft);}
+.chip b{color:var(--accent);font-weight:700;}
+/* part divider */
+.part{margin:74px 0 8px;padding:26px 30px;border-radius:16px;position:relative;
+  background:linear-gradient(135deg,var(--accent-deep),var(--accent));color:#fff;overflow:hidden;}
+.part::after{content:"";position:absolute;right:-40px;top:-40px;width:180px;height:180px;
+  border:2px solid rgba(255,255,255,.13);border-radius:50%;}
+.part .pl{font-family:var(--mono);font-size:12px;letter-spacing:.2em;opacity:.8;}
+.part h2{font-family:var(--serif);font-size:28px;font-weight:700;margin-top:6px;}
+.part p{margin-top:8px;font-size:14.5px;opacity:.9;max-width:560px;}
+/* section */
+section{padding:50px 0 8px;scroll-margin-top:24px;}
+.sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:8px;}
+.sec-num{font-family:var(--mono);font-size:15px;font-weight:700;color:#fff;
+  background:var(--ink);padding:4px 10px;border-radius:7px;flex:0 0 auto;}
+h2.sec-title{font-family:var(--serif);font-size:clamp(24px,3.6vw,33px);font-weight:700;
+  line-height:1.3;color:var(--ink);}
+h3{font-family:var(--serif);font-size:21px;font-weight:700;margin:34px 0 12px;color:var(--accent-deep);
+  padding-left:13px;border-left:4px solid var(--amber);}
+p{margin:14px 0;}
+strong{color:var(--accent-deep);font-weight:700;}
+.mono{font-family:var(--mono);font-size:.9em;background:var(--paper2);
+  padding:1px 6px;border-radius:5px;border:1px solid var(--line);}
+/* one-liner box */
+.oneliner{background:var(--ink);color:var(--paper);border-radius:14px;
+  padding:24px 28px;margin:26px 0;position:relative;overflow:hidden;}
+.oneliner::before{content:"一言でいうと";font-family:var(--mono);font-size:11px;
+  letter-spacing:.18em;color:var(--amber);display:block;margin-bottom:8px;}
+.oneliner p{margin:0;font-family:var(--serif);font-size:20px;line-height:1.7;font-weight:600;}
+/* callouts */
+.panel{border-radius:12px;padding:18px 22px 18px 20px;margin:22px 0;border:1px solid;
+  border-left-width:5px;position:relative;}
+.panel .pt{font-family:var(--mono);font-size:11px;letter-spacing:.12em;
+  text-transform:uppercase;font-weight:700;display:block;margin-bottom:6px;}
+.panel p{margin:6px 0;font-size:15px;}
+.panel.why{background:var(--accent-soft);border-color:var(--accent);}
+.panel.why .pt{color:var(--accent-deep);}
+.panel.point{background:var(--amber-soft);border-color:var(--amber);}
+.panel.point .pt{color:var(--amber);}
+.panel.tip{background:#eaf2e9;border-color:#4f7d4a;}
+.panel.tip .pt{color:#3c6437;}
+.panel.warn{background:var(--warn-soft);border-color:var(--warn);}
+.panel.warn .pt{color:var(--warn);}
+.panel.danger{background:var(--danger-soft);border-color:var(--danger);}
+.panel.danger .pt{color:var(--danger);}
+/* code */
+.code{background:var(--code-bg);border-radius:12px;margin:22px 0;overflow:hidden;
+  border:1px solid var(--code-line);box-shadow:0 8px 22px rgba(12,40,36,.18);}
+.code-top{display:flex;justify-content:space-between;align-items:center;
+  background:var(--code-bg2);padding:9px 14px;border-bottom:1px solid var(--code-line);}
+.code-top .fn{font-family:var(--mono);font-size:12px;color:#7fa8a2;letter-spacing:.04em;}
+.copy{font-family:var(--mono);font-size:11px;color:#9fc4be;background:transparent;
+  border:1px solid var(--code-line);border-radius:6px;padding:3px 10px;cursor:pointer;transition:.15s;}
+.copy:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
+.code pre{padding:16px 18px;overflow-x:auto;}
+.code code{font-family:var(--mono);font-size:13.5px;line-height:1.75;color:#cfe6e1;white-space:pre;}
+.tok-k{color:#6fc3b8;font-weight:500;}      /* keyword */
+.tok-f{color:#e0b072;}                       /* function/table */
+.tok-s{color:#c2d97f;}                       /* string */
+.tok-n{color:#d98f78;}                       /* number */
+.tok-c{color:#5f7a76;font-style:italic;}     /* comment */
+.tok-p{color:#7fa8a2;}                        /* prompt */
+/* tables */
+.tbl{margin:24px 0;overflow-x:auto;border-radius:12px;border:1px solid var(--line);}
+table{border-collapse:collapse;width:100%;font-size:14px;background:#fbf8f0;}
+th{background:var(--accent-deep);color:#fff;font-family:var(--sans);font-weight:700;
+  text-align:left;padding:11px 14px;font-size:13px;letter-spacing:.02em;}
+td{padding:10px 14px;border-top:1px solid var(--line);vertical-align:top;}
+tr:nth-child(even) td{background:var(--paper2);}
+td .mono,th .mono{background:rgba(0,0,0,.06);}
+.tbl.mini td:first-child{font-family:var(--mono);color:var(--accent-deep);font-weight:700;white-space:nowrap;}
+/* cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:24px 0;}
+.card{background:#fbf8f0;border:1px solid var(--line);border-radius:12px;padding:18px 20px;
+  border-top:4px solid var(--accent);}
+.card h4{font-family:var(--serif);font-size:17px;color:var(--accent-deep);margin-bottom:7px;}
+.card p{font-size:14px;margin:4px 0;color:var(--ink-soft);}
+.card .tag{font-family:var(--mono);font-size:11px;color:var(--amber);}
+/* svg figure */
+.fig{margin:30px 0;background:#fbf8f0;border:1px solid var(--line);border-radius:14px;
+  padding:22px;text-align:center;}
+.fig svg{max-width:100%;height:auto;}
+.fig .cap{font-family:var(--mono);font-size:12px;color:var(--ink-soft);margin-top:14px;letter-spacing:.03em;}
+/* back to top */
+#top-btn{position:fixed;right:24px;bottom:24px;width:48px;height:48px;border-radius:50%;
+  background:var(--ink);color:#fff;border:none;cursor:pointer;font-size:20px;display:flex;
+  align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.25s;
+  box-shadow:0 6px 18px rgba(0,0,0,.25);z-index:900;}
+#top-btn.show{opacity:1;pointer-events:auto;}
+#top-btn:hover{background:var(--accent);transform:translateY(-3px);}
+/* glossary */
+.gloss dt{font-family:var(--serif);font-weight:700;color:var(--accent-deep);font-size:16px;margin-top:16px;}
+.gloss dd{margin:3px 0 0;color:var(--ink-soft);font-size:14.5px;}
+/* footer */
+.foot{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);font-size:13.5px;color:var(--ink-soft);}
+.foot b{color:var(--accent-deep);}
+/* fade-in */
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .7s ease,transform .7s ease;}
+.reveal.in{opacity:1;transform:none;}
+/* responsive */
+@media(max-width:860px){
+  .wrap{grid-template-columns:1fr;}
+  #toc{display:none;}
+  body{font-size:15.5px;}
+  .hero{padding:54px 0 40px;}
+}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="wrap">
+
+<!-- ===== TOC ===== -->
+<nav id="toc">
+  <div class="toc-brand">Database Design</div>
+  <div class="toc-title">達人に学ぶ<br>DB設計 完全ガイド</div>
+
+  <span class="part-label">Part 1 — 設計の地図</span>
+  <a href="#s01"><span class="n">01</span>「DB設計」とは何か</a>
+  <a href="#s02"><span class="n">02</span>論理設計と物理設計</a>
+  <a href="#s03"><span class="n">03</span>設計の全工程</a>
+
+  <span class="part-label">Part 2 — 正規化（心臓部）</span>
+  <a href="#s04"><span class="n">04</span>キーと制約</a>
+  <a href="#s05"><span class="n">05</span>関数従属性</a>
+  <a href="#s06"><span class="n">06</span>正規化とは</a>
+  <a href="#s07"><span class="n">07</span>第1正規形</a>
+  <a href="#s08"><span class="n">08</span>第2正規形</a>
+  <a href="#s09"><span class="n">09</span>第3正規形</a>
+  <a href="#s10"><span class="n">10</span>ボイス・コッド正規形</a>
+  <a href="#s11"><span class="n">11</span>第4・第5正規形</a>
+  <a href="#s12"><span class="n">12</span>正規化のトレードオフ</a>
+
+  <span class="part-label">Part 3 — 図とパフォーマンス</span>
+  <a href="#s13"><span class="n">13</span>ER図</a>
+  <a href="#s14"><span class="n">14</span>インデックス</a>
+  <a href="#s15"><span class="n">15</span>統計情報</a>
+
+  <span class="part-label">Part 4 — 罠を避ける</span>
+  <a href="#s16"><span class="n">16</span>バッドノウハウ</a>
+  <a href="#s17"><span class="n">17</span>グレーノウハウ</a>
+  <a href="#s18"><span class="n">18</span>木構造の格納</a>
+
+  <span class="part-label">Reference</span>
+  <a href="#cheat"><span class="n">★</span>チートシート</a>
+  <a href="#gloss"><span class="n">＃</span>用語集</a>
+</nav>
+
+<!-- ===== MAIN ===== -->
+<main>
+  <!-- HERO -->
+  <header class="hero reveal">
+    <span class="badge">● RDB Design</span>
+    <div class="kicker">達人に学ぶ DB設計徹底指南書 ― 完全理解ガイド</div>
+    <h1>正しい設計は、<br><em>正規化</em>から始まる。</h1>
+    <p class="lede">「テーブルをどう分けるか」を、感覚ではなく理屈で決められるようになるための一冊分。SQLを少し書ける人が、論理設計・正規化・パフォーマンス・やってはいけない設計までを、これ一本で体系的に理解できるように構成しました。</p>
+    <div class="chips">
+      <span class="chip">対象 <b>初級→中級</b></span>
+      <span class="chip">前提 <b>SQLが少し書ける</b></span>
+      <span class="chip">焦点 <b>論理設計・正規化</b></span>
+      <span class="chip">章 <b>18セクション</b></span>
+    </div>
+  </header>
+
+  <!-- ============ PART 1 ============ -->
+  <div class="part reveal">
+    <div class="pl">PART 1</div>
+    <h2>設計の地図を手に入れる</h2>
+    <p>個々のテクニックの前に、「DB設計とは何をやっているのか」という全体像を押さえます。ここを外すと、後の正規化の話が宙に浮きます。</p>
+  </div>
+
+  <!-- 01 -->
+  <section id="s01" class="reveal">
+    <div class="sec-head"><span class="sec-num">01</span><h2 class="sec-title">そもそも「DB設計」とは何か</h2></div>
+    <div class="oneliner"><p>DB設計とは「現実世界のデータを、矛盾なく・重複なく・取り出しやすい形でテーブルに割り当てる作業」である。</p></div>
+
+    <p>私たちが扱う多くのデータベースは <strong>リレーショナルデータベース（RDB）</strong> です。RDBはデータを <strong>2次元の表（テーブル）</strong> として持ちます。行が1件のデータ、列がその属性です。SQLはこの表に対して「絞り込む・つなぐ・集計する」を行う言語にすぎません。</p>
+
+    <p>そして決定的に重要なのは、<strong>SQLの書きやすさも、システムの性能も、データの正しさも、すべて「テーブルの分け方（＝設計）」で先に決まってしまう</strong>ということです。設計が悪いと、どんなにSQLを工夫してもデータの重複や矛盾は消せません。だから設計を先に学ぶ価値があります。</p>
+
+    <div class="panel why">
+      <span class="pt">なぜ重要か</span>
+      <p>アプリのコードは後から直せますが、稼働後のテーブル構造は直すのが非常に高コストです。すでに大量のデータが入り、たくさんのプログラムがそのテーブルに依存しているからです。<strong>設計のミスは最も修正費用が高いバグ</strong>だと考えてください。</p>
+    </div>
+
+    <p>RDBを管理するソフトウェアを <strong>DBMS</strong>（Database Management System）と呼びます。MySQL・PostgreSQL・Oracle・SQL Server などが代表例です。本ガイドの設計理論はどのDBMSでもほぼ共通して通用します（細かな機能差はあります）。</p>
+  </section>
+
+  <!-- 02 -->
+  <section id="s02" class="reveal">
+    <div class="sec-head"><span class="sec-num">02</span><h2 class="sec-title">論理設計と物理設計</h2></div>
+    <div class="oneliner"><p>「どんなデータをどう分けるか」が論理設計。「それを実際の機械にどう載せ、速く動かすか」が物理設計。</p></div>
+
+    <p>DB設計は大きく2段階に分かれます。順番が大事で、<strong>論理設計が先、物理設計が後</strong>です。論理設計は「ハードウェアやDBMSの都合を一旦忘れて、データの意味だけを考える」フェーズです。</p>
+
+    <div class="cards">
+      <div class="card">
+        <span class="tag">LOGICAL</span>
+        <h4>論理設計</h4>
+        <p>エンティティ（実体）の洗い出し、テーブルと列の決定、<strong>正規化</strong>、キーの設定、ER図の作成。物理的制約は考えない。</p>
+      </div>
+      <div class="card" style="border-top-color:var(--amber)">
+        <span class="tag" style="color:var(--accent)">PHYSICAL</span>
+        <h4>物理設計</h4>
+        <p>テーブルの実体化、<strong>インデックス</strong>設計、データの物理配置（ファイル/ディスク）、性能を出すための調整。</p>
+      </div>
+    </div>
+
+    <p>この分離を支えるのが <strong>3層スキーマ</strong> という考え方です。ユーザーから見える形（外部）、論理構造（概念）、物理的な保存（内部）の3層に分け、それぞれを独立して変更できるようにします。下図のイメージです。</p>
+
+    <div class="fig">
+      <svg viewBox="0 0 640 270" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="3層スキーマの図">
+        <defs>
+          <marker id="ar1" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+            <path d="M0,0 L9,4.5 L0,9 z" fill="#136b62"/>
+          </marker>
+        </defs>
+        <rect x="40" y="20" width="560" height="56" rx="12" fill="#e0ece9" stroke="#136b62" stroke-width="2"/>
+        <text x="320" y="44" text-anchor="middle" font-family="'Shippori Mincho',serif" font-size="17" font-weight="700" fill="#0c4a44">外部スキーマ（ユーザーから見える形）</text>
+        <text x="320" y="64" text-anchor="middle" font-family="monospace" font-size="11" fill="#544e41">ビュー・画面・アプリが扱う見え方</text>
+
+        <line x1="320" y1="76" x2="320" y2="100" stroke="#136b62" stroke-width="2" marker-end="url(#ar1)"/>
+
+        <rect x="40" y="105" width="560" height="56" rx="12" fill="#f3e6cf" stroke="#b4742a" stroke-width="2"/>
+        <text x="320" y="129" text-anchor="middle" font-family="'Shippori Mincho',serif" font-size="17" font-weight="700" fill="#8a5a1f">概念スキーマ（論理設計）</text>
+        <text x="320" y="149" text-anchor="middle" font-family="monospace" font-size="11" fill="#544e41">テーブル・列・正規化された構造 ← この本の主戦場</text>
+
+        <line x1="320" y1="161" x2="320" y2="185" stroke="#136b62" stroke-width="2" marker-end="url(#ar1)"/>
+
+        <rect x="40" y="190" width="560" height="56" rx="12" fill="#1c2b29" stroke="#0c4a44" stroke-width="2"/>
+        <text x="320" y="214" text-anchor="middle" font-family="'Shippori Mincho',serif" font-size="17" font-weight="700" fill="#cfe6e1">内部スキーマ（物理設計）</text>
+        <text x="320" y="234" text-anchor="middle" font-family="monospace" font-size="11" fill="#7fa8a2">ファイル・ディスク・インデックスの実体</text>
+      </svg>
+      <div class="cap">図: 3層スキーマ ― 中段の概念スキーマが論理設計の成果物</div>
+    </div>
+
+    <div class="panel point">
+      <span class="pt">要点</span>
+      <p>論理設計は<strong>「データの正しさ」</strong>を、物理設計は<strong>「速さ」</strong>を担当します。本ガイドの大半（正規化）は論理設計の話です。先に正しさを固め、必要なら後で速さのために崩す、という順序を覚えてください。</p>
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section id="s03" class="reveal">
+    <div class="sec-head"><span class="sec-num">03</span><h2 class="sec-title">設計の全工程</h2></div>
+    <p>論理設計は次の流れで進みます。本ガイドの各章がどこに対応するかを意識すると、迷子になりません。</p>
+
+    <div class="fig">
+      <svg viewBox="0 0 660 130" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="論理設計のステップ">
+        <defs>
+          <marker id="ar2" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+            <path d="M0,0 L9,4.5 L0,9 z" fill="#b4742a"/>
+          </marker>
+        </defs>
+        <g font-family="'Zen Kaku Gothic New',sans-serif">
+          <rect x="10" y="40" width="118" height="50" rx="10" fill="#fbf8f0" stroke="#136b62" stroke-width="2"/>
+          <text x="69" y="62" text-anchor="middle" font-size="13" font-weight="700" fill="#0c4a44">① 実体を</text>
+          <text x="69" y="80" text-anchor="middle" font-size="13" font-weight="700" fill="#0c4a44">洗い出す</text>
+
+          <rect x="146" y="40" width="118" height="50" rx="10" fill="#fbf8f0" stroke="#136b62" stroke-width="2"/>
+          <text x="205" y="62" text-anchor="middle" font-size="13" font-weight="700" fill="#0c4a44">② テーブル</text>
+          <text x="205" y="80" text-anchor="middle" font-size="13" font-weight="700" fill="#0c4a44">と列を決める</text>
+
+          <rect x="282" y="40" width="118" height="50" rx="10" fill="#e0ece9" stroke="#136b62" stroke-width="3"/>
+          <text x="341" y="62" text-anchor="middle" font-size="13" font-weight="700" fill="#0c4a44">③ 正規化</text>
+          <text x="341" y="80" text-anchor="middle" font-size="11" fill="#544e41">（本ガイド核心）</text>
+
+          <rect x="418" y="40" width="118" height="50" rx="10" fill="#fbf8f0" stroke="#136b62" stroke-width="2"/>
+          <text x="477" y="62" text-anchor="middle" font-size="13" font-weight="700" fill="#0c4a44">④ キー設定</text>
+          <text x="477" y="80" text-anchor="middle" font-size="11" fill="#544e41">主キー/外部キー</text>
+
+          <rect x="554" y="40" width="98" height="50" rx="10" fill="#fbf8f0" stroke="#136b62" stroke-width="2"/>
+          <text x="603" y="62" text-anchor="middle" font-size="13" font-weight="700" fill="#0c4a44">⑤ ER図</text>
+          <text x="603" y="80" text-anchor="middle" font-size="11" fill="#544e41">で表現</text>
+
+          <line x1="128" y1="65" x2="144" y2="65" stroke="#b4742a" stroke-width="2" marker-end="url(#ar2)"/>
+          <line x1="264" y1="65" x2="280" y2="65" stroke="#b4742a" stroke-width="2" marker-end="url(#ar2)"/>
+          <line x1="400" y1="65" x2="416" y2="65" stroke="#b4742a" stroke-width="2" marker-end="url(#ar2)"/>
+          <line x1="536" y1="65" x2="552" y2="65" stroke="#b4742a" stroke-width="2" marker-end="url(#ar2)"/>
+        </g>
+      </svg>
+      <div class="cap">図: 論理設計の5ステップ ― 中心は③正規化</div>
+    </div>
+    <p>では土台となる「キー」から順に積み上げていきましょう。</p>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <div class="part reveal">
+    <div class="pl">PART 2</div>
+    <h2>正規化 ― この本の心臓部</h2>
+    <p>正規化は「重複と矛盾の余地をテーブルの形そのものから取り除く」技術です。ここを理解すれば、設計の8割は身についたと言えます。焦らず一段ずつ登ります。</p>
+  </div>
+
+  <!-- 04 -->
+  <section id="s04" class="reveal">
+    <div class="sec-head"><span class="sec-num">04</span><h2 class="sec-title">キーと制約 ― 設計の土台</h2></div>
+    <div class="oneliner"><p>キーとは「行を見分けるための列」。これが決まらないと、テーブルは集合として成立しない。</p></div>
+
+    <h3>主キー（PRIMARY KEY）</h3>
+    <p><strong>主キー</strong>は、テーブルの中の1行を一意に特定できる列（または列の組）です。主キーが決まれば、残りの全ての列の値は主キーによって一意に定まります。主キーには次の鉄則があります。</p>
+    <div class="cards">
+      <div class="card"><h4>一意である</h4><p>同じ主キー値を持つ行は2つと存在できない。</p></div>
+      <div class="card"><h4>NULL不可</h4><p>主キーは必ず値を持つ。「不明」は許されない。</p></div>
+      <div class="card"><h4>不変が望ましい</h4><p>後から値が変わると参照関係が壊れる。</p></div>
+    </div>
+
+    <h3>複合キーと候補キー・代理キー</h3>
+    <p>複数の列を組み合わせて初めて一意になる主キーを <strong>複合キー</strong> と呼びます。また、主キーになりうる候補が複数ある場合、それらを <strong>候補キー</strong> と呼び、その中から1つを主キーに選びます。自然な意味を持つ列をキーにする <strong>自然キー</strong> に対し、連番などの人工的な列を立てるものを <strong>代理キー（サロゲートキー）</strong> と呼びます（17章で詳述）。</p>
+
+    <h3>外部キー（FOREIGN KEY）と参照整合性</h3>
+    <p><strong>外部キー</strong>は、別テーブルの主キーを指す列です。これにより「存在しない会社コードの社員」のような<strong>宙に浮いたデータ</strong>を防げます。これを <strong>参照整合性制約</strong> と言います。</p>
+
+    <div class="code">
+      <div class="code-top"><span class="fn">schema.sql ― キーと制約の例</span><button class="copy">copy</button></div>
+      <pre><code><span class="tok-k">CREATE TABLE</span> <span class="tok-f">会社</span> (
+  会社コード <span class="tok-k">CHAR</span>(<span class="tok-n">4</span>) <span class="tok-k">PRIMARY KEY</span>,   <span class="tok-c">-- 主キー：一意 & NULL不可</span>
+  会社名     <span class="tok-k">VARCHAR</span>(<span class="tok-n">50</span>) <span class="tok-k">NOT NULL</span>
+);
+
+<span class="tok-k">CREATE TABLE</span> <span class="tok-f">社員</span> (
+  社員ID     <span class="tok-k">CHAR</span>(<span class="tok-n">6</span>) <span class="tok-k">PRIMARY KEY</span>,
+  社員名     <span class="tok-k">VARCHAR</span>(<span class="tok-n">50</span>) <span class="tok-k">NOT NULL</span>,
+  会社コード <span class="tok-k">CHAR</span>(<span class="tok-n">4</span>),
+  <span class="tok-k">FOREIGN KEY</span> (会社コード) <span class="tok-k">REFERENCES</span> <span class="tok-f">会社</span>(会社コード)
+  <span class="tok-c">-- 存在しない会社コードは登録できない（参照整合性）</span>
+);</code></pre>
+    </div>
+
+    <div class="panel tip">
+      <span class="pt">tip</span>
+      <p>「制約」はデータの正しさをDBMS側に守らせる仕組みです。アプリ側のチェックは抜けがありますが、制約はDBが必ず守ります。<strong>正しさは可能な限りDB側で担保する</strong>のが鉄則です。</p>
+    </div>
+  </section>
+
+  <!-- 05 -->
+  <section id="s05" class="reveal">
+    <div class="sec-head"><span class="sec-num">05</span><h2 class="sec-title">関数従属性 ― 正規化の言語</h2></div>
+    <div class="oneliner"><p>「Aが決まればBが1つに決まる」関係を A → B と書く。正規化はこの矢印を整理する作業にすぎない。</p></div>
+
+    <p>正規化を理屈で理解する鍵が <strong>関数従属性</strong>（functional dependency）です。難しそうな名前ですが、意味は単純です。ある列Aの値が決まると、別の列Bの値が必ず1つに定まるとき、<strong>「BはAに関数従属する」</strong>と言い、次のように書きます。</p>
+
+    <div class="fig">
+      <svg viewBox="0 0 520 90" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="関数従属の記法">
+        <defs>
+          <marker id="ar3" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#136b62"/>
+          </marker>
+        </defs>
+        <rect x="40" y="28" width="150" height="44" rx="10" fill="#e0ece9" stroke="#136b62" stroke-width="2"/>
+        <text x="115" y="55" text-anchor="middle" font-family="monospace" font-size="15" fill="#0c4a44">{ 社員ID }</text>
+        <line x1="195" y1="50" x2="320" y2="50" stroke="#136b62" stroke-width="2.5" marker-end="url(#ar3)"/>
+        <text x="257" y="38" text-anchor="middle" font-family="monospace" font-size="13" fill="#b4742a">決まれば</text>
+        <rect x="328" y="28" width="150" height="44" rx="10" fill="#f3e6cf" stroke="#b4742a" stroke-width="2"/>
+        <text x="403" y="55" text-anchor="middle" font-family="monospace" font-size="15" fill="#8a5a1f">{ 社員名 }</text>
+      </svg>
+      <div class="cap">図: <span style="font-family:var(--mono)">{社員ID} → {社員名}</span>（社員IDが決まれば社員名が1つに決まる）</div>
+    </div>
+
+    <div class="panel why">
+      <span class="pt">なぜ重要か</span>
+      <p>主キーとは「テーブルの他の全列が関数従属する列」のことです。つまり<strong>正しいテーブルとは『主キー → 全ての列』だけが成り立つテーブル</strong>。正規化とは、主キー以外への余計な矢印（部分従属・推移従属など）を見つけて、別テーブルに追い出す作業です。これから出てくる用語はすべてこの「矢印」の種類だと思ってください。</p>
+    </div>
+  </section>
+
+  <!-- 06 -->
+  <section id="s06" class="reveal">
+    <div class="sec-head"><span class="sec-num">06</span><h2 class="sec-title">正規化とは ― なぜ必要か</h2></div>
+    <div class="oneliner"><p>正規化とは「1つの事実は1か所にだけ書く」を徹底するためのテーブル分割ルールである。</p></div>
+
+    <p>正規化していないテーブルがなぜ危険か、具体例で見ましょう。次の「社員」テーブルは、社員の情報と会社の情報を1枚に詰め込んでいます。</p>
+
+    <div class="tbl">
+      <table>
+        <tr><th>社員ID(主キー)</th><th>社員名</th><th>会社コード</th><th>会社名</th></tr>
+        <tr><td>E001</td><td>佐藤</td><td>C01</td><td>アクメ商事</td></tr>
+        <tr><td>E002</td><td>鈴木</td><td>C01</td><td>アクメ商事</td></tr>
+        <tr><td>E003</td><td>田中</td><td>C02</td><td>ビーコン物産</td></tr>
+      </table>
+    </div>
+
+    <p>「アクメ商事」という会社名が<strong>2回書かれています</strong>。これが諸悪の根源です。重複があると、次の3つの<strong>更新時異常（anomaly）</strong>が起きます。</p>
+
+    <div class="cards">
+      <div class="card" style="border-top-color:var(--danger)">
+        <h4>更新異常</h4>
+        <p>会社名が「アクメ株式会社」に変わったら全行を直す必要がある。1行直し忘れると<strong>矛盾</strong>が生まれる。</p>
+      </div>
+      <div class="card" style="border-top-color:var(--danger)">
+        <h4>挿入異常</h4>
+        <p>社員のいない新会社を登録できない。社員ID(主キー)が空では行を作れないから。</p>
+      </div>
+      <div class="card" style="border-top-color:var(--danger)">
+        <h4>削除異常</h4>
+        <p>最後の社員を消すと、その会社の情報まで<strong>道連れで消える</strong>。</p>
+      </div>
+    </div>
+
+    <div class="panel point">
+      <span class="pt">要点</span>
+      <p>正規化のゴールは美しさではなく<strong>「これらの異常を構造的に起こせなくする」</strong>こと。重複を消せば、更新は1か所で済み、矛盾は生まれようがありません。次章から、段階的にこの社員テーブルを直していきます。</p>
+    </div>
+
+    <div class="panel tip">
+      <span class="pt">tip ― 正規化は可逆</span>
+      <p>正規化で分割したテーブルは、<strong>JOIN（結合）で必ず元に戻せます</strong>。情報は1つも失われません。だから安心して分割できます。逆に言えば「戻せない分割」は正規化ではありません。</p>
+    </div>
+  </section>
+
+  <!-- 07 -->
+  <section id="s07" class="reveal">
+    <div class="sec-head"><span class="sec-num">07</span><h2 class="sec-title">第1正規形（1NF）</h2></div>
+    <div class="oneliner"><p>1セルには1つの値だけ。繰り返し項目や「複数値の詰め込み」を排除する。</p></div>
+
+    <p>第1正規形のルールは1つだけ。<strong>各セルの値はこれ以上分割できない単一の値（スカラ値）であること</strong>。次のような設計は1NF違反です。</p>
+
+    <div class="tbl">
+      <table>
+        <tr><th>社員ID</th><th>社員名</th><th>子の名前（NG）</th></tr>
+        <tr><td>E001</td><td>佐藤</td><td>太郎, 花子</td></tr>
+        <tr><td>E002</td><td>鈴木</td><td>一郎</td></tr>
+      </table>
+    </div>
+
+    <p>「太郎, 花子」のように1セルに複数値を詰め込むと、「花子だけ検索」「子供を1人追加」がSQLでまともに書けません。これを別行に分けて1NFにします。</p>
+
+    <div class="tbl">
+      <table>
+        <tr><th>社員ID</th><th>社員名</th><th>子の名前</th></tr>
+        <tr><td>E001</td><td>佐藤</td><td>太郎</td></tr>
+        <tr><td>E001</td><td>佐藤</td><td>花子</td></tr>
+        <tr><td>E002</td><td>鈴木</td><td>一郎</td></tr>
+      </table>
+    </div>
+
+    <div class="panel danger">
+      <span class="pt">danger ― 配列やJSONの安易な利用</span>
+      <p>「列にカンマ区切りで詰める」「配列型に放り込む」のは1NF違反の典型です。検索・集計・整合性チェックがすべて困難になります。<strong>繰り返す情報は行に展開する</strong>のが原則。どうしても1セルに複数を入れたくなったら、それは別テーブルに分けるべきサインです。</p>
+    </div>
+    <p>なお1NFにして初めて「主キー → 各列」という関数従属が定義できます。次の2NF・3NFは、この主キーへの従属の仕方をさらに精密に整えていく作業です。</p>
+  </section>
+
+  <!-- 08 -->
+  <section id="s08" class="reveal">
+    <div class="sec-head"><span class="sec-num">08</span><h2 class="sec-title">第2正規形（2NF）</h2></div>
+    <div class="oneliner"><p>複合主キーの「一部」だけで決まる列を、別テーブルに追い出す（部分関数従属の排除）。</p></div>
+
+    <p>2NFが問題になるのは <strong>複合主キー</strong> のときだけです。次の「受注明細」テーブルは <span class="mono">{受注ID, 商品ID}</span> が複合主キーです。</p>
+
+    <div class="tbl">
+      <table>
+        <tr><th>受注ID</th><th>商品ID</th><th>数量</th><th>商品名</th></tr>
+        <tr><td>R01</td><td>P10</td><td>3</td><td>ボールペン</td></tr>
+        <tr><td>R01</td><td>P20</td><td>1</td><td>ノート</td></tr>
+        <tr><td>R02</td><td>P10</td><td>5</td><td>ボールペン</td></tr>
+      </table>
+    </div>
+
+    <p>ここで関数従属を観察します。<span class="mono">数量</span>は <span class="mono">{受注ID, 商品ID}</span> の両方がないと決まりません（＝完全関数従属＝正しい）。しかし <span class="mono">商品名</span>は <span class="mono">{商品ID}</span> <strong>だけ</strong>で決まります。これは主キーの<strong>一部</strong>への従属＝<strong>部分関数従属</strong>で、2NF違反です。</p>
+
+    <div class="fig">
+      <svg viewBox="0 0 560 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="部分関数従属の図">
+        <defs><marker id="ar4" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#a23b2e"/></marker>
+        <marker id="ar4b" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#136b62"/></marker></defs>
+        <rect x="30" y="20" width="220" height="40" rx="9" fill="#e0ece9" stroke="#136b62" stroke-width="2"/>
+        <text x="140" y="45" text-anchor="middle" font-family="monospace" font-size="13" fill="#0c4a44">{ 受注ID , 商品ID }</text>
+        <rect x="380" y="14" width="150" height="34" rx="9" fill="#f3e6cf" stroke="#136b62" stroke-width="2"/>
+        <text x="455" y="36" text-anchor="middle" font-family="monospace" font-size="13" fill="#8a5a1f">数量 ✔完全</text>
+        <line x1="250" y1="36" x2="378" y2="31" stroke="#136b62" stroke-width="2" marker-end="url(#ar4b)"/>
+        <rect x="160" y="100" width="90" height="34" rx="9" fill="#fbf8f0" stroke="#a23b2e" stroke-width="2"/>
+        <text x="205" y="122" text-anchor="middle" font-family="monospace" font-size="13" fill="#a23b2e">商品ID</text>
+        <rect x="380" y="100" width="150" height="34" rx="9" fill="#f4dfd9" stroke="#a23b2e" stroke-width="2"/>
+        <text x="455" y="122" text-anchor="middle" font-family="monospace" font-size="13" fill="#a23b2e">商品名 ✘部分</text>
+        <line x1="250" y1="117" x2="378" y2="117" stroke="#a23b2e" stroke-width="2" marker-end="url(#ar4)"/>
+      </svg>
+      <div class="cap">図: 商品名は商品IDだけに従属（部分関数従属）＝分離すべき</div>
+    </div>
+
+    <p>解決策は、部分従属している列を別テーブルへ切り出すことです。商品マスタを独立させます。</p>
+
+    <div class="tbl">
+      <table>
+        <tr><th>受注明細：受注ID(PK)</th><th>商品ID(PK)</th><th>数量</th></tr>
+        <tr><td>R01</td><td>P10</td><td>3</td></tr>
+        <tr><td>R01</td><td>P20</td><td>1</td></tr>
+      </table>
+    </div>
+    <div class="tbl">
+      <table>
+        <tr><th>商品：商品ID(PK)</th><th>商品名</th></tr>
+        <tr><td>P10</td><td>ボールペン</td></tr>
+        <tr><td>P20</td><td>ノート</td></tr>
+      </table>
+    </div>
+
+    <div class="panel point">
+      <span class="pt">要点</span>
+      <p>2NF違反は「主キーが複合のとき、その<strong>一部分</strong>を見れば値が決まってしまう列」。商品名は今や1か所にしかなく、商品名の変更は商品テーブルの1行を直すだけで済みます。</p>
+    </div>
+  </section>
+
+  <!-- 09 -->
+  <section id="s09" class="reveal">
+    <div class="sec-head"><span class="sec-num">09</span><h2 class="sec-title">第3正規形（3NF）</h2></div>
+    <div class="oneliner"><p>「主キー → 非キー列A → 非キー列B」という間接的な従属（推移的関数従属）を断ち切る。</p></div>
+
+    <p>06章の社員テーブルに戻りましょう。これは単一主キーなので2NFは満たしますが、別の問題があります。</p>
+
+    <div class="tbl">
+      <table>
+        <tr><th>社員ID(PK)</th><th>社員名</th><th>部署コード</th><th>部署名</th></tr>
+        <tr><td>E001</td><td>佐藤</td><td>D1</td><td>営業部</td></tr>
+        <tr><td>E002</td><td>鈴木</td><td>D1</td><td>営業部</td></tr>
+        <tr><td>E003</td><td>田中</td><td>D2</td><td>開発部</td></tr>
+      </table>
+    </div>
+
+    <p>関数従属を追うと、<span class="mono">{社員ID} → {部署コード} → {部署名}</span> という<strong>2段の矢印</strong>になっています。社員IDから部署名へは、部署コードを<strong>経由して</strong>間接的に決まる。これが <strong>推移的関数従属</strong> で、3NF違反です。「営業部」が複数行に重複しているのが見て取れますね。</p>
+
+    <div class="fig">
+      <svg viewBox="0 0 560 80" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="推移的関数従属">
+        <defs><marker id="ar5" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#a23b2e"/></marker></defs>
+        <rect x="20" y="26" width="120" height="36" rx="9" fill="#e0ece9" stroke="#136b62" stroke-width="2"/>
+        <text x="80" y="49" text-anchor="middle" font-family="monospace" font-size="13" fill="#0c4a44">社員ID</text>
+        <rect x="220" y="26" width="120" height="36" rx="9" fill="#f3e6cf" stroke="#b4742a" stroke-width="2"/>
+        <text x="280" y="49" text-anchor="middle" font-family="monospace" font-size="13" fill="#8a5a1f">部署コード</text>
+        <rect x="420" y="26" width="120" height="36" rx="9" fill="#f4dfd9" stroke="#a23b2e" stroke-width="2"/>
+        <text x="480" y="49" text-anchor="middle" font-family="monospace" font-size="13" fill="#a23b2e">部署名</text>
+        <line x1="140" y1="44" x2="218" y2="44" stroke="#136b62" stroke-width="2" marker-end="url(#ar5)"/>
+        <line x1="340" y1="44" x2="418" y2="44" stroke="#a23b2e" stroke-width="2" marker-end="url(#ar5)"/>
+        <text x="280" y="18" text-anchor="middle" font-family="monospace" font-size="11" fill="#a23b2e">経由している＝推移的従属</text>
+      </svg>
+      <div class="cap">図: 部署名は部署コードを経由して間接的に決まる（3NF違反）</div>
+    </div>
+
+    <p>解決は2NFと同じ発想。間接的に従属している部分を別テーブルへ切り出します。</p>
+
+    <div class="tbl">
+      <table>
+        <tr><th>社員：社員ID(PK)</th><th>社員名</th><th>部署コード(FK)</th></tr>
+        <tr><td>E001</td><td>佐藤</td><td>D1</td></tr>
+        <tr><td>E002</td><td>鈴木</td><td>D1</td></tr>
+      </table>
+    </div>
+    <div class="tbl">
+      <table>
+        <tr><th>部署：部署コード(PK)</th><th>部署名</th></tr>
+        <tr><td>D1</td><td>営業部</td></tr>
+        <tr><td>D2</td><td>開発部</td></tr>
+      </table>
+    </div>
+
+    <div class="code">
+      <div class="code-top"><span class="fn">query.sql ― 分割しても JOIN で元に戻る</span><button class="copy">copy</button></div>
+      <pre><code><span class="tok-c">-- 社員名と部署名を一緒に見たいときは結合する</span>
+<span class="tok-k">SELECT</span> e.社員名, d.部署名
+<span class="tok-k">FROM</span>   <span class="tok-f">社員</span> e
+<span class="tok-k">JOIN</span>   <span class="tok-f">部署</span> d <span class="tok-k">ON</span> e.部署コード = d.部署コード;</code></pre>
+    </div>
+
+    <div class="panel point">
+      <span class="pt">要点 ― 第3正規形までが実務の標準</span>
+      <p>多くの業務システムは <strong>第3正規形</strong> まで正規化すれば十分です。覚え方は有名な一文 ―「<strong>キーに、キー全体に、キー以外の何ものにも従属しない</strong>」。非キー列は、主キーだけに・主キー全体に・主キー以外には従属しない、という3条件が、そのまま1NF→2NF→3NFの精神を言い表しています。</p>
+    </div>
+  </section>
+
+  <!-- 10 -->
+  <section id="s10" class="reveal">
+    <div class="sec-head"><span class="sec-num">10</span><h2 class="sec-title">ボイス・コッド正規形（BCNF）</h2></div>
+    <div class="oneliner"><p>3NFを満たしても残る「非キー列 → キーの一部」という逆向きの従属をなくす、より厳しい3NF。</p></div>
+
+    <p>BCNFは「<strong>すべての関数従属の左側（決定項）が候補キーであること</strong>」を要求します。3NFをほぼ満たすが、候補キーが複数あって一部が重なる特殊なケースで違反が起きます。</p>
+
+    <p>例: <span class="mono">{学生, 科目}</span> が主キーで、各科目を担当する教員が1人だけ決まっているとします。すると <span class="mono">{教員} → {科目}</span>（教員が決まれば担当科目が決まる）という従属が生まれます。教員は候補キーではないのに、キーの一部（科目）を決めてしまう ― これがBCNF違反です。</p>
+
+    <div class="panel warn">
+      <span class="pt">warn ― 実務での立ち位置</span>
+      <p>BCNF・第4・第5正規形は理論上重要ですが、<strong>実務で意識する場面は多くありません</strong>。「3NFまできっちりやれば、ほとんどの異常は防げる」と理解した上で、こういう上位の正規形が存在すること、そして稀に必要になることだけ頭の片隅に置いておけば十分です。深入りより、3NFを確実に使えることが大切です。</p>
+    </div>
+  </section>
+
+  <!-- 11 -->
+  <section id="s11" class="reveal">
+    <div class="sec-head"><span class="sec-num">11</span><h2 class="sec-title">第4・第5正規形</h2></div>
+    <div class="oneliner"><p>1つの主キーに、互いに無関係な「多対多」が2つ以上ぶら下がっている状態を分割する。</p></div>
+
+    <p>第4正規形は <strong>多値従属</strong> を排除します。例えば「社員」に対して、互いに独立な「扱える言語」と「持っている資格」を同じテーブルに同居させると、無意味な組み合わせ爆発が起きます。これらを別々のテーブルに分けるのが4NFです。第5正規形（結合従属の排除）はさらに稀なケースを扱います。</p>
+
+    <div class="panel point">
+      <span class="pt">要点</span>
+      <p>4NF/5NFの核心は「<strong>独立した関係を1つのテーブルに混ぜない</strong>」という、3NFと同じ直感の延長です。新しい考え方というより、関数従属の整理を多対多にも徹底したもの、と捉えれば怖くありません。日常設計では「独立な多対多は別テーブル」とだけ覚えておけば実害は出ません。</p>
+    </div>
+  </section>
+
+  <!-- 12 -->
+  <section id="s12" class="reveal">
+    <div class="sec-head"><span class="sec-num">12</span><h2 class="sec-title">正規化と非正規化のトレードオフ</h2></div>
+    <div class="oneliner"><p>正規化は「正しさ」を上げるが、しばしば「速さ」を下げる。両者は基本的にトレードオフの関係にある。</p></div>
+
+    <p>正規化すればするほどテーブルは増え、欲しい情報を得るのに <strong>JOINの回数が増えます</strong>。JOINは計算コストが高く、巨大なテーブルでは性能問題になります。そこで、あえて重複を許して結合を減らす <strong>非正規化（正規化崩し）</strong> が選択肢になります。</p>
+
+    <div class="tbl">
+      <table>
+        <tr><th>観点</th><th>高度に正規化</th><th>非正規化（崩す）</th></tr>
+        <tr><td>データの正しさ</td><td>◎ 矛盾が起きにくい</td><td>△ 重複で矛盾リスク</td></tr>
+        <tr><td>検索（SELECT）</td><td>△ JOINが増え遅くなりがち</td><td>◎ 結合不要で速い</td></tr>
+        <tr><td>更新（UPDATE）</td><td>◎ 1か所直すだけ</td><td>△ 全コピーを直す必要</td></tr>
+        <tr><td>保守性</td><td>◎ 構造が素直</td><td>△ 整合性維持の手間</td></tr>
+      </table>
+    </div>
+
+    <div class="panel danger">
+      <span class="pt">danger ― 順番を間違えない</span>
+      <p>非正規化は<strong>「最後の手段」</strong>です。最初から崩すのではなく、まず正規化した設計を作り、実測して性能が足りないと判明した箇所だけ、リスクを理解した上で限定的に崩します。「速くなりそうだから」という想像で崩すのは、矛盾だらけのDBへの第一歩です。</p>
+    </div>
+
+    <div class="panel why">
+      <span class="pt">なぜか ― 崩した重複は誰が守る？</span>
+      <p>非正規化で重複させたデータは、DBMSが自動では一致を保証してくれません。一致させ続ける責任は<strong>アプリ側のコードや運用</strong>に移ります。この「見えないコスト」を必ず勘定に入れてから判断してください。多くの場合、まずインデックス（14章）で十分速くなります。</p>
+    </div>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <div class="part reveal">
+    <div class="pl">PART 3</div>
+    <h2>図とパフォーマンスの基礎</h2>
+    <p>設計を人に伝えるための「ER図」と、物理設計の主役「インデックス」。論理設計と物理設計をつなぐ章です。</p>
+  </div>
+
+  <!-- 13 -->
+  <section id="s13" class="reveal">
+    <div class="sec-head"><span class="sec-num">13</span><h2 class="sec-title">ER図 ― 設計を1枚の地図にする</h2></div>
+    <div class="oneliner"><p>ER図は「どんなテーブルが、どんな関係（1対多など）でつながっているか」を一目で示す設計図。</p></div>
+
+    <p>正規化で分割が進むと、テーブル同士の関係を把握しづらくなります。それを可視化するのが <strong>ER図</strong>（Entity-Relationship図）です。重要なのは <strong>カーディナリティ（多重度）</strong> ― 1対1、1対多、多対多のどれかです。</p>
+
+    <div class="fig">
+      <svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ER図の例">
+        <g font-family="'Zen Kaku Gothic New',sans-serif">
+          <!-- 部署 -->
+          <rect x="40" y="60" width="150" height="80" rx="8" fill="#fbf8f0" stroke="#136b62" stroke-width="2"/>
+          <rect x="40" y="60" width="150" height="26" rx="8" fill="#136b62"/>
+          <text x="115" y="78" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">部署</text>
+          <text x="52" y="105" font-size="12" fill="#0c4a44" font-family="monospace">PK 部署コード</text>
+          <text x="52" y="126" font-size="12" fill="#544e41" font-family="monospace">部署名</text>
+          <!-- 社員 -->
+          <rect x="400" y="50" width="160" height="100" rx="8" fill="#fbf8f0" stroke="#136b62" stroke-width="2"/>
+          <rect x="400" y="50" width="160" height="26" rx="8" fill="#136b62"/>
+          <text x="480" y="68" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">社員</text>
+          <text x="412" y="95" font-size="12" fill="#0c4a44" font-family="monospace">PK 社員ID</text>
+          <text x="412" y="116" font-size="12" fill="#544e41" font-family="monospace">社員名</text>
+          <text x="412" y="137" font-size="12" fill="#b4742a" font-family="monospace">FK 部署コード</text>
+          <!-- relationship -->
+          <line x1="190" y1="100" x2="400" y2="100" stroke="#b4742a" stroke-width="2"/>
+          <text x="210" y="93" font-size="13" fill="#8a5a1f" font-family="monospace">1</text>
+          <text x="370" y="93" font-size="13" fill="#8a5a1f" font-family="monospace">多(∞)</text>
+          <text x="295" y="86" text-anchor="middle" font-size="12" fill="#544e41">所属する</text>
+          <text x="295" y="120" text-anchor="middle" font-size="12" fill="#544e41">1つの部署に複数の社員</text>
+        </g>
+      </svg>
+      <div class="cap">図: 「部署 1 ―― 多 社員」の関係。FK（外部キー）が関係を表す</div>
+    </div>
+
+    <div class="panel tip">
+      <span class="pt">tip ― 多対多は分解する</span>
+      <p>「学生 と 講義」のような<strong>多対多</strong>は、RDBに直接は持てません。間に <strong>連関テーブル（中間テーブル）</strong>（例: 受講テーブル）を挟み、「1対多」＋「多対1」の2本に分解します。正規化を進めると自然にこの形になります。</p>
+    </div>
+  </section>
+
+  <!-- 14 -->
+  <section id="s14" class="reveal">
+    <div class="sec-head"><span class="sec-num">14</span><h2 class="sec-title">インデックス ― 速さの主役</h2></div>
+    <div class="oneliner"><p>インデックスは「本の索引」。全ページ読まずに目的の行へ直行できる、最も費用対効果の高い高速化手段。</p></div>
+
+    <p>インデックスがないと、DBMSは目的の行を探すのにテーブルを<strong>先頭から全部読み（フルスキャン）</strong>ます。100万行なら100万行調べます。インデックスを張ると、ソート済みの索引をたどって一気に目的地へ到達できます。多くのDBMSは内部で <strong>B-tree（バランス木）</strong> という構造を使います。</p>
+
+    <div class="fig">
+      <svg viewBox="0 0 560 180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="B-treeインデックスの図">
+        <defs><marker id="ar6" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#136b62"/></marker></defs>
+        <g font-family="monospace">
+          <rect x="230" y="14" width="100" height="32" rx="7" fill="#136b62"/>
+          <text x="280" y="35" text-anchor="middle" font-size="13" fill="#fff">50</text>
+          <rect x="90" y="78" width="100" height="32" rx="7" fill="#e0ece9" stroke="#136b62" stroke-width="2"/>
+          <text x="140" y="99" text-anchor="middle" font-size="13" fill="#0c4a44">10 / 30</text>
+          <rect x="370" y="78" width="100" height="32" rx="7" fill="#e0ece9" stroke="#136b62" stroke-width="2"/>
+          <text x="420" y="99" text-anchor="middle" font-size="13" fill="#0c4a44">70 / 90</text>
+          <rect x="30" y="138" width="70" height="28" rx="6" fill="#f3e6cf" stroke="#b4742a"/>
+          <text x="65" y="157" text-anchor="middle" font-size="12" fill="#8a5a1f">…行…</text>
+          <rect x="150" y="138" width="70" height="28" rx="6" fill="#f3e6cf" stroke="#b4742a"/>
+          <text x="185" y="157" text-anchor="middle" font-size="12" fill="#8a5a1f">…行…</text>
+          <rect x="340" y="138" width="70" height="28" rx="6" fill="#f3e6cf" stroke="#b4742a"/>
+          <text x="375" y="157" text-anchor="middle" font-size="12" fill="#8a5a1f">…行…</text>
+          <rect x="460" y="138" width="70" height="28" rx="6" fill="#f3e6cf" stroke="#b4742a"/>
+          <text x="495" y="157" text-anchor="middle" font-size="12" fill="#8a5a1f">…行…</text>
+          <line x1="255" y1="46" x2="160" y2="76" stroke="#136b62" stroke-width="1.5" marker-end="url(#ar6)"/>
+          <line x1="305" y1="46" x2="400" y2="76" stroke="#136b62" stroke-width="1.5" marker-end="url(#ar6)"/>
+          <line x1="120" y1="110" x2="75" y2="136" stroke="#136b62" stroke-width="1.5" marker-end="url(#ar6)"/>
+          <line x1="160" y1="110" x2="185" y2="136" stroke="#136b62" stroke-width="1.5" marker-end="url(#ar6)"/>
+          <line x1="400" y1="110" x2="385" y2="136" stroke="#136b62" stroke-width="1.5" marker-end="url(#ar6)"/>
+          <line x1="440" y1="110" x2="495" y2="136" stroke="#136b62" stroke-width="1.5" marker-end="url(#ar6)"/>
+        </g>
+      </svg>
+      <div class="cap">図: B-tree。大小で枝を選びながら少ない比較回数で目的の行に到達する</div>
+    </div>
+
+    <div class="code">
+      <div class="code-top"><span class="fn">index.sql</span><button class="copy">copy</button></div>
+      <pre><code><span class="tok-c">-- 「会社コードで社員を検索」が多いならインデックスを張る</span>
+<span class="tok-k">CREATE INDEX</span> idx_社員_会社 <span class="tok-k">ON</span> <span class="tok-f">社員</span>(会社コード);
+
+<span class="tok-c">-- これで下のWHERE検索が高速になる</span>
+<span class="tok-k">SELECT</span> * <span class="tok-k">FROM</span> <span class="tok-f">社員</span> <span class="tok-k">WHERE</span> 会社コード = <span class="tok-s">'C01'</span>;</code></pre>
+    </div>
+
+    <div class="panel warn">
+      <span class="pt">warn ― インデックスはタダではない</span>
+      <p>インデックスは検索を速くしますが、<strong>INSERT/UPDATE/DELETEのたびに索引も更新</strong>するため書き込みは遅くなり、ディスクも消費します。「とりあえず全列に張る」は逆効果。<strong>検索条件(WHERE)・結合(JOIN)・並び替え(ORDER BY)でよく使う列</strong>に絞って張るのが基本です。値の種類が極端に少ない列（性別など）は効きにくい点にも注意。</p>
+    </div>
+  </section>
+
+  <!-- 15 -->
+  <section id="s15" class="reveal">
+    <div class="sec-head"><span class="sec-num">15</span><h2 class="sec-title">統計情報 ― DBMSの「勘」の源</h2></div>
+    <div class="oneliner"><p>DBMSは統計情報を見て「インデックスを使うか、全部読むか」を自分で決めている。</p></div>
+
+    <p>同じSQLでも、DBMSは状況に応じて最も速そうな実行方法（<strong>実行計画</strong>）を選びます。その判断材料が <strong>統計情報</strong> ― 「テーブルに何行あるか」「ある列に何種類の値があるか」などのデータの分布です。これを使って最適な計画を立てるDBMS内部の仕組みを <strong>オプティマイザ</strong> と呼びます。</p>
+
+    <div class="panel why">
+      <span class="pt">なぜ重要か ― 急に遅くなる原因No.1</span>
+      <p>統計情報が古い（実態とずれている）と、オプティマイザが判断を誤り、せっかくのインデックスを使わずフルスキャンする、といった事故が起きます。「昨日まで速かったのに突然遅い」の典型原因です。大量のデータ投入後は統計情報を更新する（多くのDBMSで <span class="mono">ANALYZE</span> 等）、と覚えておきましょう。</p>
+    </div>
+  </section>
+
+  <!-- ============ PART 4 ============ -->
+  <div class="part reveal">
+    <div class="pl">PART 4</div>
+    <h2>やってはいけない設計</h2>
+    <p>「動くけれど、いずれ必ず後悔する」設計のパターン集です。原則（正規化）を学んだ今なら、なぜダメかが理屈で分かります。</p>
+  </div>
+
+  <!-- 16 -->
+  <section id="s16" class="reveal">
+    <div class="sec-head"><span class="sec-num">16</span><h2 class="sec-title">論理設計のバッドノウハウ</h2></div>
+    <div class="oneliner"><p>これらは「絶対に避けるべき」アンチパターン。1つでも見つけたら設計を疑う。</p></div>
+
+    <div class="cards">
+      <div class="card" style="border-top-color:var(--danger)">
+        <span class="tag" style="color:var(--danger)">BAD</span>
+        <h4>非スカラ値</h4>
+        <p>1セルに複数値を詰める（1NF違反）。検索も整合性も壊れる。→ 行に展開する。</p>
+      </div>
+      <div class="card" style="border-top-color:var(--danger)">
+        <span class="tag" style="color:var(--danger)">BAD</span>
+        <h4>ダブルミーニング</h4>
+        <p>1つの列が状況によって違う意味を持つ（「金額」が時に在庫数）。列は1つの意味だけに。</p>
+      </div>
+      <div class="card" style="border-top-color:var(--danger)">
+        <span class="tag" style="color:var(--danger)">BAD</span>
+        <h4>単一参照テーブル</h4>
+        <p>性質の違う複数のマスタを「コード種別＋値」の1表に無理やり統合。型も制約も効かなくなる。</p>
+      </div>
+      <div class="card" style="border-top-color:var(--danger)">
+        <span class="tag" style="color:var(--danger)">BAD</span>
+        <h4>不適切なキー</h4>
+        <p>可変長文字列や「意味が変わりうる値」を主キーにする。値が変わると参照が壊れる。</p>
+      </div>
+      <div class="card" style="border-top-color:var(--danger)">
+        <span class="tag" style="color:var(--danger)">BAD</span>
+        <h4>テーブル分割の乱用</h4>
+        <p>「月別テーブル」など物理都合での水平/垂直分割。検索が複雑化し正規化の利点を失う。</p>
+      </div>
+      <div class="card" style="border-top-color:var(--danger)">
+        <span class="tag" style="color:var(--danger)">BAD</span>
+        <h4>ダブルマスタ</h4>
+        <p>同じ意味のマスタが2つ存在し、どちらが正か分からなくなる。マスタは1つに統一。</p>
+      </div>
+    </div>
+
+    <div class="panel danger">
+      <span class="pt">danger ― 共通する病巣</span>
+      <p>これらの多くは<strong>「正規化のサボり」または「物理都合の論理設計への混入」</strong>が原因です。論理設計の段階では性能を考えない、という02章の原則を守れば、その大半は自然に避けられます。</p>
+    </div>
+  </section>
+
+  <!-- 17 -->
+  <section id="s17" class="reveal">
+    <div class="sec-head"><span class="sec-num">17</span><h2 class="sec-title">グレーノウハウ</h2></div>
+    <div class="oneliner"><p>「常に悪」ではないが、使うなら理由とリスクを言える状態で使うべき技法。</p></div>
+
+    <h3>代理キー（サロゲートキー）</h3>
+    <p>自然キーが存在しない、または不安定（値が変わる・重複しうる）なとき、連番などの人工キーを立てます。<strong>有用ですが、安易に全テーブルでやると自然キーへの一意制約を忘れて重複データを許す</strong>事故が起きがちです。代理キーを使っても、本来の自然キーには <span class="mono">UNIQUE</span> 制約を付けるのが安全です。</p>
+
+    <h3>列持ち と 行持ち</h3>
+    <p>「1月,2月,3月…」を<strong>列</strong>として並べるか（列持ち）、<strong>行</strong>として持つか（行持ち）。列持ちは見やすい反面、項目が増えると列追加＝スキーマ変更が必要で硬直的。行持ちは柔軟ですが集計SQLがやや複雑。原則は<strong>行持ち</strong>が拡張に強くおすすめです。</p>
+
+    <div class="tbl">
+      <table>
+        <tr><th>方式</th><th>長所</th><th>短所</th></tr>
+        <tr><td>列持ち</td><td>1行で横並び、見やすい</td><td>項目追加でスキーマ変更が必要</td></tr>
+        <tr><td>行持ち</td><td>項目追加が行追加だけで済む</td><td>横断集計のSQLが複雑になりがち</td></tr>
+      </table>
+    </div>
+
+    <h3>多段ビュー</h3>
+    <p>ビューの上にビュー、さらにその上にビュー…と重ねると、元のテーブル構造が見えなくなり、性能も予測困難になります。<strong>ビューは浅く保つ</strong>のが原則です。</p>
+
+    <div class="panel point">
+      <span class="pt">要点</span>
+      <p>グレーノウハウの共通テーマは<strong>「便利さと引き換えに、整合性や保守性のどこかを担保する責任が自分に移る」</strong>こと。使うこと自体は禁止ではなく、トレードオフを言語化できるかどうかが、達人と初心者の分かれ目です。</p>
+    </div>
+  </section>
+
+  <!-- 18 -->
+  <section id="s18" class="reveal">
+    <div class="sec-head"><span class="sec-num">18</span><h2 class="sec-title">木構造（階層データ）の格納</h2></div>
+    <div class="oneliner"><p>「組織図」「カテゴリ階層」のような木構造を、平らな表でどう表現するかの定番パターン。</p></div>
+
+    <p>RDBは平らな表が得意で、親子の階層（木構造）は素直には表せません。代表的な格納方法が3つあります。</p>
+
+    <div class="cards">
+      <div class="card">
+        <span class="tag">最も基本</span>
+        <h4>隣接リストモデル</h4>
+        <p>各行に「親のID」列を持たせる。実装が直感的で更新も簡単。反面、「全ての子孫」を取るには再帰が必要で深い階層に弱い。</p>
+      </div>
+      <div class="card">
+        <span class="tag">検索が速い</span>
+        <h4>入れ子集合モデル</h4>
+        <p>各ノードに左右の番号(座標)を振り、範囲で子孫を表現。子孫の一括取得が1クエリで速い。反面、ノード追加時に多くの番号を振り直す必要があり更新が重い。</p>
+      </div>
+      <div class="card">
+        <span class="tag">経路で表現</span>
+        <h4>経路列挙モデル</h4>
+        <p>「/1/4/9/」のように先祖の経路を文字列で持つ。先祖・子孫検索がLIKEで簡単。反面、経路が長くなり移動時の更新に注意。</p>
+      </div>
+    </div>
+
+    <div class="panel tip">
+      <span class="pt">tip ― まずは隣接リストから</span>
+      <p>初学者はまず<strong>隣接リストモデル（親IDを持つ）</strong>を確実に使えるようになれば十分です。多くのDBMSは再帰クエリ（<span class="mono">WITH RECURSIVE</span>）に対応しており、深い階層もたどれます。性能で困ってから他のモデルを検討すれば遅くありません。</p>
+    </div>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section id="cheat" class="reveal">
+    <div class="sec-head"><span class="sec-num">★</span><h2 class="sec-title">チートシート ― 正規形 早見表</h2></div>
+
+    <div class="tbl mini">
+      <table>
+        <tr><th>正規形</th><th>排除するもの</th><th>一言で</th></tr>
+        <tr><td>1NF</td><td>非スカラ値（繰り返し）</td><td>1セルに値は1つ</td></tr>
+        <tr><td>2NF</td><td>部分関数従属</td><td>主キーの一部で決まる列を分離</td></tr>
+        <tr><td>3NF</td><td>推移的関数従属</td><td>非キー経由で決まる列を分離</td></tr>
+        <tr><td>BCNF</td><td>非キー→キー一部の従属</td><td>決定項は必ず候補キー</td></tr>
+        <tr><td>4NF</td><td>多値従属</td><td>独立な多対多を別表に</td></tr>
+        <tr><td>5NF</td><td>結合従属</td><td>これ以上分割で矛盾が出ない形</td></tr>
+      </table>
+    </div>
+
+    <div class="panel point">
+      <span class="pt">最重要の合言葉</span>
+      <p>非キー列は <strong>「キーに、キー全体に、キー以外の何ものにも従属しない」</strong>。これが1NF→2NF→3NFの本質。実務はまず<strong>3NF</strong>を確実に。</p>
+    </div>
+
+    <h3>設計の判断フロー</h3>
+    <div class="tbl mini">
+      <table>
+        <tr><th>状況</th><th>すべきこと</th></tr>
+        <tr><td>1セルに複数値がある</td><td>行に展開（1NF）</td></tr>
+        <tr><td>複合主キーの一部で決まる列</td><td>別テーブルへ分離（2NF）</td></tr>
+        <tr><td>非キー列が他の非キー列で決まる</td><td>別テーブルへ分離（3NF）</td></tr>
+        <tr><td>検索が遅い</td><td>まずインデックスを検討（14章）</td></tr>
+        <tr><td>インデックスでも足りない</td><td>実測の上で限定的に非正規化（12章）</td></tr>
+        <tr><td>自然キーが不安定</td><td>代理キー＋自然キーにUNIQUE（17章）</td></tr>
+        <tr><td>階層データを持ちたい</td><td>まず隣接リスト（親ID）（18章）</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ GLOSSARY ============ -->
+  <section id="gloss" class="reveal">
+    <div class="sec-head"><span class="sec-num">＃</span><h2 class="sec-title">用語集</h2></div>
+    <dl class="gloss">
+      <dt>RDB / DBMS</dt><dd>データを表で持つDB（RDB）と、それを管理するソフト（DBMS）。</dd>
+      <dt>主キー</dt><dd>1行を一意に特定する列。一意・NULL不可・不変が原則。</dd>
+      <dt>外部キー</dt><dd>他テーブルの主キーを指す列。参照整合性を担保する。</dd>
+      <dt>候補キー</dt><dd>主キーになりうる列の組。複数あれば1つを主キーに選ぶ。</dd>
+      <dt>代理キー</dt><dd>連番などの人工的な主キー。自然キーが不安定なとき使う。</dd>
+      <dt>関数従属（A→B）</dt><dd>Aが決まればBが1つに定まる関係。正規化の基本言語。</dd>
+      <dt>部分関数従属</dt><dd>複合主キーの一部だけで決まる従属。2NFで排除。</dd>
+      <dt>推移的関数従属</dt><dd>主キー→非キー→非キー、と間接的に決まる従属。3NFで排除。</dd>
+      <dt>正規化 / 非正規化</dt><dd>重複を消す分割 / あえて重複を許し結合を減らす崩し。</dd>
+      <dt>更新時異常</dt><dd>重複が原因の更新・挿入・削除時の矛盾や不都合。</dd>
+      <dt>ER図</dt><dd>テーブルと関係（1対多など）を表す設計図。</dd>
+      <dt>カーディナリティ</dt><dd>関係の多重度（1対1 / 1対多 / 多対多）。</dd>
+      <dt>連関テーブル</dt><dd>多対多を1対多×2に分解する中間テーブル。</dd>
+      <dt>インデックス</dt><dd>検索を高速化する索引。多くはB-tree構造。</dd>
+      <dt>実行計画 / オプティマイザ</dt><dd>SQLをどう実行するかの計画 / それを決めるDBMSの頭脳。</dd>
+      <dt>統計情報</dt><dd>データ分布の情報。古いと実行計画を誤る。</dd>
+    </dl>
+  </section>
+
+  <!-- FOOTER -->
+  <div class="foot reveal">
+    <p><b>このガイドについて：</b> 書籍『達人に学ぶDB設計徹底指南書』（ミック 著）の主要テーマ ― 論理設計、正規化（1NF〜BCNF・4NF/5NF）、ER図、パフォーマンス（インデックス・統計情報・正規化のトレードオフ）、バッド/グレーノウハウ、木構造の格納 ― を、SQLを少し書ける初学者向けに自分の言葉で再構成した独立教材です。原書の逐語引用は含みません。</p>
+    <p style="margin-top:10px"><b>注記：</b> コード例は概念理解のため簡略化しています。インデックスや統計情報の具体的な構文・挙動、最新の正規形の扱いはDBMSやバージョンによって異なり、また仕様は将来変わり得ます。実装時はお使いのDBMSの公式ドキュメントで最新仕様をご確認ください。</p>
+  </div>
+</main>
+</div>
+
+<button id="top-btn" aria-label="トップへ戻る">↑</button>
+
+<script>
+// progress bar
+const progress=document.getElementById('progress');
+const topBtn=document.getElementById('top-btn');
+function onScroll(){
+  const h=document.documentElement;
+  const sc=h.scrollTop;
+  const max=h.scrollHeight-h.clientHeight;
+  progress.style.width=(max>0?(sc/max*100):0)+'%';
+  if(sc>500){topBtn.classList.add('show');}else{topBtn.classList.remove('show');}
+}
+window.addEventListener('scroll',onScroll,{passive:true});
+onScroll();
+topBtn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+
+// reveal on scroll
+const revObs=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');revObs.unobserve(e.target);}});
+},{threshold:0.08});
+document.querySelectorAll('.reveal').forEach(el=>revObs.observe(el));
+
+// TOC active highlight
+const tocLinks=[...document.querySelectorAll('#toc a')];
+const sections=tocLinks.map(a=>document.querySelector(a.getAttribute('href'))).filter(Boolean);
+const linkFor=id=>tocLinks.find(a=>a.getAttribute('href')==='#'+id);
+const secObs=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      tocLinks.forEach(a=>a.classList.remove('active'));
+      const l=linkFor(e.target.id);
+      if(l){l.classList.add('active');
+        l.scrollIntoView({block:'nearest'});
+      }
+    }
+  });
+},{rootMargin:'-20% 0px -70% 0px',threshold:0});
+sections.forEach(s=>secObs.observe(s));
+
+// copy buttons
+document.querySelectorAll('.copy').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const code=btn.closest('.code').querySelector('code');
+    const text=code.innerText;
+    navigator.clipboard.writeText(text).then(()=>{
+      const o=btn.textContent;btn.textContent='copied ✓';
+      setTimeout(()=>btn.textContent=o,1400);
+    }).catch(()=>{btn.textContent='error';});
+  });
+});
+</script>
+</body>
+</html>

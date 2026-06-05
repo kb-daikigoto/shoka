@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ちょうぜつソフトウェア設計入門 ― 完全理解ガイド</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=M+PLUS+2:wght@400;500;700;800&family=Source+Code+Pro:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f6eae9;
+  --paper2:#eed8d8;
+  --card:#fdf5f3;
+  --ink:#2a2530;
+  --ink-soft:#5a5160;
+  --line:#e2c9cb;
+  --accent:#b3325a;        /* rose-crimson */
+  --accent-deep:#7d1f3d;
+  --accent-soft:#f7dde4;
+  --gold:#b5811f;          /* secondary */
+  --gold-soft:#f3e6c6;
+  --ok:#3c7a50;
+  --ok-soft:#dbeee0;
+  --warn:#a5760d;
+  --warn-soft:#f6ecc9;
+  --danger:#bd3a2c;
+  --danger-soft:#f6ddd6;
+  --code-bg:#241b27;
+  --code-bg2:#1c151e;
+  --code-line:#3a2c3e;
+  --mono:'Source Code Pro',ui-monospace,monospace;
+  --disp:'Zen Maru Gothic',sans-serif;
+  --sans:'M PLUS 2',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+body{
+  font-family:var(--sans);color:var(--ink);background-color:var(--paper);
+  background-image:repeating-linear-gradient(-45deg,rgba(179,50,90,.05) 0 1px,transparent 1px 13px);
+  line-height:1.85;font-size:16px;-webkit-font-smoothing:antialiased;letter-spacing:.01em;
+}
+#progress{position:fixed;top:0;left:0;height:4px;width:0;background:linear-gradient(90deg,var(--accent),var(--gold));z-index:1000;transition:width .12s ease-out;}
+.wrap{display:grid;grid-template-columns:272px 1fr;max-width:1240px;margin:0 auto;}
+#toc{position:sticky;top:0;height:100vh;overflow-y:auto;padding:38px 22px 60px 30px;border-right:1px solid var(--line);background:rgba(246,234,233,.72);backdrop-filter:blur(2px);}
+#toc .toc-brand{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;}
+#toc .toc-title{font-family:var(--disp);font-weight:900;font-size:18px;line-height:1.45;margin-bottom:22px;}
+#toc .part-label{font-family:var(--mono);font-size:10px;letter-spacing:.13em;color:var(--gold);text-transform:uppercase;margin:20px 0 8px;display:block;}
+#toc a{display:flex;gap:9px;align-items:baseline;text-decoration:none;color:var(--ink-soft);font-size:13.5px;padding:4px 8px;border-radius:7px;line-height:1.45;transition:all .15s;margin-bottom:1px;}
+#toc a .n{font-family:var(--mono);font-size:11px;color:var(--accent);flex:0 0 auto;opacity:.8;}
+#toc a:hover{background:var(--accent-soft);color:var(--ink);}
+#toc a.active{background:var(--accent);color:#fff;}
+#toc a.active .n{color:#f3c4d2;opacity:1;}
+main{padding:0 clamp(20px,5vw,70px) 120px;min-width:0;}
+.hero{padding:78px 0 54px;border-bottom:2px solid var(--ink);position:relative;}
+.badge{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:#fff;font-family:var(--mono);font-size:11px;letter-spacing:.1em;padding:5px 12px;border-radius:30px;text-transform:uppercase;}
+.kicker{font-family:var(--mono);font-size:13px;letter-spacing:.04em;color:var(--accent-deep);margin:22px 0 14px;}
+.hero h1{font-family:var(--disp);font-weight:900;font-size:clamp(33px,5.6vw,58px);line-height:1.22;letter-spacing:.01em;}
+.hero h1 em{font-style:normal;color:var(--accent);}
+.lede{font-size:18px;color:var(--ink-soft);margin-top:24px;max-width:660px;line-height:1.95;}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:30px;}
+.chip{font-family:var(--mono);font-size:12px;background:var(--paper2);border:1px solid var(--line);padding:6px 13px;border-radius:8px;color:var(--ink-soft);}
+.chip b{color:var(--accent);font-weight:600;}
+.part{margin:74px 0 8px;padding:26px 30px;border-radius:18px;position:relative;background:linear-gradient(135deg,var(--accent-deep),var(--accent));color:#fff;overflow:hidden;}
+.part::after{content:"";position:absolute;right:-46px;top:-46px;width:190px;height:190px;border:2px solid rgba(255,255,255,.13);border-radius:50%;}
+.part::before{content:"";position:absolute;right:30px;bottom:-56px;width:120px;height:120px;border:2px solid rgba(255,255,255,.1);border-radius:50%;}
+.part .pl{font-family:var(--mono);font-size:12px;letter-spacing:.2em;opacity:.82;}
+.part h2{font-family:var(--disp);font-size:27px;font-weight:900;margin-top:6px;}
+.part p{margin-top:8px;font-size:14.5px;opacity:.92;max-width:580px;}
+section{padding:50px 0 8px;scroll-margin-top:24px;}
+.sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:8px;}
+.sec-num{font-family:var(--mono);font-size:15px;font-weight:600;color:#fff;background:var(--ink);padding:4px 10px;border-radius:8px;flex:0 0 auto;}
+h2.sec-title{font-family:var(--disp);font-size:clamp(23px,3.4vw,32px);font-weight:700;line-height:1.32;}
+h3{font-family:var(--disp);font-size:20px;font-weight:700;margin:34px 0 12px;color:var(--accent-deep);padding-left:13px;border-left:4px solid var(--gold);}
+p{margin:14px 0;}
+strong{color:var(--accent-deep);font-weight:700;}
+.mono{font-family:var(--mono);font-size:.86em;background:var(--paper2);padding:1px 6px;border-radius:5px;border:1px solid var(--line);}
+.oneliner{background:var(--ink);color:#f4eef0;border-radius:14px;padding:24px 28px;margin:26px 0;}
+.oneliner::before{content:"一言でいうと";font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--gold);display:block;margin-bottom:8px;}
+.oneliner p{margin:0;font-family:var(--disp);font-size:20px;line-height:1.7;font-weight:700;}
+.panel{border-radius:12px;padding:18px 22px;margin:22px 0;border:1px solid;border-left-width:5px;}
+.panel .pt{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;display:block;margin-bottom:6px;}
+.panel p{margin:6px 0;font-size:15px;}
+.panel.why{background:var(--accent-soft);border-color:var(--accent);}.panel.why .pt{color:var(--accent-deep);}
+.panel.point{background:var(--gold-soft);border-color:var(--gold);}.panel.point .pt{color:var(--gold);}
+.panel.tip{background:var(--ok-soft);border-color:var(--ok);}.panel.tip .pt{color:var(--ok);}
+.panel.warn{background:var(--warn-soft);border-color:var(--warn);}.panel.warn .pt{color:var(--warn);}
+.panel.danger{background:var(--danger-soft);border-color:var(--danger);}.panel.danger .pt{color:var(--danger);}
+.code{background:var(--code-bg);border-radius:12px;margin:22px 0;overflow:hidden;border:1px solid var(--code-line);box-shadow:0 8px 22px rgba(36,27,39,.22);}
+.code-top{display:flex;justify-content:space-between;align-items:center;background:var(--code-bg2);padding:9px 14px;border-bottom:1px solid var(--code-line);}
+.code-top .fn{font-family:var(--mono);font-size:12px;color:#a98fae;letter-spacing:.03em;}
+.copy{font-family:var(--mono);font-size:11px;color:#c6a9cc;background:transparent;border:1px solid var(--code-line);border-radius:6px;padding:3px 10px;cursor:pointer;transition:.15s;}
+.copy:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
+.code pre{padding:16px 18px;overflow-x:auto;}
+.code code{font-family:var(--mono);font-size:13.5px;line-height:1.8;color:#e3d6e6;white-space:pre;}
+.tok-k{color:#f08aae;font-weight:500;}
+.tok-f{color:#e6b362;}
+.tok-s{color:#a8d98f;}
+.tok-n{color:#d98fbc;}
+.tok-c{color:#7a6a7e;font-style:italic;}
+.tok-v{color:#9fc6e8;}
+.tbl{margin:24px 0;overflow-x:auto;border-radius:12px;border:1px solid var(--line);}
+table{border-collapse:collapse;width:100%;font-size:14px;background:var(--card);}
+th{background:var(--accent-deep);color:#fff;font-weight:700;text-align:left;padding:11px 14px;font-size:13px;}
+td{padding:10px 14px;border-top:1px solid var(--line);vertical-align:top;}
+tr:nth-child(even) td{background:var(--paper2);}
+.tbl.mini td:first-child{font-family:var(--mono);color:var(--accent-deep);font-weight:600;white-space:nowrap;}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:24px 0;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;border-top:4px solid var(--accent);}
+.card h4{font-family:var(--disp);font-size:17px;color:var(--accent-deep);margin-bottom:7px;}
+.card p{font-size:14px;margin:4px 0;color:var(--ink-soft);}
+.card .tag{font-family:var(--mono);font-size:11px;color:var(--gold);}
+.fig{margin:30px 0;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;text-align:center;}
+.fig svg{max-width:100%;height:auto;}
+.fig .cap{font-family:var(--mono);font-size:12px;color:var(--ink-soft);margin-top:14px;}
+#top-btn{position:fixed;right:24px;bottom:24px;width:48px;height:48px;border-radius:50%;background:var(--ink);color:#fff;border:none;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.25s;box-shadow:0 6px 18px rgba(0,0,0,.28);z-index:900;}
+#top-btn.show{opacity:1;pointer-events:auto;}
+#top-btn:hover{background:var(--accent);transform:translateY(-3px);}
+.gloss dt{font-family:var(--disp);font-weight:700;color:var(--accent-deep);font-size:16px;margin-top:16px;}
+.gloss dd{margin:3px 0 0;color:var(--ink-soft);font-size:14.5px;}
+.foot{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);font-size:13.5px;color:var(--ink-soft);}
+.foot b{color:var(--accent-deep);}
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .7s ease,transform .7s ease;}
+.reveal.in{opacity:1;transform:none;}
+@media(max-width:860px){.wrap{grid-template-columns:1fr;}#toc{display:none;}body{font-size:15.5px;}.hero{padding:54px 0 40px;}}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="wrap">
+
+<nav id="toc">
+  <div class="toc-brand">Software Design</div>
+  <div class="toc-title">ちょうぜつ<br>ソフトウェア設計入門<br>完全ガイド</div>
+
+  <span class="part-label">Part 1 — 目的の絵</span>
+  <a href="#s01"><span class="n">01</span>良い設計とは何か</a>
+  <a href="#s02"><span class="n">02</span>クリーンアーキテクチャ</a>
+
+  <span class="part-label">Part 2 — 部品と原則</span>
+  <a href="#s03"><span class="n">03</span>オブジェクト指向の本質</a>
+  <a href="#s04"><span class="n">04</span>多態性こそ主役</a>
+  <a href="#s05"><span class="n">05</span>SOLID原則</a>
+  <a href="#s06"><span class="n">06</span>パッケージ原則</a>
+
+  <span class="part-label">Part 3 — 実践</span>
+  <a href="#s07"><span class="n">07</span>依存性注入(DI)</a>
+  <a href="#s08"><span class="n">08</span>テスト駆動開発(TDD)</a>
+  <a href="#s09"><span class="n">09</span>デザインパターン</a>
+  <a href="#s10"><span class="n">10</span>アジャイルと設計</a>
+
+  <span class="part-label">Reference</span>
+  <a href="#cheat"><span class="n">★</span>チートシート</a>
+  <a href="#gloss"><span class="n">＃</span>用語集</a>
+</nav>
+
+<main>
+  <header class="hero reveal">
+    <span class="badge">◇ Clean Design</span>
+    <div class="kicker">ちょうぜつソフトウェア設計入門 ― 完全理解ガイド</div>
+    <h1>動くコードの先へ。<br><em>変更に強い</em>設計を。</h1>
+    <p class="lede">コードは「動けば終わり」ではありません。要求は必ず変わり、その変更を安全に・楽にできるかどうかが設計の良し悪しを決めます。クリーンアーキテクチャを目的の絵として掲げ、オブジェクト指向・SOLID・DI・TDD・デザインパターンを、すべて「依存をどう制御するか」という一本の糸で貫いて理解します。例はPHPです。</p>
+    <div class="chips">
+      <span class="chip">対象 <b>コードは少し書ける初学者</b></span>
+      <span class="chip">言語例 <b>PHP</b></span>
+      <span class="chip">焦点 <b>依存の制御</b></span>
+      <span class="chip">章 <b>10セクション</b></span>
+    </div>
+  </header>
+
+  <!-- PART 1 -->
+  <div class="part reveal">
+    <div class="pl">PART 1</div>
+    <h2>目的の絵を先に見る</h2>
+    <p>本書は珍しく「クリーンアーキテクチャ」という完成形から話を始めます。ゴールの絵を先に持つと、後の原則がすべて「そこへ至る手段」として腑に落ちます。</p>
+  </div>
+
+  <!-- 01 -->
+  <section id="s01" class="reveal">
+    <div class="sec-head"><span class="sec-num">01</span><h2 class="sec-title">良い設計とは何か</h2></div>
+    <div class="oneliner"><p>良い設計とは「正しく動くこと」ではなく「変更を、安全に・楽にできること」である。</p></div>
+
+    <p>初学者がまず越えるべき壁は、「動くコード＝良いコード」という思い込みです。動くだけなら設計はいりません。問題は、ソフトウェアが <strong>soft（やわらかい＝変わる前提のもの）</strong> だということです。仕様は追加され、要求は覆り、外部サービスは差し替わります。</p>
+
+    <p>つまり<strong>変更は例外ではなく前提</strong>。だから設計の目的はただ一つ ― その避けられない変更を、こわごわではなく安心して行える状態をつくることです。本書のすべての技法は、この一点に奉仕します。</p>
+
+    <div class="cards">
+      <div class="card">
+        <span class="tag">悪い兆候</span>
+        <h4>変更が怖い</h4>
+        <p>一箇所直すと、関係なさそうな別の場所が壊れる。どこに影響するか読めない。＝結合が強すぎる。</p>
+      </div>
+      <div class="card" style="border-top-color:var(--ok)">
+        <span class="tag" style="color:var(--ok)">良い兆候</span>
+        <h4>変更が局所的</h4>
+        <p>仕様変更が、関係する1〜2クラスの修正で収まる。影響範囲が予測できる。＝結合が弱く凝集が高い。</p>
+      </div>
+    </div>
+
+    <div class="panel why">
+      <span class="pt">なぜ重要か ― 結合度と凝集度</span>
+      <p>設計の良し悪しは究極的に2語で測れます。<strong>結合度（モジュール同士の依存の強さ）は低く、凝集度（1モジュール内のまとまりの強さ）は高く</strong>。以降に出てくるSOLIDもDIもパターンも、要は「結合を弱め、凝集を高める」ための具体策です。この物差しを常に手元に置いてください。</p>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section id="s02" class="reveal">
+    <div class="sec-head"><span class="sec-num">02</span><h2 class="sec-title">クリーンアーキテクチャ ― 依存は内側へ</h2></div>
+    <div class="oneliner"><p>UIもDBもフレームワークも「詳細」にすぎない。中心の業務ルールを、詳細から独立させる。</p></div>
+
+    <p>クリーンアーキテクチャ（ロバート・C・マーチンが整理）は、システムを同心円で描きます。中心ほど「アプリの本質（業務ルール）」、外側ほど「技術的な詳細（画面・DB・Web）」です。そして唯一にして絶対のルールがあります。</p>
+
+    <div class="fig">
+      <svg viewBox="0 0 460 380" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="クリーンアーキテクチャの同心円">
+        <defs><marker id="ain" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#b3325a"/></marker></defs>
+        <circle cx="230" cy="190" r="178" fill="#f7dde4" stroke="#b3325a" stroke-width="2"/>
+        <circle cx="230" cy="190" r="132" fill="#f3e6c6" stroke="#b5811f" stroke-width="2"/>
+        <circle cx="230" cy="190" r="86" fill="#dbeee0" stroke="#3c7a50" stroke-width="2"/>
+        <circle cx="230" cy="190" r="44" fill="#7d1f3d" stroke="#7d1f3d"/>
+        <g font-family="'Zen Maru Gothic',sans-serif" font-weight="700">
+          <text x="230" y="186" text-anchor="middle" font-size="13" fill="#fff">エンティティ</text>
+          <text x="230" y="202" text-anchor="middle" font-size="11" fill="#f3c4d2">業務の核</text>
+          <text x="230" y="120" text-anchor="middle" font-size="13" fill="#2c5a3a">ユースケース</text>
+          <text x="230" y="78" text-anchor="middle" font-size="13" fill="#7a5610">インターフェース変換</text>
+          <text x="230" y="42" text-anchor="middle" font-size="13" fill="#7d1f3d">UI・DB・Web・FW（詳細）</text>
+        </g>
+        <line x1="430" y1="190" x2="288" y2="190" stroke="#b3325a" stroke-width="2.5" marker-end="url(#ain)"/>
+        <text x="358" y="180" text-anchor="middle" font-family="'Source Code Pro',monospace" font-size="11" fill="#b3325a">依存は内向き</text>
+      </svg>
+      <div class="cap">図: 依存性のルール ― 矢印（依存）は常に外側から内側へ。内側は外側を知らない</div>
+    </div>
+
+    <div class="panel why">
+      <span class="pt">依存性のルール（The Dependency Rule）</span>
+      <p><strong>ソースコードの依存は、必ず外側から内側へ向ける。内側の円は、外側の円のことを一切知ってはならない。</strong> 中心の業務ルールは「どのDBか」「どの画面か」「どのフレームワークか」を知りません。だからそれらを差し替えても、中心は1行も壊れません。</p>
+    </div>
+
+    <p>ここが初学者の常識をひっくり返すポイントです。多くの人はDBやフレームワークを設計の「主役」だと思っています。本書は逆だと言います ―<strong>DBもWebも「詳細」であり、後から決めて差し替えてよい脇役</strong>。主役はアプリ固有の業務ルールです。</p>
+
+    <div class="panel point">
+      <span class="pt">要点 ― 形より向き</span>
+      <p>同心円の絵を丸暗記する必要はありません。本質は<strong>「依存の矢印の向きを内側へ制御する」</strong>こと。クリーンアーキテクチャは目的ではなく、依存をきちんと制御した<strong>結果として現れる形</strong>です。ではどうやって矢印の向きを操るのか? その道具がPart 2のオブジェクト指向と原則です。</p>
+    </div>
+  </section>
+
+  <!-- PART 2 -->
+  <div class="part reveal">
+    <div class="pl">PART 2</div>
+    <h2>部品 ― オブジェクト指向と原則</h2>
+    <p>「依存の向きを制御する」を実現する道具箱。オブジェクト指向の本当の役割と、それを言語化したSOLID原則を学びます。</p>
+  </div>
+
+  <!-- 03 -->
+  <section id="s03" class="reveal">
+    <div class="sec-head"><span class="sec-num">03</span><h2 class="sec-title">オブジェクト指向の本当の意味</h2></div>
+    <div class="oneliner"><p>オブジェクト指向は「現実を写し取る道具」ではなく「依存を制御し、変更に強くする道具」である。</p></div>
+
+    <p>「OOPとは現実世界をモデル化すること」「クラスとは“もの”」 ― この説明だけだと、なぜ便利なのかが分かりません。本書はもっと実用的に捉えます。OOPの価値は<strong>変更に強い構造をつくれること</strong>。その手段が三大要素です。</p>
+
+    <div class="cards">
+      <div class="card">
+        <span class="tag">隠す</span>
+        <h4>カプセル化</h4>
+        <p>データと振る舞いを1つにまとめ、内部実装を外から隠す。外部は「使い方」だけを知り、内部の都合に依存しない。</p>
+      </div>
+      <div class="card">
+        <span class="tag">差し替える</span>
+        <h4>多態性（ポリモーフィズム）</h4>
+        <p>同じ呼び出し方で、相手によって違う振る舞いをさせる。<strong>本書が最重視する要素。</strong></p>
+      </div>
+      <div class="card">
+        <span class="tag">注意して使う</span>
+        <h4>継承</h4>
+        <p>共通部分を親に括り出す。便利だが結合を強めやすく、濫用は禁物。多くの場合コンポジションの方が安全。</p>
+      </div>
+    </div>
+
+    <div class="panel warn">
+      <span class="pt">warn ― 継承よりコンポジション</span>
+      <p>初学者はつい「コードの共有＝継承」と考えますが、安易な継承は親子をきつく縛り、変更に弱くします。「AはBの一種か?（is-a）」が本当に成り立つ時だけ継承を使い、それ以外は<strong>必要な相手を持たせて使う（コンポジション）</strong>方が、結合が弱く柔軟です。</p>
+    </div>
+  </section>
+
+  <!-- 04 -->
+  <section id="s04" class="reveal">
+    <div class="sec-head"><span class="sec-num">04</span><h2 class="sec-title">多態性こそ主役 ― 依存を逆転させる鍵</h2></div>
+    <div class="oneliner"><p>呼び出す側を「抽象（インターフェース）」だけに依存させれば、具体的な相手を自由に差し替えられる。</p></div>
+
+    <p>クリーンアーキテクチャの「依存を内向きにする」を実際に可能にするのが、多態性です。仕組みはこうです ― 呼び出す側は<strong>インターフェース（抽象）</strong>だけを知り、その背後にどんな具体実装が来るかを知りません。だから具体は後から差し替え自由です。</p>
+
+    <div class="code">
+      <div class="code-top"><span class="fn">Notifier.php ― 抽象に依存し、具体を差し替える</span><button class="copy">copy</button></div>
+      <pre><code><span class="tok-c">// 抽象：通知の「使い方」だけを定義</span>
+<span class="tok-k">interface</span> <span class="tok-f">Notifier</span> {
+    <span class="tok-k">public function</span> <span class="tok-f">send</span>(<span class="tok-k">string</span> <span class="tok-v">$message</span>): <span class="tok-k">void</span>;
+}
+
+<span class="tok-c">// 具体①</span>
+<span class="tok-k">class</span> <span class="tok-f">EmailNotifier</span> <span class="tok-k">implements</span> <span class="tok-f">Notifier</span> {
+    <span class="tok-k">public function</span> <span class="tok-f">send</span>(<span class="tok-k">string</span> <span class="tok-v">$message</span>): <span class="tok-k">void</span> { <span class="tok-c">/* メール送信 */</span> }
+}
+<span class="tok-c">// 具体②（後から追加。呼び出し側は変えなくてよい）</span>
+<span class="tok-k">class</span> <span class="tok-f">SlackNotifier</span> <span class="tok-k">implements</span> <span class="tok-f">Notifier</span> {
+    <span class="tok-k">public function</span> <span class="tok-f">send</span>(<span class="tok-k">string</span> <span class="tok-v">$message</span>): <span class="tok-k">void</span> { <span class="tok-c">/* Slack送信 */</span> }
+}
+
+<span class="tok-c">// 呼び出し側は Notifier(抽象) しか知らない</span>
+<span class="tok-k">function</span> <span class="tok-f">notifyUser</span>(<span class="tok-f">Notifier</span> <span class="tok-v">$notifier</span>): <span class="tok-k">void</span> {
+    <span class="tok-v">$notifier</span>->send(<span class="tok-s">'ようこそ！'</span>);
+}</code></pre>
+    </div>
+
+    <div class="fig">
+      <svg viewBox="0 0 560 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="抽象への依存">
+        <defs><marker id="ap" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#b3325a"/></marker></defs>
+        <g font-family="'Zen Maru Gothic',sans-serif" font-weight="700">
+          <rect x="30" y="62" width="150" height="46" rx="10" fill="#f7dde4" stroke="#b3325a" stroke-width="2"/>
+          <text x="105" y="90" text-anchor="middle" font-size="14" fill="#7d1f3d">呼び出し側</text>
+          <rect x="240" y="62" width="160" height="46" rx="10" fill="#fdf5f3" stroke="#b5811f" stroke-width="2.5" stroke-dasharray="5 4"/>
+          <text x="320" y="84" text-anchor="middle" font-size="14" fill="#7a5610">«interface»</text>
+          <text x="320" y="100" text-anchor="middle" font-size="12" fill="#7a5610">Notifier</text>
+          <rect x="450" y="20" width="100" height="36" rx="9" fill="#dbeee0" stroke="#3c7a50" stroke-width="2"/>
+          <text x="500" y="43" text-anchor="middle" font-size="12" fill="#2c5a3a">Email</text>
+          <rect x="450" y="112" width="100" height="36" rx="9" fill="#dbeee0" stroke="#3c7a50" stroke-width="2"/>
+          <text x="500" y="135" text-anchor="middle" font-size="12" fill="#2c5a3a">Slack</text>
+          <line x1="180" y1="85" x2="238" y2="85" stroke="#b3325a" stroke-width="2.5" marker-end="url(#ap)"/>
+          <line x1="500" y1="56" x2="500" y2="62" stroke="#3c7a50" stroke-width="2" marker-end="url(#ap)"/>
+          <line x1="500" y1="112" x2="500" y2="106" stroke="#3c7a50" stroke-width="2" marker-end="url(#ap)"/>
+          <text x="207" y="62" text-anchor="middle" font-family="'Source Code Pro',monospace" font-size="10" fill="#b3325a">依存</text>
+        </g>
+      </svg>
+      <div class="cap">図: 呼び出し側は抽象だけに依存。具体実装は抽象を実装する側＝矢印が逆向きになる</div>
+    </div>
+
+    <div class="panel point">
+      <span class="pt">要点 ― これが「依存性の逆転」</span>
+      <p>普通なら「使う側 → 具体クラス」と依存しますが、間に抽象を挟むと、具体クラスの方が「抽象 ← 具体」と逆向きに依存します。<strong>この向きの反転こそ、02章で見た“依存を内向きに制御する”の正体</strong>です。次章のSOLIDの「D」で正式に名前が付きます。</p>
+    </div>
+  </section>
+
+  <!-- 05 -->
+  <section id="s05" class="reveal">
+    <div class="sec-head"><span class="sec-num">05</span><h2 class="sec-title">SOLID原則 ― 設計の5つの指針</h2></div>
+    <div class="oneliner"><p>SOLIDは「結合を弱め、変更に強くする」ための5つの合言葉。バラバラの規則ではなく、互いに支え合う。</p></div>
+
+    <div class="tbl mini">
+      <table>
+        <tr><th>頭文字</th><th>原則</th><th>一言でいうと</th></tr>
+        <tr><td>S</td><td>単一責任</td><td>クラスが変更される理由は1つだけにする</td></tr>
+        <tr><td>O</td><td>開放閉鎖</td><td>拡張には開き、修正には閉じる</td></tr>
+        <tr><td>L</td><td>リスコフ置換</td><td>派生型は基底型と入れ替えても壊れない</td></tr>
+        <tr><td>I</td><td>インターフェース分離</td><td>使わないメソッドに依存させない</td></tr>
+        <tr><td>D</td><td>依存性逆転</td><td>具体ではなく抽象に依存する</td></tr>
+      </table>
+    </div>
+
+    <h3>S ― 単一責任原則（SRP）</h3>
+    <p>「責任」とは<strong>変更理由</strong>のこと。1つのクラスが「請求書の計算」と「画面表示」と「DB保存」を抱えると、3つの別々の理由で書き換えられ、互いに巻き添えになります。理由ごとにクラスを分ければ、変更が局所化します。</p>
+
+    <h3>O ― 開放閉鎖原則（OCP）</h3>
+    <p>新機能を足すとき、<strong>既存コードを書き換えず、新しいコードを追加するだけで済む</strong>のが理想。04章の通知の例がまさにそれ ― Slack対応は新クラスを足すだけで、呼び出し側は無修正でした。多態性がOCPを実現します。</p>
+
+    <h3>L ― リスコフの置換原則（LSP）</h3>
+    <p>派生クラスは、基底クラスを期待している場所にそのまま入れても正しく動くべき、という約束。継承で親の「契約」を破る（例外を投げる、戻り値の意味を変える）と、これが崩れてバグの温床になります。03章の「継承は慎重に」の理論的裏付けです。</p>
+
+    <h3>I ― インターフェース分離原則（ISP）</h3>
+    <p>巨大なインターフェースを1つ持つより、<strong>役割ごとに小さなインターフェースに分ける</strong>。使わないメソッドにまで依存させられると、関係ない変更の影響を受けてしまうからです。</p>
+
+    <h3>D ― 依存性逆転原則（DIP）</h3>
+    <p>上位（業務ロジック）も下位（DBアクセス等）も、<strong>互いにではなく「抽象」に依存せよ</strong>。これがクリーンアーキテクチャの矢印を内向きにする理論的核心であり、次章のDIで実装手段を得ます。</p>
+
+    <div class="panel point">
+      <span class="pt">要点</span>
+      <p>5つは独立した暗記項目ではありません。<strong>SRPで責任を分け、ISPで窓口を小さく保ち、DIPで抽象に向け、OCPで拡張可能にし、LSPでその安全を保証する</strong> ― すべて「結合を弱め変更に強くする」一つの目的の別の顔です。</p>
+    </div>
+  </section>
+
+  <!-- 06 -->
+  <section id="s06" class="reveal">
+    <div class="sec-head"><span class="sec-num">06</span><h2 class="sec-title">パッケージ原則 ― クラスより大きな単位</h2></div>
+    <div class="oneliner"><p>SOLIDがクラスの話なら、パッケージ原則は「クラスの集まり（モジュール）」をどう束ね、どう依存させるかの話。</p></div>
+
+    <p>規模が大きくなると、クラス単位の整頓だけでは足りません。パッケージ（モジュール）同士の関係を整える原則があります。初学者はまず<strong>結合に関する2点</strong>だけ押さえれば十分です。</p>
+
+    <div class="cards">
+      <div class="card" style="border-top-color:var(--danger)">
+        <span class="tag" style="color:var(--danger)">ADP</span>
+        <h4>循環依存を作らない</h4>
+        <p>AがBに、BがAに依存する循環は禁物。どちらも単独でビルド・テスト・理解できなくなる。依存の矢印は一方通行に。</p>
+      </div>
+      <div class="card">
+        <span class="tag">SDP</span>
+        <h4>安定したものに依存する</h4>
+        <p>変わりにくい（多くから依存される）安定パッケージに向けて依存する。コロコロ変わるものに依存しない。</p>
+      </div>
+    </div>
+
+    <div class="panel why">
+      <span class="pt">なぜ抽象は安定なのか（SAP）</span>
+      <p>「安定したものに依存せよ」と「変化に対応せよ」は一見矛盾します。これを解くのが<strong>「安定したものほど抽象的にする」</strong>という考え方です。抽象（インターフェース）は実装の詳細を含まないので滅多に変わらない＝安定。だから安心して依存できる。DIPで抽象に依存したのは、パッケージ視点でも正解だった、というわけです。</p>
+    </div>
+  </section>
+
+  <!-- PART 3 -->
+  <div class="part reveal">
+    <div class="pl">PART 3</div>
+    <h2>実践 ― 作りながら設計する</h2>
+    <p>原則を現場で動かす具体的な技。DIで抽象依存を実装し、TDDで設計を駆動し、パターンで語彙を増やし、アジャイルで設計を育てます。</p>
+  </div>
+
+  <!-- 07 -->
+  <section id="s07" class="reveal">
+    <div class="sec-head"><span class="sec-num">07</span><h2 class="sec-title">依存性注入（DI）</h2></div>
+    <div class="oneliner"><p>必要な部品を自分で new せず、外から「渡してもらう」。これだけでDIPが実装できる。</p></div>
+
+    <p>DIP（抽象に依存せよ）を実際のコードにする最も簡単な方法がDI（依存性注入）です。コツはたった一つ ―<strong>クラスの中で具体クラスを <span class="mono">new</span> しない</strong>。代わりに、必要なものをコンストラクタで受け取ります。</p>
+
+    <div class="code">
+      <div class="code-top"><span class="fn">UserService.php ― new するか、注入されるか</span><button class="copy">copy</button></div>
+      <pre><code><span class="tok-c">// ✘ 悪い例：内部で具体クラスを new → EmailNotifierに固定され差し替え不能</span>
+<span class="tok-k">class</span> <span class="tok-f">UserService</span> {
+    <span class="tok-k">public function</span> <span class="tok-f">register</span>(): <span class="tok-k">void</span> {
+        <span class="tok-v">$notifier</span> = <span class="tok-k">new</span> <span class="tok-f">EmailNotifier</span>();   <span class="tok-c">// 具体に依存…</span>
+        <span class="tok-v">$notifier</span>->send(<span class="tok-s">'登録完了'</span>);
+    }
+}
+
+<span class="tok-c">// ✔ 良い例：抽象を外から注入 → どの通知手段でも差し替え自由＆テスト容易</span>
+<span class="tok-k">class</span> <span class="tok-f">UserService</span> {
+    <span class="tok-k">public function</span> <span class="tok-f">__construct</span>(<span class="tok-k">private</span> <span class="tok-f">Notifier</span> <span class="tok-v">$notifier</span>) {}
+
+    <span class="tok-k">public function</span> <span class="tok-f">register</span>(): <span class="tok-k">void</span> {
+        <span class="tok-v">$this</span>->notifier->send(<span class="tok-s">'登録完了'</span>);
+    }
+}</code></pre>
+    </div>
+
+    <div class="panel tip">
+      <span class="pt">tip ― DIコンテナは「組み立て係」</span>
+      <p>「では誰が具体クラスを new するの?」という疑問の答えがアプリ最外周の組み立て役（しばしば<strong>DIコンテナ</strong>）です。どの抽象にどの具体を結びつけるかを一箇所で決め、必要な場所へ注入します。業務ロジックの内側は最後まで具体を知らずに済み、矢印は内向きのまま保たれます。</p>
+    </div>
+  </section>
+
+  <!-- 08 -->
+  <section id="s08" class="reveal">
+    <div class="sec-head"><span class="sec-num">08</span><h2 class="sec-title">テスト駆動開発（TDD）</h2></div>
+    <div class="oneliner"><p>テストを先に書く。テストは品質保証だけでなく、「使いやすい設計」を引き出す設計ツールでもある。</p></div>
+
+    <p>TDDは「失敗するテストを先に書く → 通す最小限の実装をする → 整える」を小さく繰り返す進め方です。<strong>Red → Green → Refactor</strong> の三拍子で回します。</p>
+
+    <div class="fig">
+      <svg viewBox="0 0 420 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="TDDのサイクル">
+        <defs><marker id="at" markerWidth="10" markerHeight="10" refX="7" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#b3325a"/></marker></defs>
+        <g font-family="'Zen Maru Gothic',sans-serif" font-weight="700">
+          <circle cx="210" cy="50" r="40" fill="#f6ddd6" stroke="#bd3a2c" stroke-width="2.5"/>
+          <text x="210" y="48" text-anchor="middle" font-size="14" fill="#bd3a2c">Red</text>
+          <text x="210" y="64" text-anchor="middle" font-size="10" fill="#7a3028">失敗を書く</text>
+          <circle cx="330" cy="160" r="40" fill="#dbeee0" stroke="#3c7a50" stroke-width="2.5"/>
+          <text x="330" y="158" text-anchor="middle" font-size="14" fill="#2c5a3a">Green</text>
+          <text x="330" y="174" text-anchor="middle" font-size="10" fill="#2c5a3a">最小で通す</text>
+          <circle cx="90" cy="160" r="40" fill="#f3e6c6" stroke="#b5811f" stroke-width="2.5"/>
+          <text x="90" y="158" text-anchor="middle" font-size="13" fill="#7a5610">Refactor</text>
+          <text x="90" y="174" text-anchor="middle" font-size="10" fill="#7a5610">整える</text>
+          <path d="M242 72 A120 120 0 0 1 318 122" fill="none" stroke="#b3325a" stroke-width="2.5" marker-end="url(#at)"/>
+          <path d="M292 185 A120 120 0 0 1 128 185" fill="none" stroke="#b3325a" stroke-width="2.5" marker-end="url(#at)"/>
+          <path d="M102 122 A120 120 0 0 1 178 72" fill="none" stroke="#b3325a" stroke-width="2.5" marker-end="url(#at)"/>
+        </g>
+      </svg>
+      <div class="cap">図: Red（失敗するテスト）→ Green（通す）→ Refactor（整える）を小さく回す</div>
+    </div>
+
+    <div class="panel why">
+      <span class="pt">なぜ設計が良くなるのか</span>
+      <p>テストを先に書くと、まず「このクラスはどう使われるか（外から見たインターフェース）」を考えることになります。さらにテストしやすくするには、依存を外から差し替えられる必要があり、自然と<strong>DI・疎結合・小さな責任</strong>へ向かいます。つまりTDDは、これまで学んだ原則を否応なく実践させる仕組みなのです。Refactorの安全網があるから、設計を後から育てられます。</p>
+    </div>
+  </section>
+
+  <!-- 09 -->
+  <section id="s09" class="reveal">
+    <div class="sec-head"><span class="sec-num">09</span><h2 class="sec-title">デザインパターン ― 定番解と共通語彙</h2></div>
+    <div class="oneliner"><p>パターンは「よくある設計問題への定番の解き方」。暗記対象ではなく、原則が形になった実例。</p></div>
+
+    <p>デザインパターン（GoF＝Gang of Fourの23種が有名）は、先人が繰り返し出会った問題への定石集です。価値は2つ ― 車輪の再発明を避けられること、そして「ここはStrategyで」と一言で意図を伝えられる<strong>共通語彙</strong>になること。</p>
+
+    <div class="cards">
+      <div class="card"><span class="tag">振る舞い</span><h4>Strategy</h4><p>アルゴリズムをインターフェースで抜き差しする。04章の通知の例がまさにこれ。OCPの典型。</p></div>
+      <div class="card"><span class="tag">生成</span><h4>Factory</h4><p>オブジェクトの生成手順を専用の場所に隔離し、利用側を生成の詳細から切り離す。</p></div>
+      <div class="card"><span class="tag">構造</span><h4>Adapter</h4><p>既存クラスの「形が合わない」インターフェースを、欲しい形に変換して繋ぐ。</p></div>
+      <div class="card"><span class="tag">振る舞い</span><h4>Observer</h4><p>状態変化を、依存する相手へ自動で通知する。結合を弱く保ったまま連動させる。</p></div>
+    </div>
+
+    <div class="panel point">
+      <span class="pt">要点 ― パターンは結果であって目的ではない</span>
+      <p>本書のスタンスは明快です。<strong>「パターンを当てはめよう」と先に考えるのは順序が逆</strong>。SOLIDに従って素直に設計すると、結果として既知のパターンの形になっていることが多い。だから名前を覚えるより、「なぜその形が良いのか（どの原則の現れか）」を理解することが大切です。</p>
+    </div>
+  </section>
+
+  <!-- 10 -->
+  <section id="s10" class="reveal">
+    <div class="sec-head"><span class="sec-num">10</span><h2 class="sec-title">アジャイルと設計 ― 設計は育てるもの</h2></div>
+    <div class="oneliner"><p>良い設計は一度では完成しない。変更に強い設計と、反復して育てる進め方は、表裏一体である。</p></div>
+
+    <p>最後のピースは「進め方」です。要求が変わり続ける以上、最初に完璧な設計を描き切ることはできません。だから少しずつ作り、動かし、学び、また直す ― この反復（アジャイル）が前提になります。そしてここまでの全技法が、この反復を支えています。</p>
+
+    <div class="panel why">
+      <span class="pt">なぜ全部つながるのか</span>
+      <p>変更に強い設計（クリーンアーキテクチャ・SOLID）があるから、安心して<strong>リファクタリング</strong>できる。TDDのテストが安全網になるから、こわごわせず直せる。DIで疎結合だから、部品を差し替えられる。つまり<strong>「変更に強い設計」と「反復して育てる開発」は、互いを可能にし合う関係</strong>です。本書が最初にゴールの絵（02章）を見せたのは、このためでした。</p>
+    </div>
+
+    <div class="panel warn">
+      <span class="pt">warn ― 過剰設計を避ける（YAGNI）</span>
+      <p>「将来きっと必要になる」と先回りして抽象や仕組みを盛りすぎると、かえって複雑で変更しにくくなります。<strong>YAGNI（You Aren't Gonna Need It：たぶん要らない）</strong>。今必要な分だけ素直に作り、必要になった時に育てる。これも立派な設計判断です。</p>
+    </div>
+  </section>
+
+  <!-- CHEAT -->
+  <section id="cheat" class="reveal">
+    <div class="sec-head"><span class="sec-num">★</span><h2 class="sec-title">チートシート</h2></div>
+
+    <h3>SOLID 早見表</h3>
+    <div class="tbl mini">
+      <table>
+        <tr><th>原則</th><th>合言葉</th><th>主な道具</th></tr>
+        <tr><td>SRP 単一責任</td><td>変更理由は1つ</td><td>責任ごとにクラス分割</td></tr>
+        <tr><td>OCP 開放閉鎖</td><td>拡張で足す・修正しない</td><td>多態性 / Strategy</td></tr>
+        <tr><td>LSP 置換</td><td>親と入れ替えても壊れない</td><td>継承の契約を守る</td></tr>
+        <tr><td>ISP 分離</td><td>窓口は小さく</td><td>インターフェースを分ける</td></tr>
+        <tr><td>DIP 逆転</td><td>抽象に依存する</td><td>DI（注入）</td></tr>
+      </table>
+    </div>
+
+    <h3>設計の判断フロー</h3>
+    <div class="tbl mini">
+      <table>
+        <tr><th>状況・違和感</th><th>打ち手</th></tr>
+        <tr><td>変更が怖い・影響が読めない</td><td>結合を疑う → 抽象を挟む(DIP/DI)</td></tr>
+        <tr><td>1クラスが何でも屋になっている</td><td>変更理由ごとに分割(SRP)</td></tr>
+        <tr><td>機能追加のたびに既存を書き換える</td><td>多態性で拡張可能に(OCP)</td></tr>
+        <tr><td>クラス内で具体を new している</td><td>コンストラクタで注入(DI)</td></tr>
+        <tr><td>コード共有のために継承したい</td><td>まずコンポジションを検討</td></tr>
+        <tr><td>テストが書きにくい</td><td>疎結合のサイン → 依存を注入可能に</td></tr>
+        <tr><td>パッケージ間に循環依存</td><td>依存を一方通行に(ADP)</td></tr>
+        <tr><td>将来のために仕組みを盛りたい</td><td>YAGNI ― 今必要な分だけ</td></tr>
+      </table>
+    </div>
+
+    <div class="panel point">
+      <span class="pt">最重要の合言葉</span>
+      <p>すべては<strong>「結合を弱め、凝集を高め、依存の矢印を抽象（内側）へ向ける」</strong>の一点に集約される。クリーンアーキテクチャは目的でなく、その結果現れる形。</p>
+    </div>
+  </section>
+
+  <!-- GLOSSARY -->
+  <section id="gloss" class="reveal">
+    <div class="sec-head"><span class="sec-num">＃</span><h2 class="sec-title">用語集</h2></div>
+    <dl class="gloss">
+      <dt>結合度 / 凝集度</dt><dd>モジュール同士の依存の強さ（低いほど良い）/ 1モジュール内のまとまりの強さ（高いほど良い）。</dd>
+      <dt>クリーンアーキテクチャ</dt><dd>業務ルールを中心に、技術的詳細を外側へ追いやる同心円の設計。依存は内向き。</dd>
+      <dt>依存性のルール</dt><dd>ソースコードの依存は常に外→内。内側は外側を知らない。</dd>
+      <dt>カプセル化</dt><dd>データと振る舞いをまとめ、内部実装を外から隠すこと。</dd>
+      <dt>多態性（ポリモーフィズム）</dt><dd>同じ呼び出し方で、相手によって異なる振る舞いをさせる仕組み。</dd>
+      <dt>継承 / コンポジション</dt><dd>親の性質を引き継ぐ / 必要な相手を持たせて使う。多くの場合後者が安全。</dd>
+      <dt>インターフェース（抽象）</dt><dd>「使い方」だけを定めた契約。具体実装を差し替え可能にする。</dd>
+      <dt>SOLID</dt><dd>SRP/OCP/LSP/ISP/DIP の5原則。変更に強い設計の指針。</dd>
+      <dt>依存性逆転（DIP）</dt><dd>具体ではなく抽象に依存させ、依存の向きを反転させる原則。</dd>
+      <dt>依存性注入（DI）</dt><dd>必要な依存を内部でnewせず、外から渡す実装手法。DIPの実現策。</dd>
+      <dt>DIコンテナ</dt><dd>どの抽象にどの具体を結びつけるかを一元管理し、注入する仕組み。</dd>
+      <dt>パッケージ原則</dt><dd>クラス群（モジュール）の束ね方と依存関係に関する原則群。</dd>
+      <dt>循環依存</dt><dd>互いに依存し合う状態。理解・テスト・ビルドを困難にする。避ける。</dd>
+      <dt>TDD</dt><dd>テスト駆動開発。Red→Green→Refactorを小さく反復する進め方。</dd>
+      <dt>リファクタリング</dt><dd>外から見た振る舞いを変えずに、内部構造を改善すること。</dd>
+      <dt>デザインパターン</dt><dd>よくある設計問題への定番解。GoFの23種が有名。共通語彙になる。</dd>
+      <dt>Strategy</dt><dd>アルゴリズムをインターフェースで差し替え可能にするパターン。</dd>
+      <dt>アジャイル</dt><dd>小さく作り反復しながら育てる開発の進め方。変更前提の設計と表裏一体。</dd>
+      <dt>YAGNI</dt><dd>「たぶん要らない」。先回りの過剰設計を戒める考え方。</dd>
+    </dl>
+  </section>
+
+  <div class="foot reveal">
+    <p><b>このガイドについて：</b> 書籍『ちょうぜつソフトウェア設計入門 ― PHPで理解するオブジェクト指向の活用』（田中ひさてる 著）の主要テーマ ― クリーンアーキテクチャ、オブジェクト指向（カプセル化・多態性・継承）、SOLID原則、パッケージ原則、依存性注入、テスト駆動開発、デザインパターン、アジャイル ― を、コードを少し書ける初学者向けに自分の言葉で再構成した独立教材です。原書やGoF等の逐語引用は含みません。姉妹編「達人に学ぶDB設計」「達人に学ぶSQL」と対になる構成です。</p>
+    <p style="margin-top:10px"><b>注記：</b> コード例（PHP）は概念理解のため簡略化しています。言語・フレームワークの構文やDIコンテナの使い方は処理系やバージョンで異なり、仕様は将来変わり得ます。実装時は各公式ドキュメントで最新仕様をご確認ください。</p>
+  </div>
+</main>
+</div>
+
+<button id="top-btn" aria-label="トップへ戻る">↑</button>
+
+<script>
+const progress=document.getElementById('progress'),topBtn=document.getElementById('top-btn');
+function onScroll(){const h=document.documentElement,sc=h.scrollTop,max=h.scrollHeight-h.clientHeight;progress.style.width=(max>0?(sc/max*100):0)+'%';if(sc>500)topBtn.classList.add('show');else topBtn.classList.remove('show');}
+window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+topBtn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+const revObs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');revObs.unobserve(e.target);}});},{threshold:0.08});
+document.querySelectorAll('.reveal').forEach(el=>revObs.observe(el));
+const tocLinks=[...document.querySelectorAll('#toc a')];
+const sections=tocLinks.map(a=>document.querySelector(a.getAttribute('href'))).filter(Boolean);
+const linkFor=id=>tocLinks.find(a=>a.getAttribute('href')==='#'+id);
+const secObs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){tocLinks.forEach(a=>a.classList.remove('active'));const l=linkFor(e.target.id);if(l){l.classList.add('active');l.scrollIntoView({block:'nearest'});}}});},{rootMargin:'-20% 0px -70% 0px',threshold:0});
+sections.forEach(s=>secObs.observe(s));
+document.querySelectorAll('.copy').forEach(btn=>{btn.addEventListener('click',()=>{const code=btn.closest('.code').querySelector('code');navigator.clipboard.writeText(code.innerText).then(()=>{const o=btn.textContent;btn.textContent='copied ✓';setTimeout(()=>btn.textContent=o,1400);}).catch(()=>btn.textContent='error');});});
+</script>
+</body>
+</html>

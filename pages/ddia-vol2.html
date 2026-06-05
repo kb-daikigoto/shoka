@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>データ指向アプリケーションデザイン 第2巻 ― 複製と分割</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@600;700;900&family=Zen+Kaku+Gothic+Antique:wght@400;500;700&family=Red+Hat+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f141c;--bg2:#151c26;--card:#172029;--ink:#cfd6e2;--ink-soft:#8b95a6;--ink-dim:#5d6776;--line:#26303d;
+  --accent:#41b6e6;--accent-deep:#2c87b4;--accent-soft:rgba(65,182,230,.13);
+  --amber:#e0a458;--amber-soft:rgba(224,164,88,.13);
+  --ok:#5bc88a;--ok-soft:rgba(91,200,138,.13);--warn:#e0b54e;--warn-soft:rgba(224,181,78,.13);--danger:#e8736a;--danger-soft:rgba(232,115,106,.13);
+  --code-bg:#0b1017;--code-bg2:#080c12;--code-line:#1f2935;
+  --mono:'Red Hat Mono',ui-monospace,monospace;--disp:'Noto Serif JP',serif;--sans:'Zen Kaku Gothic Antique',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+body{font-family:var(--sans);color:var(--ink);background-color:var(--bg);background-image:linear-gradient(rgba(65,182,230,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(65,182,230,.035) 1px,transparent 1px);background-size:30px 30px;line-height:1.9;font-size:16px;-webkit-font-smoothing:antialiased;letter-spacing:.01em;}
+#progress{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--accent),var(--amber));z-index:1000;transition:width .12s ease-out;box-shadow:0 0 10px var(--accent);}
+.wrap{display:grid;grid-template-columns:280px 1fr;max-width:1280px;margin:0 auto;}
+#toc{position:sticky;top:0;height:100vh;overflow-y:auto;padding:36px 22px 60px 30px;border-right:1px solid var(--line);background:rgba(15,20,28,.85);backdrop-filter:blur(3px);}
+#toc .toc-brand{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:5px;}
+#toc .toc-vol{font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:.1em;margin-bottom:6px;}
+#toc .toc-title{font-family:var(--disp);font-weight:700;font-size:17px;line-height:1.5;margin-bottom:20px;color:#e8edf4;}
+#toc .part-label{font-family:var(--mono);font-size:10px;letter-spacing:.13em;color:var(--amber);text-transform:uppercase;margin:18px 0 7px;display:block;}
+#toc a{display:flex;gap:9px;align-items:baseline;text-decoration:none;color:var(--ink-soft);font-size:13px;padding:4px 8px;border-radius:7px;line-height:1.45;transition:all .15s;margin-bottom:1px;}
+#toc a .n{font-family:var(--mono);font-size:11px;color:var(--accent);flex:0 0 auto;opacity:.8;}
+#toc a:hover{background:var(--accent-soft);color:#e8edf4;}
+#toc a.active{background:var(--accent);color:#07111a;font-weight:700;}
+#toc a.active .n{color:#07111a;opacity:.9;}
+main{padding:0 clamp(20px,5vw,72px) 120px;min-width:0;}
+.hero{padding:74px 0 50px;border-bottom:1px solid var(--line);position:relative;}
+.badge{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:#07111a;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.08em;padding:5px 12px;border-radius:30px;text-transform:uppercase;}
+.kicker{font-family:var(--mono);font-size:13px;letter-spacing:.04em;color:var(--accent);margin:22px 0 14px;}
+.hero h1{font-family:var(--disp);font-weight:900;font-size:clamp(32px,5.4vw,56px);line-height:1.25;color:#eef2f8;}
+.hero h1 em{font-style:normal;color:var(--accent);}
+.lede{font-size:18px;color:var(--ink-soft);margin-top:24px;max-width:660px;line-height:2;}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:30px;}
+.chip{font-family:var(--mono);font-size:12px;background:var(--bg2);border:1px solid var(--line);padding:6px 13px;border-radius:8px;color:var(--ink-soft);}
+.chip b{color:var(--accent);font-weight:600;}
+.recap{margin:34px 0 0;background:var(--bg2);border:1px solid var(--line);border-left:4px solid var(--ink-dim);border-radius:12px;padding:16px 20px;}
+.recap .rl{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--ink-soft);text-transform:uppercase;display:block;margin-bottom:5px;}
+.recap p{margin:0;font-size:14.5px;color:var(--ink-soft);}
+.map{margin:40px 0 10px;}
+.map h3{font-family:var(--disp);font-size:18px;color:#e8edf4;border:none;padding:0;margin:0 0 14px;}
+.volgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;}
+.vol{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;position:relative;}
+.vol.done{opacity:.62;}
+.vol.cur{border-color:var(--accent);background:linear-gradient(160deg,var(--accent-soft),var(--card));}
+.vol .vn{font-family:var(--mono);font-size:11px;color:var(--amber);letter-spacing:.08em;}
+.vol.cur .vn{color:var(--accent);}
+.vol h4{font-family:var(--disp);font-size:16px;color:#e8edf4;margin:5px 0 6px;}
+.vol p{font-size:13px;color:var(--ink-soft);margin:0;}
+.vol .now{position:absolute;top:14px;right:14px;font-family:var(--mono);font-size:10px;background:var(--accent);color:#07111a;padding:2px 7px;border-radius:20px;font-weight:600;}
+.vol .ck{position:absolute;top:14px;right:14px;font-family:var(--mono);font-size:11px;color:var(--ok);}
+.part{margin:72px 0 8px;padding:26px 30px;border-radius:16px;position:relative;background:linear-gradient(135deg,#10202c,#16323f);border:1px solid var(--accent-deep);overflow:hidden;}
+.part::after{content:"";position:absolute;right:-50px;top:-50px;width:200px;height:200px;border:1px solid rgba(65,182,230,.25);border-radius:50%;}
+.part::before{content:"";position:absolute;right:20px;bottom:-60px;width:130px;height:130px;border:1px solid rgba(65,182,230,.18);border-radius:50%;}
+.part .pl{font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--accent);}
+.part h2{font-family:var(--disp);font-size:26px;font-weight:700;margin-top:6px;color:#eef2f8;}
+.part p{margin-top:8px;font-size:14.5px;color:var(--ink-soft);max-width:600px;}
+section{padding:48px 0 8px;scroll-margin-top:24px;}
+.sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:8px;}
+.sec-num{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--accent);background:var(--bg2);border:1px solid var(--accent-deep);padding:3px 10px;border-radius:7px;flex:0 0 auto;}
+h2.sec-title{font-family:var(--disp);font-size:clamp(23px,3.3vw,31px);font-weight:700;line-height:1.34;color:#eef2f8;}
+h3{font-family:var(--disp);font-size:20px;font-weight:700;margin:34px 0 12px;color:var(--accent);padding-left:13px;border-left:3px solid var(--amber);}
+p{margin:14px 0;}
+strong{color:#e8edf4;font-weight:700;}
+.mono{font-family:var(--mono);font-size:.85em;background:var(--bg2);padding:1px 6px;border-radius:5px;border:1px solid var(--line);color:var(--accent);}
+.oneliner{background:linear-gradient(135deg,#0c1622,#10202c);border:1px solid var(--accent-deep);border-radius:14px;padding:24px 28px;margin:26px 0;}
+.oneliner::before{content:"一言でいうと";font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--accent);display:block;margin-bottom:8px;}
+.oneliner p{margin:0;font-family:var(--disp);font-size:20px;line-height:1.7;font-weight:700;color:#eef2f8;}
+.panel{border-radius:12px;padding:18px 22px;margin:22px 0;border:1px solid;border-left-width:4px;background:var(--bg2);}
+.panel .pt{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;display:block;margin-bottom:6px;}
+.panel p{margin:6px 0;font-size:15px;}
+.panel.why{border-color:var(--accent);background:var(--accent-soft);}.panel.why .pt{color:var(--accent);}
+.panel.point{border-color:var(--amber);background:var(--amber-soft);}.panel.point .pt{color:var(--amber);}
+.panel.tip{border-color:var(--ok);background:var(--ok-soft);}.panel.tip .pt{color:var(--ok);}
+.panel.warn{border-color:var(--warn);background:var(--warn-soft);}.panel.warn .pt{color:var(--warn);}
+.panel.danger{border-color:var(--danger);background:var(--danger-soft);}.panel.danger .pt{color:var(--danger);}
+.code{background:var(--code-bg);border-radius:12px;margin:22px 0;overflow:hidden;border:1px solid var(--code-line);}
+.code-top{display:flex;justify-content:space-between;align-items:center;background:var(--code-bg2);padding:9px 14px;border-bottom:1px solid var(--code-line);}
+.code-top .fn{font-family:var(--mono);font-size:12px;color:var(--ink-soft);letter-spacing:.03em;}
+.copy{font-family:var(--mono);font-size:11px;color:var(--accent);background:transparent;border:1px solid var(--code-line);border-radius:6px;padding:3px 10px;cursor:pointer;transition:.15s;}
+.copy:hover{background:var(--accent);color:#07111a;border-color:var(--accent);}
+.code pre{padding:16px 18px;overflow-x:auto;}
+.code code{font-family:var(--mono);font-size:13px;line-height:1.8;color:#c6d0dd;white-space:pre;}
+.tok-k{color:#5fb6e8;font-weight:500;}.tok-f{color:#e0a458;}.tok-s{color:#8fcf96;}.tok-n{color:#e58fb0;}.tok-c{color:#566273;font-style:italic;}.tok-v{color:#c6d0dd;}
+.tbl{margin:24px 0;overflow-x:auto;border-radius:12px;border:1px solid var(--line);}
+table{border-collapse:collapse;width:100%;font-size:14px;background:var(--card);}
+th{background:#10202c;color:var(--accent);font-weight:700;text-align:left;padding:11px 14px;font-size:13px;border-bottom:1px solid var(--accent-deep);}
+td{padding:10px 14px;border-top:1px solid var(--line);vertical-align:top;color:var(--ink);}
+tr:nth-child(even) td{background:var(--bg2);}
+.tbl.mini td:first-child{font-family:var(--mono);color:var(--accent);font-weight:500;white-space:nowrap;}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:24px 0;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;border-top:3px solid var(--accent);}
+.card h4{font-family:var(--disp);font-size:16px;color:#e8edf4;margin-bottom:7px;}
+.card p{font-size:14px;margin:4px 0;color:var(--ink-soft);}
+.card .tag{font-family:var(--mono);font-size:11px;color:var(--amber);}
+.fig{margin:30px 0;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;text-align:center;}
+.fig svg{max-width:100%;height:auto;}
+.fig .cap{font-family:var(--mono);font-size:12px;color:var(--ink-soft);margin-top:14px;}
+#top-btn{position:fixed;right:24px;bottom:24px;width:48px;height:48px;border-radius:50%;background:var(--accent);color:#07111a;border:none;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.25s;box-shadow:0 6px 18px rgba(0,0,0,.4);z-index:900;}
+#top-btn.show{opacity:1;pointer-events:auto;}
+#top-btn:hover{transform:translateY(-3px);}
+.gloss dt{font-family:var(--disp);font-weight:700;color:var(--accent);font-size:16px;margin-top:16px;}
+.gloss dd{margin:3px 0 0;color:var(--ink-soft);font-size:14.5px;}
+.nextvol{margin:50px 0 0;background:linear-gradient(135deg,#10202c,#16323f);border:1px solid var(--accent-deep);border-radius:16px;padding:26px 30px;}
+.nextvol .nl{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--accent);}
+.nextvol h3{border:none;padding:0;margin:6px 0 6px;color:#eef2f8;font-size:20px;}
+.nextvol p{margin:0;font-size:14.5px;color:var(--ink-soft);}
+.foot{margin-top:60px;padding-top:30px;border-top:1px solid var(--line);font-size:13.5px;color:var(--ink-soft);}
+.foot b{color:#e8edf4;}
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .7s ease,transform .7s ease;}
+.reveal.in{opacity:1;transform:none;}
+@media(max-width:880px){.wrap{grid-template-columns:1fr;}#toc{display:none;}body{font-size:15.5px;}.hero{padding:52px 0 38px;}}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="wrap">
+
+<nav id="toc">
+  <div class="toc-brand">Data-Intensive Apps</div>
+  <div class="toc-vol">第2巻 / 全4巻</div>
+  <div class="toc-title">データ指向<br>アプリケーション<br>デザイン 完全ガイド</div>
+
+  <a href="#map"><span class="n">◈</span>シリーズ地図</a>
+  <a href="#s00"><span class="n">00</span>分散へ踏み出す</a>
+
+  <span class="part-label">A — レプリケーション</span>
+  <a href="#s01"><span class="n">01</span>3つの複製方式</a>
+  <a href="#s02"><span class="n">02</span>同期/非同期とフェイルオーバー</a>
+  <a href="#s03"><span class="n">03</span>レプリケーションラグ</a>
+  <a href="#s04"><span class="n">04</span>マルチリーダーと衝突</a>
+  <a href="#s05"><span class="n">05</span>リーダーレスとクォーラム</a>
+
+  <span class="part-label">B — パーティショニング</span>
+  <a href="#s06"><span class="n">06</span>なぜ分割するか</a>
+  <a href="#s07"><span class="n">07</span>範囲分割とハッシュ分割</a>
+  <a href="#s08"><span class="n">08</span>セカンダリインデックス</a>
+  <a href="#s09"><span class="n">09</span>リバランスとルーティング</a>
+
+  <span class="part-label">Reference</span>
+  <a href="#cheat"><span class="n">★</span>チートシート</a>
+  <a href="#gloss"><span class="n">＃</span>用語集</a>
+</nav>
+
+<main>
+  <header class="hero reveal">
+    <span class="badge">▣ Vol.2 / Distributed Data ①</span>
+    <div class="kicker">データ指向アプリケーションデザイン ― 完全理解ガイド 第2巻</div>
+    <h1>データを増やせば、<br><em>一貫性</em>という難問が現れる。</h1>
+    <p class="lede">データを複数のマシンに「複製（レプリケーション）」し「分割（パーティショニング）」すると、可用性もスケールも上がります。しかし同時に、どのコピーが正しいのか・どこに何があるのかという新しい問いが生まれます。第2巻はこのトレードオフの核心へ踏み込みます。</p>
+    <div class="chips">
+      <span class="chip">本巻 <b>第2部 / 5〜6章</b></span>
+      <span class="chip">主題 <b>複製と分割</b></span>
+      <span class="chip">難度 <b>中級〜</b></span>
+    </div>
+    <div class="recap">
+      <span class="rl">前巻のおさらい</span>
+      <p>第1巻では1つのデータシステムの土台 ― 信頼性・拡張性・保守性、データモデル、ストレージ、互換性 ― を見ました。本巻からは、それを<strong>複数マシンに広げる</strong>と何が起きるかが主題です。</p>
+    </div>
+  </header>
+
+  <!-- MAP -->
+  <div class="map reveal" id="map">
+    <h3>◈ シリーズ地図（全4巻）</h3>
+    <div class="volgrid">
+      <div class="vol done"><span class="ck">✓ 読了</span><div class="vn">第1巻 ― 土台</div><h4>Foundations</h4><p>三つの関心事／データモデル／ストレージ／エンコーディング（1〜4章）</p></div>
+      <div class="vol cur"><span class="now">今ここ</span><div class="vn">第2巻 ― 複製と分割</div><h4>Distributed Data ①</h4><p>レプリケーション／パーティショニング（5〜6章）</p></div>
+      <div class="vol"><div class="vn">第3巻 ― 分散の難所</div><h4>Distributed Data ②</h4><p>トランザクション／分散システムの問題／一貫性と合意（7〜9章）</p></div>
+      <div class="vol"><div class="vn">第4巻 ― 派生データ</div><h4>Derived Data</h4><p>バッチ処理／ストリーム処理／将来像（10〜12章）</p></div>
+    </div>
+  </div>
+
+  <!-- 00 -->
+  <section id="s00" class="reveal">
+    <div class="sec-head"><span class="sec-num">00</span><h2 class="sec-title">分散へ踏み出す ― 2つの道具</h2></div>
+    <div class="oneliner"><p>データを複数マシンに広げる手段は2つ。同じデータを複数持つ「複製」と、違うデータを別々に持つ「分割」。</p></div>
+
+    <p>1台では限界がある ― 容量も、処理能力も、そして「その1台が落ちたら終わり」という可用性も。そこで複数マシンにデータを分散させます。やり方は本質的に2つだけです。</p>
+
+    <div class="cards">
+      <div class="card"><span class="tag">replication</span><h4>レプリケーション（複製）</h4><p>同じデータのコピーを複数ノードに置く。<strong>可用性・読み取りスケール・低レイテンシ</strong>のため。</p></div>
+      <div class="card"><span class="tag">partitioning</span><h4>パーティショニング（分割）</h4><p>大きなデータを断片に割り、別々のノードに置く。<strong>1台に収まらない量と書き込み負荷</strong>をさばくため。</p></div>
+    </div>
+
+    <div class="panel point">
+      <span class="pt">要点 ― 両者は併用する</span>
+      <p>実システムは<strong>分割した各断片を、さらに複製する</strong>のが普通です。つまり「分割で広げ、複製で守る」。本巻は前半でレプリケーション、後半でパーティショニングを扱い、最後に両者の組み合わせを見ます。どちらにも共通する敵が<strong>一貫性</strong>（複数のコピー/断片の足並みをどう揃えるか）です。</p>
+    </div>
+  </section>
+
+  <!-- PART A -->
+  <div class="part reveal">
+    <div class="pl">PART A</div>
+    <h2>レプリケーション ― 同じデータを複数持つ</h2>
+    <p>コピーを増やすほど壊れにくく速くなる。ただし「どのコピーに書き、どのコピーから読むか」の設計で、一貫性の性質がまるで変わります。</p>
+  </div>
+
+  <!-- 01 -->
+  <section id="s01" class="reveal">
+    <div class="sec-head"><span class="sec-num">01</span><h2 class="sec-title">3つの複製方式</h2></div>
+    <div class="oneliner"><p>書き込みを受ける窓口が「1つ」か「複数」か「全員」か ― これがシングル/マルチ/リーダーレスの分かれ目。</p></div>
+
+    <p>レプリケーションの設計は、結局<strong>「書き込みをどのノードが受け付けるか」</strong>で決まります。最も普及しているのがシングルリーダー方式です。</p>
+
+    <div class="fig">
+      <svg viewBox="0 0 560 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="シングルリーダーレプリケーション">
+        <defs><marker id="aw" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#e0a458"/></marker>
+        <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#5bc88a"/></marker></defs>
+        <g font-family="'Red Hat Mono',monospace" font-size="11">
+          <rect x="20" y="90" width="90" height="36" rx="8" fill="#0b1017" stroke="#26303d"/><text x="65" y="113" text-anchor="middle" fill="#cfd6e2">クライアント</text>
+          <rect x="220" y="30" width="110" height="40" rx="8" fill="#10202c" stroke="#41b6e6" stroke-width="2"/><text x="275" y="48" text-anchor="middle" fill="#41b6e6" font-weight="600">リーダー</text><text x="275" y="62" text-anchor="middle" fill="#8b95a6" font-size="9">書き込みはここだけ</text>
+          <rect x="420" y="100" width="120" height="34" rx="8" fill="#0b1017" stroke="#26303d"/><text x="480" y="121" text-anchor="middle" fill="#cfd6e2">フォロワー1</text>
+          <rect x="420" y="150" width="120" height="34" rx="8" fill="#0b1017" stroke="#26303d"/><text x="480" y="171" text-anchor="middle" fill="#cfd6e2">フォロワー2</text>
+          <line x1="110" y1="100" x2="218" y2="60" stroke="#e0a458" stroke-width="2" marker-end="url(#aw)"/><text x="150" y="72" fill="#e0a458">write</text>
+          <line x1="330" y1="60" x2="418" y2="112" stroke="#e0a458" stroke-width="2" marker-end="url(#aw)"/>
+          <line x1="330" y1="62" x2="418" y2="162" stroke="#e0a458" stroke-width="2" marker-end="url(#aw)"/>
+          <text x="392" y="92" fill="#e0a458" font-size="10">複製ログ</text>
+          <line x1="420" y1="117" x2="112" y2="112" stroke="#5bc88a" stroke-width="1.6" stroke-dasharray="5 3" marker-end="url(#ar)"/>
+          <text x="250" y="135" fill="#5bc88a">read（どのノードからでも可）</text>
+        </g>
+      </svg>
+      <div class="cap">図: シングルリーダー ― 書き込みはリーダーへ集約、各フォロワーへ複製。読み取りは分散できる</div>
+    </div>
+
+    <div class="tbl">
+      <table>
+        <tr><th>方式</th><th>書き込み窓口</th><th>得意</th><th>主な弱点</th></tr>
+        <tr><td>シングルリーダー</td><td>1ノード</td><td>単純・衝突が起きない</td><td>リーダーが書き込みの単一障害点</td></tr>
+        <tr><td>マルチリーダー</td><td>複数ノード</td><td>複数拠点・オフライン編集に強い</td><td>書き込み衝突が起きる</td></tr>
+        <tr><td>リーダーレス</td><td>全ノード</td><td>一部ノード障害に強い・高可用</td><td>一貫性の保証が緩くなりがち</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section id="s02" class="reveal">
+    <div class="sec-head"><span class="sec-num">02</span><h2 class="sec-title">同期/非同期と、フェイルオーバーの罠</h2></div>
+    <div class="oneliner"><p>同期複製は安全だが遅い。非同期は速いが、リーダー故障時にデータを失いうる。これは消せないトレードオフ。</p></div>
+
+    <p>リーダーがフォロワーへ複製するとき、<strong>フォロワーの完了を待ってから</strong>クライアントに成功を返すのが同期、<strong>待たずに</strong>返すのが非同期です。</p>
+
+    <div class="tbl mini">
+      <table>
+        <tr><th>方式</th><th>長所</th><th>短所</th></tr>
+        <tr><td>同期</td><td>フォロワーに確実に届いている＝失われにくい</td><td>1台でも遅い/落ちると書き込み全体が止まる</td></tr>
+        <tr><td>非同期</td><td>速い・フォロワー障害の影響を受けにくい</td><td>未複製分はリーダー故障で消えうる</td></tr>
+      </table>
+    </div>
+    <p>現実には全フォロワーを同期にはせず、<strong>1台だけ同期・残りは非同期</strong>（準同期）のような折衷がよく使われます。</p>
+
+    <div class="panel danger">
+      <span class="pt">danger ― フェイルオーバーは危険な操作</span>
+      <p>リーダーが落ちたら、フォロワーの1台を新リーダーに昇格させます（<strong>フェイルオーバー</strong>）。だがここには罠が多い。① 非同期だと<strong>未複製の書き込みが失われる</strong>。② 故障と誤判定して<strong>リーダーが2台になる（スプリットブレイン）</strong>とデータが壊れる。③ 検知タイムアウトが短すぎると、高負荷で正常なリーダーまで切り替えて事態を悪化させる。だから自動フェイルオーバーは慎重に設計します。</p>
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section id="s03" class="reveal">
+    <div class="sec-head"><span class="sec-num">03</span><h2 class="sec-title">レプリケーションラグと読み取り一貫性</h2></div>
+    <div class="oneliner"><p>非同期複製では、フォロワーが少し遅れる（ラグ）。この遅れが、利用者に奇妙な現象を見せる。</p></div>
+
+    <p>非同期だとフォロワーはリーダーより少し古い状態になります（<strong>レプリケーションラグ</strong>）。普段は無害ですが、ラグが大きいと利用者が混乱します。本書は防ぐべき3つの保証を挙げます。</p>
+
+    <div class="cards">
+      <div class="card"><span class="tag">read-your-writes</span><h4>自分の書き込みを読む</h4><p>投稿直後に自分のページを開いたら消えている ― を防ぐ。自分が書いた内容は必ず自分には見える保証。</p></div>
+      <div class="card"><span class="tag">monotonic reads</span><h4>モノトニック読み取り</h4><p>更新後に再読み込みしたら古い値に戻った ― という「時間が巻き戻る」現象を防ぐ。</p></div>
+      <div class="card"><span class="tag">consistent prefix</span><h4>一貫性のあるプレフィックス</h4><p>「答え」が「質問」より先に見える ― という因果順序の逆転を防ぐ。</p></div>
+    </div>
+
+    <div class="panel why">
+      <span class="pt">なぜ意識するのか</span>
+      <p>これらは「強い一貫性」より弱い保証ですが、利用者の体験を守るのに必要十分なことが多い。たとえば自分の書き込みだけはリーダーから読む、同じ利用者は常に同じフォロワーへ振る、といった工夫で実現します。<strong>完全な一貫性を諦める代わりに、必要な保証だけを選んで買う</strong> ― これも立派なトレードオフ設計です。強い一貫性そのものは第3巻で扱います。</p>
+    </div>
+  </section>
+
+  <!-- 04 -->
+  <section id="s04" class="reveal">
+    <div class="sec-head"><span class="sec-num">04</span><h2 class="sec-title">マルチリーダーと書き込み衝突</h2></div>
+    <div class="oneliner"><p>窓口を増やすと書き込みは速く・止まりにくくなるが、同じデータを同時に別々に書く「衝突」が避けられない。</p></div>
+
+    <p>複数拠点（データセンター）にまたがるシステムや、オフラインでも編集できるアプリ（カレンダー、共同編集）では、各拠点/端末がそれぞれリーダーになる<strong>マルチリーダー</strong>が有効です。だが代償として、別々のリーダーが<strong>同じ項目を同時に違う値に更新する衝突</strong>が起こります。</p>
+
+    <div class="panel warn">
+      <span class="pt">warn ― 衝突解決の難しさ</span>
+      <p>代表的な解決策はいくつもあります。<strong>LWW（Last Write Wins：最後の書き込みが勝つ）</strong>は単純ですが、敗者の更新を<strong>黙って捨てる</strong>ため危険。しかも「最後」を決めるには時計が要りますが、分散環境の時計はずれます（第3巻の核心）。他にも値をマージする、アプリ側で解決する、データ構造を工夫して必ず収束させる（CRDT）などがあります。万能解はなく、<strong>衝突しない設計（同じデータは同じリーダーへ寄せる）が一番楽</strong>です。</p>
+    </div>
+  </section>
+
+  <!-- 05 -->
+  <section id="s05" class="reveal">
+    <div class="sec-head"><span class="sec-num">05</span><h2 class="sec-title">リーダーレスとクォーラム</h2></div>
+    <div class="oneliner"><p>「書き込み数 + 読み取り数 > 全コピー数」なら、読み書きの集合が必ず重なり、最新値を1つは読める。</p></div>
+
+    <p>リーダーを置かず、クライアントが複数のレプリカへ直接読み書きするのが<strong>リーダーレス</strong>方式です。鍵は<strong>クォーラム（定足数）</strong>。全レプリカ数を <span class="mono">n</span>、書き込みで応答を待つ数を <span class="mono">w</span>、読み取りで問い合わせる数を <span class="mono">r</span> とすると、<strong><span class="mono">w + r &gt; n</span></strong> を満たせば、読み取り集合と書き込み集合が必ず1台以上で重なり、最新値を含んだ応答を得られます。</p>
+
+    <div class="fig">
+      <svg viewBox="0 0 520 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="クォーラムの図 n=3 w=2 r=2">
+        <g font-family="'Red Hat Mono',monospace" font-size="12">
+          <text x="130" y="24" text-anchor="middle" fill="#e0a458" font-size="13">書き込み w=2</text>
+          <circle cx="80" cy="80" r="26" fill="rgba(224,164,88,.25)" stroke="#e0a458" stroke-width="2"/><text x="80" y="85" text-anchor="middle" fill="#e8edf4">A</text>
+          <circle cx="180" cy="80" r="26" fill="rgba(224,164,88,.25)" stroke="#e0a458" stroke-width="2"/><text x="180" y="85" text-anchor="middle" fill="#e8edf4">B</text>
+          <circle cx="280" cy="80" r="26" fill="#0b1017" stroke="#26303d" stroke-width="2"/><text x="280" y="85" text-anchor="middle" fill="#8b95a6">C</text>
+          <text x="390" y="24" text-anchor="middle" fill="#5bc88a" font-size="13">読み取り r=2</text>
+          <circle cx="180" cy="80" r="34" fill="none" stroke="#5bc88a" stroke-width="2" stroke-dasharray="5 3"/>
+          <circle cx="280" cy="80" r="34" fill="none" stroke="#5bc88a" stroke-width="2" stroke-dasharray="5 3"/>
+          <text x="180" y="150" text-anchor="middle" fill="#41b6e6">Bで重なる → 最新を必ず読める</text>
+          <text x="260" y="180" text-anchor="middle" fill="#cfd6e2" font-family="'Red Hat Mono',monospace">n=3, w=2, r=2  →  w+r=4 &gt; 3 ✓</text>
+        </g>
+      </svg>
+      <div class="cap">図: w+r&gt;n なら書き込み集合と読み取り集合が必ず重なる（ここではB）</div>
+    </div>
+
+    <p>古いレプリカは放置されず、読み取り時に新しい値で直す<strong>リードリペア</strong>や、背後で差分を埋める<strong>アンチエントロピー</strong>で徐々に揃えられます。</p>
+
+    <div class="panel warn">
+      <span class="pt">warn ― クォーラムは万能ではない</span>
+      <p>ネットワーク分断時に応答可能なノードだけで受け付ける<strong>緩いクォーラム（sloppy quorum）</strong>を使うと、可用性は上がりますが <span class="mono">w+r&gt;n</span> の保証は崩れ、古い値を読む可能性が出ます。「どこまでの一貫性と引き換えに、どこまでの可用性を取るか」 ― ここでもトレードオフがつきまといます。可用性と一貫性の根本的な綱引きは第3巻で正面から扱います。</p>
+    </div>
+  </section>
+
+  <!-- PART B -->
+  <div class="part reveal">
+    <div class="pl">PART B</div>
+    <h2>パーティショニング ― 違うデータを分けて持つ</h2>
+    <p>1台に収まらない量と負荷を、複数ノードへ分散させる技術（シャーディングとも呼ぶ）。鍵は「どう分けるか」と「偏りをどう避けるか」です。</p>
+  </div>
+
+  <!-- 06 -->
+  <section id="s06" class="reveal">
+    <div class="sec-head"><span class="sec-num">06</span><h2 class="sec-title">なぜ分割するのか</h2></div>
+    <div class="oneliner"><p>分割の目的はスケーラビリティ。データと負荷を多数のノードに散らし、台数に応じて性能を伸ばす。</p></div>
+
+    <p>パーティショニング（シャーディング）は、データを<strong>パーティション（断片）</strong>に分け、各ノードに割り当てます。理想は<strong>データ量も負荷も均等に散る</strong>こと。そして実システムでは、各パーティションをさらにレプリケーションします ― つまり前半の複製と組み合わせます。</p>
+
+    <div class="panel point">
+      <span class="pt">要点 ― 分割 × 複製</span>
+      <p>「パーティションごとに1人のリーダーと複数のフォロワーがいる」構成が典型です。<strong>分割でスケールを稼ぎ、各断片を複製で守る</strong>。本巻前半と後半は、こうして1つの絵に統合されます。あとは「どの基準で分けるか」が問題です。</p>
+    </div>
+  </section>
+
+  <!-- 07 -->
+  <section id="s07" class="reveal">
+    <div class="sec-head"><span class="sec-num">07</span><h2 class="sec-title">範囲分割 と ハッシュ分割</h2></div>
+    <div class="oneliner"><p>キーの範囲で区切ると範囲検索が速いが偏りやすい。ハッシュで散らすと均等だが範囲検索を失う。</p></div>
+
+    <div class="fig">
+      <svg viewBox="0 0 560 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="範囲分割とハッシュ分割">
+        <g font-family="'Red Hat Mono',monospace" font-size="11">
+          <text x="140" y="22" text-anchor="middle" font-family="'Noto Serif JP',serif" font-weight="700" font-size="14" fill="#41b6e6">キー範囲で分割</text>
+          <rect x="30" y="40" width="60" height="40" rx="6" fill="#10202c" stroke="#41b6e6"/><text x="60" y="65" text-anchor="middle" fill="#cfd6e2">A–F</text>
+          <rect x="100" y="40" width="60" height="40" rx="6" fill="#10202c" stroke="#41b6e6"/><text x="130" y="65" text-anchor="middle" fill="#cfd6e2">G–M</text>
+          <rect x="170" y="40" width="60" height="40" rx="6" fill="#10202c" stroke="#41b6e6"/><text x="200" y="65" text-anchor="middle" fill="#cfd6e2">N–S</text>
+          <rect x="240" y="40" width="60" height="40" rx="6" fill="#10202c" stroke="#41b6e6"/><text x="270" y="65" text-anchor="middle" fill="#cfd6e2">T–Z</text>
+          <text x="165" y="100" text-anchor="middle" fill="#5bc88a" font-size="10">○ 範囲検索が速い</text>
+          <text x="165" y="116" text-anchor="middle" fill="#e8736a" font-size="10">✘ 偏り(ホットスポット)が出やすい</text>
+
+          <text x="420" y="22" text-anchor="middle" font-family="'Noto Serif JP',serif" font-weight="700" font-size="14" fill="#41b6e6">ハッシュで分割</text>
+          <text x="350" y="55" fill="#8b95a6">key → hash() →</text>
+          <rect x="350" y="68" width="44" height="36" rx="6" fill="#10202c" stroke="#e0a458"/><text x="372" y="91" text-anchor="middle" fill="#cfd6e2">P0</text>
+          <rect x="400" y="68" width="44" height="36" rx="6" fill="#10202c" stroke="#e0a458"/><text x="422" y="91" text-anchor="middle" fill="#cfd6e2">P1</text>
+          <rect x="450" y="68" width="44" height="36" rx="6" fill="#10202c" stroke="#e0a458"/><text x="472" y="91" text-anchor="middle" fill="#cfd6e2">P2</text>
+          <rect x="500" y="68" width="44" height="36" rx="6" fill="#10202c" stroke="#e0a458"/><text x="522" y="91" text-anchor="middle" fill="#cfd6e2">P3</text>
+          <text x="447" y="124" text-anchor="middle" fill="#5bc88a" font-size="10">○ 均等に散る</text>
+          <text x="447" y="140" text-anchor="middle" fill="#e8736a" font-size="10">✘ 範囲検索が苦手に</text>
+        </g>
+      </svg>
+      <div class="cap">図: 範囲分割は順序を保つ／ハッシュ分割は均等に散らす。それぞれ長所と短所が裏返し</div>
+    </div>
+
+    <div class="panel danger">
+      <span class="pt">danger ― ホットスポット</span>
+      <p>負荷が特定パーティションに集中する状態が<strong>ホットスポット</strong>です。たとえば著名人のユーザーIDに「いいね」が殺到すると、そのキーを持つ1パーティションだけが過負荷に。ハッシュ分割でも、単一の人気キーへの集中は防げません。緩和策として<strong>人気キーに乱数の接尾辞を付けて複数パーティションに散らす</strong>といった手がありますが、読み取り時に集約が必要になり複雑化します。ここにもトレードオフ。</p>
+    </div>
+  </section>
+
+  <!-- 08 -->
+  <section id="s08" class="reveal">
+    <div class="sec-head"><span class="sec-num">08</span><h2 class="sec-title">セカンダリインデックスの分割</h2></div>
+    <div class="oneliner"><p>主キー以外で検索する索引を分割する方法は2つ。「書きが楽だが読みで全台に聞く」か「読みが楽だが書きで複数台を触る」か。</p></div>
+
+    <p>主キーで分けたデータを、別の属性（例: 色、ブランド）でも検索したい ― そのための<strong>セカンダリインデックス</strong>を、どう分割するか。方法は2つで、ちょうど鏡像の関係です。</p>
+
+    <div class="tbl">
+      <table>
+        <tr><th>方式</th><th>索引の置き方</th><th>書き込み</th><th>読み取り</th></tr>
+        <tr><td>ローカル索引<br>（ドキュメント単位）</td><td>各パーティション内に自分の分の索引を持つ</td><td>○ 自分の中だけ更新（安い）</td><td>✘ 全パーティションに問い合わせ（scatter/gather）</td></tr>
+        <tr><td>グローバル索引<br>（語単位）</td><td>索引自体を語(term)で分割し別配置</td><td>✘ 複数パーティションを更新（しばしば非同期）</td><td>○ 1パーティションに聞けば済む</td></tr>
+      </table>
+    </div>
+
+    <div class="panel point">
+      <span class="pt">要点</span>
+      <p>これは第1巻のインデックス論（読みを速くすると書きが重くなる）の、分散版です。<strong>書き込みの軽さを取るか、読み取りの速さを取るか</strong>。アプリの読み書き比に合わせて選びます。</p>
+    </div>
+  </section>
+
+  <!-- 09 -->
+  <section id="s09" class="reveal">
+    <div class="sec-head"><span class="sec-num">09</span><h2 class="sec-title">リバランシングとリクエストルーティング</h2></div>
+    <div class="oneliner"><p>ノードを増減してもデータ移動を最小に。そして「どのキーがどのノードか」を客が知る仕組みが要る。</p></div>
+
+    <h3>リバランシング ― なぜ「mod N」が悪手か</h3>
+    <p>ノードが増減したとき、パーティションの再配置（<strong>リバランシング</strong>）が必要です。単純に <span class="mono">hash(key) mod ノード数</span> で割り当てると、ノード数が変わるたびに<strong>ほぼ全データが移動</strong>してしまい最悪です。実用的な戦略はこちら。</p>
+
+    <div class="cards">
+      <div class="card"><span class="tag">fixed</span><h4>固定数パーティション</h4><p>ノードよりずっと多い数のパーティションを先に作り、ノード増減時はパーティション単位でまるごと移す。単純で扱いやすい。</p></div>
+      <div class="card"><span class="tag">dynamic</span><h4>動的パーティション</h4><p>データ量に応じてパーティションを分割・統合（Bツリーの分割に似る）。データの偏りに自動追従。</p></div>
+      <div class="card"><span class="tag">per-node</span><h4>ノード比例</h4><p>ノードあたりのパーティション数を固定。台数を増やすほど各パーティションは小さくなる。</p></div>
+    </div>
+
+    <h3>リクエストルーティング ― どこに聞けばいい?</h3>
+    <p>キーがどのノードにあるかを、リクエストの送り手が知る必要があります。アプローチは3つ。</p>
+
+    <div class="fig">
+      <svg viewBox="0 0 560 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="リクエストルーティングの3方式">
+        <defs><marker id="rt" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#41b6e6"/></marker></defs>
+        <g font-family="'Red Hat Mono',monospace" font-size="10">
+          <text x="93" y="20" text-anchor="middle" fill="#e0a458" font-size="11">①どのノードでも受け</text>
+          <rect x="40" y="34" width="50" height="24" rx="5" fill="#0b1017" stroke="#26303d"/><text x="65" y="50" text-anchor="middle" fill="#cfd6e2">client</text>
+          <rect x="40" y="78" width="50" height="24" rx="5" fill="#10202c" stroke="#41b6e6"/><text x="65" y="94" text-anchor="middle" fill="#cfd6e2">node</text>
+          <rect x="110" y="78" width="50" height="24" rx="5" fill="#10202c" stroke="#41b6e6"/><text x="135" y="94" text-anchor="middle" fill="#cfd6e2">正node</text>
+          <line x1="65" y1="58" x2="65" y2="76" stroke="#41b6e6" marker-end="url(#rt)"/>
+          <line x1="90" y1="90" x2="108" y2="90" stroke="#41b6e6" marker-end="url(#rt)"/><text x="80" y="120" fill="#8b95a6">受けた所が転送</text>
+
+          <text x="280" y="20" text-anchor="middle" fill="#e0a458" font-size="11">②ルーティング層</text>
+          <rect x="255" y="34" width="50" height="24" rx="5" fill="#0b1017" stroke="#26303d"/><text x="280" y="50" text-anchor="middle" fill="#cfd6e2">client</text>
+          <rect x="245" y="78" width="70" height="24" rx="5" fill="#10202c" stroke="#e0a458"/><text x="280" y="94" text-anchor="middle" fill="#e0a458">router</text>
+          <rect x="245" y="120" width="70" height="24" rx="5" fill="#10202c" stroke="#41b6e6"/><text x="280" y="136" text-anchor="middle" fill="#cfd6e2">正node</text>
+          <line x1="280" y1="58" x2="280" y2="76" stroke="#41b6e6" marker-end="url(#rt)"/>
+          <line x1="280" y1="102" x2="280" y2="118" stroke="#41b6e6" marker-end="url(#rt)"/>
+
+          <text x="470" y="20" text-anchor="middle" fill="#e0a458" font-size="11">③客が知っている</text>
+          <rect x="445" y="34" width="50" height="24" rx="5" fill="#0b1017" stroke="#41b6e6"/><text x="470" y="50" text-anchor="middle" fill="#cfd6e2">client</text>
+          <rect x="445" y="100" width="50" height="24" rx="5" fill="#10202c" stroke="#41b6e6"/><text x="470" y="116" text-anchor="middle" fill="#cfd6e2">正node</text>
+          <line x1="470" y1="58" x2="470" y2="98" stroke="#41b6e6" marker-end="url(#rt)"/><text x="500" y="82" fill="#8b95a6">直行</text>
+        </g>
+      </svg>
+      <div class="cap">図: ルーティングの3方式。多くは配置情報を別の調整サービス（例: ZooKeeper）で一元管理する</div>
+    </div>
+
+    <div class="panel point">
+      <span class="pt">第3巻への橋</span>
+      <p>「どのノードが生きていて、どのパーティションを持つか」というクラスタの合意は、実は<strong>分散合意</strong>という難問そのものです（しばしば ZooKeeper のような調整サービスに委ねます）。複製・分割を支える土台にある「複数ノードでどう真実を1つに合意するか」 ― 第3巻はこの最難関に挑みます。</p>
+    </div>
+  </section>
+
+  <!-- CHEAT -->
+  <section id="cheat" class="reveal">
+    <div class="sec-head"><span class="sec-num">★</span><h2 class="sec-title">チートシート（第2巻）</h2></div>
+
+    <h3>レプリケーション方式</h3>
+    <div class="tbl mini">
+      <table>
+        <tr><th>方式</th><th>覚え方</th></tr>
+        <tr><td>シングルリーダー</td><td>書込は1台。単純・衝突なし・リーダーが要</td></tr>
+        <tr><td>マルチリーダー</td><td>複数拠点/オフラインに強いが衝突解決が要</td></tr>
+        <tr><td>リーダーレス</td><td>全台で受け、クォーラム w+r&gt;n で一貫性</td></tr>
+      </table>
+    </div>
+
+    <h3>判断の早見</h3>
+    <div class="tbl mini">
+      <table>
+        <tr><th>状況・要件</th><th>指針</th></tr>
+        <tr><td>書込を失いたくない</td><td>同期(準同期)複製。ただし遅延と引き換え</td></tr>
+        <tr><td>投稿直後に自分の更新を見せたい</td><td>read-your-writes（自分はリーダーから読む）</td></tr>
+        <tr><td>複数データセンターで書きたい</td><td>マルチリーダー＋衝突解決方針を決める</td></tr>
+        <tr><td>一部ノード障害でも書き続けたい</td><td>リーダーレス＋クォーラム</td></tr>
+        <tr><td>範囲検索が多い</td><td>キー範囲分割（偏りに注意）</td></tr>
+        <tr><td>均等な負荷分散が最優先</td><td>ハッシュ分割（範囲検索は犠牲）</td></tr>
+        <tr><td>人気キーへの集中</td><td>キーに乱数接尾辞で分散（読みは集約）</td></tr>
+        <tr><td>ノード増減での移動を抑えたい</td><td>mod N を避け、固定数 or 動的パーティション</td></tr>
+      </table>
+    </div>
+    <div class="panel point">
+      <span class="pt">本巻の核心</span>
+      <p><strong>分割でスケールを稼ぎ、複製で守る。だが両者は必ず「一貫性」という代償を連れてくる。</strong></p>
+    </div>
+  </section>
+
+  <!-- GLOSSARY -->
+  <section id="gloss" class="reveal">
+    <div class="sec-head"><span class="sec-num">＃</span><h2 class="sec-title">用語集（第2巻）</h2></div>
+    <dl class="gloss">
+      <dt>レプリケーション</dt><dd>同じデータの複製を複数ノードに保持すること。</dd>
+      <dt>パーティショニング / シャーディング</dt><dd>データを断片に分割し、別々のノードに割り当てること。</dd>
+      <dt>シングルリーダー</dt><dd>書き込みを1ノード(リーダー)に集約し、フォロワーへ複製する方式。</dd>
+      <dt>マルチリーダー</dt><dd>複数ノードが書き込みを受け付ける方式。衝突が起こりうる。</dd>
+      <dt>リーダーレス</dt><dd>全ノードが書き込みを受け、クォーラムで一貫性を担保する方式。</dd>
+      <dt>同期 / 非同期複製</dt><dd>フォロワーの完了を待って返す / 待たずに返す。安全性と速度のトレードオフ。</dd>
+      <dt>フェイルオーバー</dt><dd>リーダー故障時にフォロワーを新リーダーへ昇格させること。</dd>
+      <dt>スプリットブレイン</dt><dd>リーダーが同時に2台存在してしまう危険な状態。</dd>
+      <dt>レプリケーションラグ</dt><dd>フォロワーがリーダーより遅れている度合い。</dd>
+      <dt>read-your-writes</dt><dd>自分の書き込みは必ず自分には見える、という保証。</dd>
+      <dt>モノトニック読み取り</dt><dd>一度見た新しい値より古い値に戻らない保証（時間の逆行防止）。</dd>
+      <dt>一貫性のあるプレフィックス読み取り</dt><dd>因果的に順序づく書き込みを正しい順で見る保証。</dd>
+      <dt>書き込み衝突</dt><dd>複数リーダーが同じ項目を同時に異なる値に更新すること。</dd>
+      <dt>LWW（Last Write Wins）</dt><dd>最後の書き込みを採用する衝突解決。単純だが更新を失いうる。</dd>
+      <dt>クォーラム</dt><dd>定足数。w+r&gt;n を満たすと読み書き集合が重なり最新を読める。</dd>
+      <dt>リードリペア / アンチエントロピー</dt><dd>読み取り時に古い複製を直す / 背後で差分を埋め合わせる仕組み。</dd>
+      <dt>ホットスポット</dt><dd>負荷が特定パーティションに偏って集中する状態。</dd>
+      <dt>ローカル / グローバル索引</dt><dd>各パーティション内に持つ索引 / 語単位で分割した索引。読み書きの楽さが裏返し。</dd>
+      <dt>リバランシング</dt><dd>ノード増減に応じてパーティションを再配置すること。</dd>
+      <dt>リクエストルーティング</dt><dd>あるキーがどのノードにあるかを解決し、要求を届ける仕組み。</dd>
+    </dl>
+  </section>
+
+  <!-- NEXT -->
+  <div class="nextvol reveal">
+    <div class="nl">NEXT — 第3巻</div>
+    <h3>分散の難所：トランザクション・障害・合意</h3>
+    <p>本巻で繰り返し顔を出した「一貫性」と「時計のずれ」。第3巻はトランザクションの分離レベル、分散システム特有の故障（不確かなネットワークと時計）、そして複数ノードで1つの真実に合意する方法へ、本シリーズの最難関に踏み込みます。</p>
+  </div>
+
+  <div class="foot reveal">
+    <p><b>このガイドについて：</b> 書籍『データ指向アプリケーションデザイン』（Martin Kleppmann 著、原題 <em>Designing Data-Intensive Applications</em>）の主要テーマを、コードを少し書ける初学者〜中級者向けに自分の言葉で再構成した独立教材です。原書の逐語引用は含みません。本巻は全4巻シリーズの第2巻（原書 第2部・5〜6章に対応）。</p>
+    <p style="margin-top:10px"><b>注記：</b> 図は概念理解のため簡略化しています。各データシステムの複製・分割の実装や保証は製品やバージョンで異なり、仕様は将来変わり得ます。導入時は各公式ドキュメントで最新仕様をご確認のうえ、ワークロードでの実測を推奨します。</p>
+  </div>
+</main>
+</div>
+
+<button id="top-btn" aria-label="トップへ戻る">↑</button>
+
+<script>
+const progress=document.getElementById('progress'),topBtn=document.getElementById('top-btn');
+function onScroll(){const h=document.documentElement,sc=h.scrollTop,max=h.scrollHeight-h.clientHeight;progress.style.width=(max>0?(sc/max*100):0)+'%';if(sc>500)topBtn.classList.add('show');else topBtn.classList.remove('show');}
+window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+topBtn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+const revObs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');revObs.unobserve(e.target);}});},{threshold:0.08});
+document.querySelectorAll('.reveal').forEach(el=>revObs.observe(el));
+const tocLinks=[...document.querySelectorAll('#toc a')];
+const sections=tocLinks.map(a=>document.querySelector(a.getAttribute('href'))).filter(Boolean);
+const linkFor=id=>tocLinks.find(a=>a.getAttribute('href')==='#'+id);
+const secObs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){tocLinks.forEach(a=>a.classList.remove('active'));const l=linkFor(e.target.id);if(l){l.classList.add('active');l.scrollIntoView({block:'nearest'});}}});},{rootMargin:'-18% 0px -72% 0px',threshold:0});
+sections.forEach(s=>secObs.observe(s));
+document.querySelectorAll('.copy').forEach(btn=>{btn.addEventListener('click',()=>{const code=btn.closest('.code').querySelector('code');navigator.clipboard.writeText(code.innerText).then(()=>{const o=btn.textContent;btn.textContent='copied ✓';setTimeout(()=>btn.textContent=o,1400);}).catch(()=>btn.textContent='error');});});
+</script>
+</body>
+</html>

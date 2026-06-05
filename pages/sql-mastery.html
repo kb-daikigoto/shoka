@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>達人に学ぶSQL ― 完全理解ガイド</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@600;700;900&family=Murecho:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#e9ebf4;
+  --paper2:#dcdfee;
+  --card:#f6f7fc;
+  --ink:#1a1d2c;
+  --ink-soft:#474c63;
+  --line:#c6cae0;
+  --accent:#3a44a0;        /* indigo */
+  --accent-deep:#212a6b;
+  --accent-soft:#e1e3f3;
+  --coral:#d2563b;         /* secondary */
+  --coral-soft:#f6e0d8;
+  --danger:#bd3a2c;
+  --danger-soft:#f6ddd6;
+  --warn:#a9790f;
+  --warn-soft:#f6ecca;
+  --ok:#2c7a58;
+  --ok-soft:#dbeee4;
+  --code-bg:#1a2038;
+  --code-bg2:#141930;
+  --code-line:#2c3354;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --serif:'Zen Old Mincho',serif;
+  --sans:'Murecho',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+body{
+  font-family:var(--sans);color:var(--ink);background-color:var(--paper);
+  background-image:radial-gradient(rgba(58,68,160,.10) 1px,transparent 1.4px);
+  background-size:22px 22px;
+  line-height:1.85;font-size:16px;-webkit-font-smoothing:antialiased;letter-spacing:.01em;
+}
+#progress{position:fixed;top:0;left:0;height:4px;width:0;
+  background:linear-gradient(90deg,var(--accent),var(--coral));z-index:1000;transition:width .12s ease-out;}
+.wrap{display:grid;grid-template-columns:272px 1fr;max-width:1240px;margin:0 auto;}
+/* TOC */
+#toc{position:sticky;top:0;height:100vh;overflow-y:auto;padding:38px 22px 60px 30px;
+  border-right:1px solid var(--line);background:rgba(233,235,244,.7);backdrop-filter:blur(2px);}
+#toc .toc-brand{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;}
+#toc .toc-title{font-family:var(--serif);font-weight:900;font-size:18px;line-height:1.4;margin-bottom:22px;color:var(--ink);}
+#toc .part-label{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--coral);text-transform:uppercase;margin:20px 0 8px;display:block;}
+#toc a{display:flex;gap:9px;align-items:baseline;text-decoration:none;color:var(--ink-soft);font-size:13.5px;padding:4px 8px;border-radius:7px;line-height:1.45;transition:all .15s;margin-bottom:1px;}
+#toc a .n{font-family:var(--mono);font-size:11px;color:var(--accent);flex:0 0 auto;opacity:.8;}
+#toc a:hover{background:var(--accent-soft);color:var(--ink);}
+#toc a.active{background:var(--accent);color:#fff;}
+#toc a.active .n{color:#c3c8f4;opacity:1;}
+main{padding:0 clamp(20px,5vw,70px) 120px;min-width:0;}
+/* hero */
+.hero{padding:78px 0 54px;border-bottom:2px solid var(--ink);position:relative;}
+.badge{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:#fff;font-family:var(--mono);font-size:11px;letter-spacing:.12em;padding:5px 12px;border-radius:30px;text-transform:uppercase;}
+.kicker{font-family:var(--mono);font-size:13px;letter-spacing:.05em;color:var(--accent-deep);margin:22px 0 14px;}
+.hero h1{font-family:var(--serif);font-weight:900;font-size:clamp(34px,6vw,60px);line-height:1.18;letter-spacing:.01em;}
+.hero h1 em{font-style:normal;color:var(--coral);}
+.lede{font-size:18px;color:var(--ink-soft);margin-top:24px;max-width:650px;line-height:1.95;}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:30px;}
+.chip{font-family:var(--mono);font-size:12px;background:var(--paper2);border:1px solid var(--line);padding:6px 13px;border-radius:8px;color:var(--ink-soft);}
+.chip b{color:var(--accent);font-weight:600;}
+/* part */
+.part{margin:74px 0 8px;padding:26px 30px;border-radius:16px;position:relative;background:linear-gradient(135deg,var(--accent-deep),var(--accent));color:#fff;overflow:hidden;}
+.part::after{content:"";position:absolute;right:-46px;top:-46px;width:190px;height:190px;border:2px solid rgba(255,255,255,.12);border-radius:50%;}
+.part::before{content:"";position:absolute;right:6px;bottom:-60px;width:130px;height:130px;border:2px solid rgba(255,255,255,.10);border-radius:50%;}
+.part .pl{font-family:var(--mono);font-size:12px;letter-spacing:.2em;opacity:.82;}
+.part h2{font-family:var(--serif);font-size:28px;font-weight:700;margin-top:6px;}
+.part p{margin-top:8px;font-size:14.5px;opacity:.92;max-width:580px;}
+/* section */
+section{padding:50px 0 8px;scroll-margin-top:24px;}
+.sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:8px;}
+.sec-num{font-family:var(--mono);font-size:15px;font-weight:600;color:#fff;background:var(--ink);padding:4px 10px;border-radius:7px;flex:0 0 auto;}
+h2.sec-title{font-family:var(--serif);font-size:clamp(24px,3.6vw,33px);font-weight:700;line-height:1.3;}
+h3{font-family:var(--serif);font-size:21px;font-weight:700;margin:34px 0 12px;color:var(--accent-deep);padding-left:13px;border-left:4px solid var(--coral);}
+p{margin:14px 0;}
+strong{color:var(--accent-deep);font-weight:700;}
+.mono{font-family:var(--mono);font-size:.88em;background:var(--paper2);padding:1px 6px;border-radius:5px;border:1px solid var(--line);}
+.oneliner{background:var(--ink);color:#eef0fa;border-radius:14px;padding:24px 28px;margin:26px 0;}
+.oneliner::before{content:"一言でいうと";font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:var(--coral);display:block;margin-bottom:8px;}
+.oneliner p{margin:0;font-family:var(--serif);font-size:20px;line-height:1.7;font-weight:700;}
+/* callouts */
+.panel{border-radius:12px;padding:18px 22px;margin:22px 0;border:1px solid;border-left-width:5px;}
+.panel .pt{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;display:block;margin-bottom:6px;}
+.panel p{margin:6px 0;font-size:15px;}
+.panel.why{background:var(--accent-soft);border-color:var(--accent);}
+.panel.why .pt{color:var(--accent-deep);}
+.panel.point{background:var(--coral-soft);border-color:var(--coral);}
+.panel.point .pt{color:var(--coral);}
+.panel.tip{background:var(--ok-soft);border-color:var(--ok);}
+.panel.tip .pt{color:var(--ok);}
+.panel.warn{background:var(--warn-soft);border-color:var(--warn);}
+.panel.warn .pt{color:var(--warn);}
+.panel.danger{background:var(--danger-soft);border-color:var(--danger);}
+.panel.danger .pt{color:var(--danger);}
+/* code */
+.code{background:var(--code-bg);border-radius:12px;margin:22px 0;overflow:hidden;border:1px solid var(--code-line);box-shadow:0 8px 22px rgba(20,25,48,.22);}
+.code-top{display:flex;justify-content:space-between;align-items:center;background:var(--code-bg2);padding:9px 14px;border-bottom:1px solid var(--code-line);}
+.code-top .fn{font-family:var(--mono);font-size:12px;color:#8a93c8;letter-spacing:.04em;}
+.copy{font-family:var(--mono);font-size:11px;color:#aab2e0;background:transparent;border:1px solid var(--code-line);border-radius:6px;padding:3px 10px;cursor:pointer;transition:.15s;}
+.copy:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
+.code pre{padding:16px 18px;overflow-x:auto;}
+.code code{font-family:var(--mono);font-size:13.5px;line-height:1.78;color:#d4d9f2;white-space:pre;}
+.tok-k{color:#8aa0ff;font-weight:500;}
+.tok-f{color:#f0a878;}
+.tok-s{color:#b7d98a;}
+.tok-n{color:#e58fb0;}
+.tok-c{color:#5e6691;font-style:italic;}
+.tok-p{color:#7f88b8;}
+/* tables */
+.tbl{margin:24px 0;overflow-x:auto;border-radius:12px;border:1px solid var(--line);}
+table{border-collapse:collapse;width:100%;font-size:14px;background:var(--card);}
+th{background:var(--accent-deep);color:#fff;font-weight:700;text-align:left;padding:11px 14px;font-size:13px;letter-spacing:.02em;}
+td{padding:10px 14px;border-top:1px solid var(--line);vertical-align:top;}
+tr:nth-child(even) td{background:var(--paper2);}
+td .mono,th .mono{background:rgba(0,0,0,.06);}
+.tbl.mini td:first-child{font-family:var(--mono);color:var(--accent-deep);font-weight:600;white-space:nowrap;}
+.truth td,.truth th{text-align:center;font-family:var(--mono);font-size:13px;}
+.truth .t{color:var(--ok);font-weight:700;}
+.truth .f{color:var(--danger);font-weight:700;}
+.truth .u{color:var(--warn);font-weight:700;}
+/* cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:24px 0;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;border-top:4px solid var(--accent);}
+.card h4{font-family:var(--serif);font-size:17px;color:var(--accent-deep);margin-bottom:7px;}
+.card p{font-size:14px;margin:4px 0;color:var(--ink-soft);}
+.card .tag{font-family:var(--mono);font-size:11px;color:var(--coral);}
+/* figures */
+.fig{margin:30px 0;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;text-align:center;}
+.fig svg{max-width:100%;height:auto;}
+.fig .cap{font-family:var(--mono);font-size:12px;color:var(--ink-soft);margin-top:14px;letter-spacing:.02em;}
+#top-btn{position:fixed;right:24px;bottom:24px;width:48px;height:48px;border-radius:50%;background:var(--ink);color:#fff;border:none;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.25s;box-shadow:0 6px 18px rgba(0,0,0,.28);z-index:900;}
+#top-btn.show{opacity:1;pointer-events:auto;}
+#top-btn:hover{background:var(--accent);transform:translateY(-3px);}
+.gloss dt{font-family:var(--serif);font-weight:700;color:var(--accent-deep);font-size:16px;margin-top:16px;}
+.gloss dd{margin:3px 0 0;color:var(--ink-soft);font-size:14.5px;}
+.foot{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);font-size:13.5px;color:var(--ink-soft);}
+.foot b{color:var(--accent-deep);}
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .7s ease,transform .7s ease;}
+.reveal.in{opacity:1;transform:none;}
+@media(max-width:860px){.wrap{grid-template-columns:1fr;}#toc{display:none;}body{font-size:15.5px;}.hero{padding:54px 0 40px;}}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="wrap">
+
+<nav id="toc">
+  <div class="toc-brand">Structured Query Lang.</div>
+  <div class="toc-title">達人に学ぶ<br>SQL 完全ガイド</div>
+
+  <span class="part-label">Part 1 — 考え方を変える</span>
+  <a href="#s01"><span class="n">01</span>SQLは集合の言語</a>
+  <a href="#s02"><span class="n">02</span>ループからの脱却</a>
+
+  <span class="part-label">Part 2 — 中核の武器</span>
+  <a href="#s03"><span class="n">03</span>CASE式</a>
+  <a href="#s04"><span class="n">04</span>NULLと3値論理</a>
+  <a href="#s05"><span class="n">05</span>自己結合</a>
+  <a href="#s06"><span class="n">06</span>HAVING句</a>
+  <a href="#s07"><span class="n">07</span>EXISTSと量化</a>
+  <a href="#s08"><span class="n">08</span>ウィンドウ関数</a>
+  <a href="#s09"><span class="n">09</span>相関サブクエリ</a>
+  <a href="#s10"><span class="n">10</span>集合演算</a>
+
+  <span class="part-label">Part 3 — 仕上げ</span>
+  <a href="#s11"><span class="n">11</span>SQLを速くする</a>
+  <a href="#s12"><span class="n">12</span>SQL作法</a>
+
+  <span class="part-label">Reference</span>
+  <a href="#cheat"><span class="n">★</span>チートシート</a>
+  <a href="#gloss"><span class="n">＃</span>用語集</a>
+</nav>
+
+<main>
+  <header class="hero reveal">
+    <span class="badge">▤ SQL Mastery</span>
+    <div class="kicker">達人に学ぶ SQL徹底指南書 ― 完全理解ガイド</div>
+    <h1>ループを捨て、<br><em>集合</em>で考える。</h1>
+    <p class="lede">SQLが伸び悩む最大の原因は、構文ではなく「考え方」です。1行ずつ処理する手続き型の発想を捨て、データを集合としてまるごと変換する発想へ。CASE式・NULL・EXISTS・ウィンドウ関数という武器を通して、その思考の転換をこれ一本で体得します。</p>
+    <div class="chips">
+      <span class="chip">対象 <b>初級→中級</b></span>
+      <span class="chip">前提 <b>SQLが少し書ける</b></span>
+      <span class="chip">焦点 <b>集合指向の発想</b></span>
+      <span class="chip">章 <b>12セクション</b></span>
+    </div>
+  </header>
+
+  <!-- PART 1 -->
+  <div class="part reveal">
+    <div class="pl">PART 1</div>
+    <h2>考え方を変える</h2>
+    <p>テクニックの前に、SQLという言語の「世界観」を入れ替えます。ここが変わると、後半の武器がすべて自然につながります。</p>
+  </div>
+
+  <!-- 01 -->
+  <section id="s01" class="reveal">
+    <div class="sec-head"><span class="sec-num">01</span><h2 class="sec-title">SQLは「集合」を扱う宣言型言語</h2></div>
+    <div class="oneliner"><p>SQLでは「どう処理するか(HOW)」ではなく「何が欲しいか(WHAT)」だけを書く。手順はDBMSが決める。</p></div>
+
+    <p>多くの人はC言語やPython、JavaScriptのような<strong>手続き型</strong>言語から入ります。そこでは「変数を用意し、ループを回し、1件ずつ処理する」のが当たり前です。ところがSQLはまったく別の血統 ―<strong>宣言型</strong>かつ<strong>集合指向</strong>の言語です。</p>
+
+    <div class="cards">
+      <div class="card">
+        <span class="tag">DECLARATIVE</span>
+        <h4>宣言型</h4>
+        <p>「欲しい結果」を記述するだけ。実際の処理手順（どのインデックスを使い、どう結合するか）はDBMSが自動で決める。</p>
+      </div>
+      <div class="card" style="border-top-color:var(--coral)">
+        <span class="tag" style="color:var(--accent)">SET-ORIENTED</span>
+        <h4>集合指向</h4>
+        <p>処理の単位は「1行」ではなく「行の集まり＝集合」。集合をまるごと別の集合へ変換する、と考える。</p>
+      </div>
+    </div>
+
+    <div class="panel why">
+      <span class="pt">なぜ重要か</span>
+      <p>この本が一貫して伝えるのは「<strong>SQLが下手なのは構文を知らないからではなく、手続き型の頭で書いているから</strong>」という一点です。ループで考える限り、SQLはぎこちなく、遅く、長くなります。集合で考えられるようになると、同じ処理が驚くほど短く・速く書けます。本ガイドの全テクニックは、この発想転換の具体例にすぎません。</p>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section id="s02" class="reveal">
+    <div class="sec-head"><span class="sec-num">02</span><h2 class="sec-title">ループからの脱却</h2></div>
+    <div class="oneliner"><p>「1行ずつ if で振り分けて数える」という手続きは、GROUP BY と CASE式で一撃に置き換わる。</p></div>
+
+    <p>例として「県ごとに男女の人数を数えたい」という典型業務を考えます。手続き型の頭だと、こうなりがちです ― 全行をループし、県ごとの変数を用意し、性別を if で見て加算する。実装も長く、県が増えるたびに直す必要があります。</p>
+
+    <div class="fig">
+      <svg viewBox="0 0 620 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="手続き型と集合指向の対比">
+        <defs><marker id="al" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#bd3a2c"/></marker>
+        <marker id="ai" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#3a44a0"/></marker></defs>
+        <text x="150" y="22" text-anchor="middle" font-family="'Zen Old Mincho',serif" font-size="15" font-weight="700" fill="#bd3a2c">手続き型：1行ずつ</text>
+        <g font-family="'IBM Plex Mono',monospace" font-size="11">
+          <rect x="70" y="34" width="160" height="22" rx="5" fill="#f6ddd6" stroke="#bd3a2c"/><text x="150" y="49" text-anchor="middle" fill="#1a1d2c">行1 → if 判定 → 加算</text>
+          <rect x="70" y="62" width="160" height="22" rx="5" fill="#f6ddd6" stroke="#bd3a2c"/><text x="150" y="77" text-anchor="middle" fill="#1a1d2c">行2 → if 判定 → 加算</text>
+          <rect x="70" y="90" width="160" height="22" rx="5" fill="#f6ddd6" stroke="#bd3a2c"/><text x="150" y="105" text-anchor="middle" fill="#1a1d2c">行3 → if 判定 → 加算</text>
+          <text x="150" y="132" text-anchor="middle" fill="#bd3a2c">⋮（行数だけ繰り返す）</text>
+        </g>
+        <line x1="150" y1="138" x2="150" y2="118" stroke="#bd3a2c" stroke-width="2" marker-end="url(#al)"/>
+        <line x1="150" y1="56" x2="150" y2="60" stroke="#bd3a2c" stroke-width="1.5"/>
+        <line x1="150" y1="84" x2="150" y2="88" stroke="#bd3a2c" stroke-width="1.5"/>
+
+        <text x="470" y="22" text-anchor="middle" font-family="'Zen Old Mincho',serif" font-size="15" font-weight="700" fill="#3a44a0">集合指向：まるごと変換</text>
+        <rect x="370" y="40" width="200" height="72" rx="9" fill="#e1e3f3" stroke="#3a44a0" stroke-width="2"/>
+        <text x="470" y="64" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="11" fill="#212a6b">人口テーブル（集合）</text>
+        <text x="470" y="84" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="11" fill="#212a6b">GROUP BY 県名</text>
+        <text x="470" y="102" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="11" fill="#212a6b">+ CASE で集計</text>
+        <line x1="470" y1="112" x2="470" y2="146" stroke="#3a44a0" stroke-width="2.5" marker-end="url(#ai)"/>
+        <rect x="380" y="150" width="180" height="34" rx="9" fill="#dbeee4" stroke="#2c7a58" stroke-width="2"/>
+        <text x="470" y="172" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="11" fill="#2c7a58">県×男女の集計（1文）</text>
+      </svg>
+      <div class="cap">図: 同じ集計でも、手続き型は「縦の繰り返し」、集合指向は「集合の一括変換」</div>
+    </div>
+
+    <div class="code">
+      <div class="code-top"><span class="fn">crosstab.sql ― ループ不要。GROUP BY + CASE で一発</span><button class="copy">copy</button></div>
+      <pre><code><span class="tok-k">SELECT</span>
+  県名,
+  <span class="tok-k">SUM</span>(<span class="tok-k">CASE WHEN</span> 性別 = <span class="tok-s">'男'</span> <span class="tok-k">THEN</span> 人口 <span class="tok-k">ELSE</span> <span class="tok-n">0</span> <span class="tok-k">END</span>) <span class="tok-k">AS</span> 男性,
+  <span class="tok-k">SUM</span>(<span class="tok-k">CASE WHEN</span> 性別 = <span class="tok-s">'女'</span> <span class="tok-k">THEN</span> 人口 <span class="tok-k">ELSE</span> <span class="tok-n">0</span> <span class="tok-k">END</span>) <span class="tok-k">AS</span> 女性
+<span class="tok-k">FROM</span> 人口
+<span class="tok-k">GROUP BY</span> 県名;</code></pre>
+    </div>
+
+    <div class="panel point">
+      <span class="pt">要点</span>
+      <p>ループ・一時変数・if分岐 ― 手続き型の三種の神器は、SQLでは <strong>GROUP BY・集約関数・CASE式</strong> に対応します。「ループで書きたくなったら、それは集合演算で書けないか？」と一度立ち止まる。これが上達の最短ルートです。</p>
+    </div>
+  </section>
+
+  <!-- PART 2 -->
+  <div class="part reveal">
+    <div class="pl">PART 2</div>
+    <h2>中核の武器</h2>
+    <p>集合指向を実戦で使うための道具を、効果の大きい順に習得します。CASE式とNULLは全SQLの土台なので、ここは特に丁寧に。</p>
+  </div>
+
+  <!-- 03 -->
+  <section id="s03" class="reveal">
+    <div class="sec-head"><span class="sec-num">03</span><h2 class="sec-title">CASE式 ― SQLの万能スイッチ</h2></div>
+    <div class="oneliner"><p>CASE式は「文」ではなく「値を返す式」。値を書ける場所ならどこにでも置ける。</p></div>
+
+    <p>多くの人はCASEを「SELECTで表示を切り替えるもの」と思っていますが、本質は<strong>値を返す式</strong>であることです。値が書ける場所 ―<span class="mono">SELECT</span>・<span class="mono">WHERE</span>・<span class="mono">GROUP BY</span>・<span class="mono">ORDER BY</span>・集約関数の中 ― すべてに書けます。これがCASEを万能たらしめています。</p>
+
+    <h3>検索CASE と 単純CASE</h3>
+    <div class="code">
+      <div class="code-top"><span class="fn">case_basic.sql</span><button class="copy">copy</button></div>
+      <pre><code><span class="tok-c">-- 検索CASE：条件式を自由に書ける（こちらを基本に）</span>
+<span class="tok-k">CASE WHEN</span> 点数 &gt;= <span class="tok-n">80</span> <span class="tok-k">THEN</span> <span class="tok-s">'A'</span>
+     <span class="tok-k">WHEN</span> 点数 &gt;= <span class="tok-n">60</span> <span class="tok-k">THEN</span> <span class="tok-s">'B'</span>
+     <span class="tok-k">ELSE</span> <span class="tok-s">'C'</span> <span class="tok-k">END</span>
+
+<span class="tok-c">-- 単純CASE：1つの値との一致のみ（簡潔だが表現力は低い）</span>
+<span class="tok-k">CASE</span> 性別 <span class="tok-k">WHEN</span> <span class="tok-s">'1'</span> <span class="tok-k">THEN</span> <span class="tok-s">'男'</span> <span class="tok-k">WHEN</span> <span class="tok-s">'2'</span> <span class="tok-k">THEN</span> <span class="tok-s">'女'</span> <span class="tok-k">END</span></code></pre>
+    </div>
+
+    <h3>真価①：条件分岐の集計（行→列のピボット）</h3>
+    <p>02章で見た <span class="mono">SUM(CASE WHEN …)</span> がそれです。集約関数の中にCASEを入れることで、行に縦持ちされたデータを<strong>横方向に集計</strong>できます。これは集合指向の典型的な威力です。</p>
+
+    <h3>真価②：並び順を式で操る</h3>
+    <div class="code">
+      <div class="code-top"><span class="fn">case_order.sql ― 特定の値を優先して並べる</span><button class="copy">copy</button></div>
+      <pre><code><span class="tok-k">SELECT</span> 商品名, 在庫
+<span class="tok-k">FROM</span> 商品
+<span class="tok-k">ORDER BY</span>
+  <span class="tok-k">CASE WHEN</span> 在庫 = <span class="tok-n">0</span> <span class="tok-k">THEN</span> <span class="tok-n">0</span> <span class="tok-k">ELSE</span> <span class="tok-n">1</span> <span class="tok-k">END</span>,  <span class="tok-c">-- 在庫切れを先頭に</span>
+  在庫 <span class="tok-k">DESC</span>;</code></pre>
+    </div>
+
+    <div class="panel tip">
+      <span class="pt">tip ― 終端のENDを忘れない</span>
+      <p>CASEは <span class="mono">END</span> で閉じます（言語によくある <span class="mono">END CASE</span> ではない）。また<span class="mono">ELSE</span>を省くと、どの条件にも当てはまらない行は<strong>NULL</strong>になります。意図しないNULLを防ぐため、原則 <span class="mono">ELSE</span> を明示しましょう。NULLの怖さは次章で。</p>
+    </div>
+  </section>
+
+  <!-- 04 -->
+  <section id="s04" class="reveal">
+    <div class="sec-head"><span class="sec-num">04</span><h2 class="sec-title">NULLと3値論理 ― 最大の罠</h2></div>
+    <div class="oneliner"><p>NULLは「値」ではなく「不明」という状態。だからNULLとの比較は真でも偽でもなく「不明(UNKNOWN)」になる。</p></div>
+
+    <p>NULLは 0 でも空文字でもありません。<strong>「値が不明・未確定」という状態</strong>です。値ではないので、<span class="mono">= NULL</span> という比較は永遠に成立しません。結果は真(TRUE)でも偽(FALSE)でもなく、第3の値 <strong>UNKNOWN（不明）</strong> になります。これがSQLが<strong>3値論理</strong>と呼ばれる理由です。</p>
+
+    <div class="tbl">
+      <table class="truth">
+        <tr><th>AND</th><th>真</th><th>不明</th><th>偽</th><th></th><th>OR</th><th>真</th><th>不明</th><th>偽</th></tr>
+        <tr><td>真</td><td class="t">真</td><td class="u">不明</td><td class="f">偽</td><td></td><td>真</td><td class="t">真</td><td class="t">真</td><td class="t">真</td></tr>
+        <tr><td>不明</td><td class="u">不明</td><td class="u">不明</td><td class="f">偽</td><td></td><td>不明</td><td class="t">真</td><td class="u">不明</td><td class="u">不明</td></tr>
+        <tr><td>偽</td><td class="f">偽</td><td class="f">偽</td><td class="f">偽</td><td></td><td>偽</td><td class="t">真</td><td class="u">不明</td><td class="f">偽</td></tr>
+      </table>
+    </div>
+
+    <p>そして重要な原則 ―<strong><span class="mono">WHERE</span>句が行を通すのは「真(TRUE)」のときだけ</strong>。「不明」の行は、偽と同じように<strong>結果から除外</strong>されます。ここから有名な罠が生まれます。</p>
+
+    <div class="code">
+      <div class="code-top"><span class="fn">null_trap.sql ― NOT IN にNULLが混じると全滅する</span><button class="copy">copy</button></div>
+      <pre><code><span class="tok-c">-- 危険：対象外IDの集合にNULLが1つでもあると、1件も返らない</span>
+<span class="tok-k">SELECT</span> * <span class="tok-k">FROM</span> 社員
+<span class="tok-k">WHERE</span> 部署ID <span class="tok-k">NOT IN</span> (<span class="tok-k">SELECT</span> 部署ID <span class="tok-k">FROM</span> 対象外部署);
+
+<span class="tok-c">-- 安全：NOT EXISTS で書き換える（NULLに惑わされない）</span>
+<span class="tok-k">SELECT</span> * <span class="tok-k">FROM</span> 社員 e
+<span class="tok-k">WHERE</span> <span class="tok-k">NOT EXISTS</span> (
+  <span class="tok-k">SELECT</span> * <span class="tok-k">FROM</span> 対象外部署 t <span class="tok-k">WHERE</span> t.部署ID = e.部署ID
+);</code></pre>
+    </div>
+
+    <div class="panel danger">
+      <span class="pt">danger ― なぜ NOT IN は全滅するのか</span>
+      <p><span class="mono">x NOT IN (a, b, NULL)</span> は <span class="mono">x≠a AND x≠b AND x≠NULL</span> に展開されます。最後の <span class="mono">x≠NULL</span> は必ず<strong>不明</strong>。「真 AND 不明」は不明になり（上の表）、WHEREは不明を通さないので、すべての行が消えます。<strong>サブクエリにNULLが混じりうるなら NOT IN は使わず NOT EXISTS</strong>、と覚えてください。</p>
+    </div>
+
+    <div class="panel point">
+      <span class="pt">要点 ― NULLの鉄則</span>
+      <p>① NULLの判定は <span class="mono">IS NULL / IS NOT NULL</span> のみ（<span class="mono">= NULL</span> は不可）。② 必要なら <span class="mono">COALESCE(列, 既定値)</span> で早めにNULLを潰す。③ そもそも列に <span class="mono">NOT NULL</span> 制約を付け、NULLを生まない設計を優先する。</p>
+    </div>
+  </section>
+
+  <!-- 05 -->
+  <section id="s05" class="reveal">
+    <div class="sec-head"><span class="sec-num">05</span><h2 class="sec-title">自己結合 ― 1つの表を2つに見立てる</h2></div>
+    <div class="oneliner"><p>同じテーブルに別名を2つ付けると、まるで2枚の表のように結合できる。組み合わせ・行間比較の定番技。</p></div>
+
+    <p>自己結合（self join）は、1つのテーブルに異なる別名（エイリアス）を与え、自分自身と結合する技法です。これにより「同じ集合の要素同士を突き合わせる」処理が書けます。よく使うのは <strong>組み合わせ・順列の列挙</strong> と <strong>行間の比較</strong> です。</p>
+
+    <h3>非等値結合で「組み合わせ」を作る</h3>
+    <p>商品のペアを重複なく列挙したいとき、結合条件に <span class="mono">=</span> ではなく <span class="mono">&lt;</span> を使うのがコツです（<strong>非等値結合</strong>）。これで「自分自身のペア」と「順序違いの重複」を同時に排除できます。</p>
+
+    <div class="code">
+      <div class="code-top"><span class="fn">self_join.sql</span><button class="copy">copy</button></div>
+      <pre><code><span class="tok-c">-- {A,A} や {りんご,みかん}と{みかん,りんご}の重複を < で防ぐ</span>
+<span class="tok-k">SELECT</span> p1.商品名 <span class="tok-k">AS</span> 商品A, p2.商品名 <span class="tok-k">AS</span> 商品B
+<span class="tok-k">FROM</span>   商品 p1
+<span class="tok-k">JOIN</span>   商品 p2 <span class="tok-k">ON</span> p1.商品名 &lt; p2.商品名;</code></pre>
+    </div>
+
+    <div class="panel why">
+      <span class="pt">なぜ &lt; なのか</span>
+      <p><span class="mono">=</span> で結ぶと自分自身（A=A）ばかりになります。<span class="mono">&lt;&gt;</span>（不等）だと {A,B} と {B,A} の両方が出て重複します。<span class="mono">&lt;</span> なら「名前の小さい方が左」というルールを1つに固定でき、組み合わせ（順序を区別しない）がちょうど1回ずつ得られます。順列（順序を区別する）が欲しければ <span class="mono">&lt;&gt;</span> を使います。</p>
+    </div>
+  </section>
+
+  <!-- 06 -->
+  <section id="s06" class="reveal">
+    <div class="sec-head"><span class="sec-num">06</span><h2 class="sec-title">HAVING句 ― 集合そのものに条件をつける</h2></div>
+    <div class="oneliner"><p>WHEREは「1行」をふるいにかける。HAVINGは「グループ＝集合」をふるいにかける。</p></div>
+
+    <p>初学者がつまずくのが <span class="mono">WHERE</span> と <span class="mono">HAVING</span> の違いです。役割は明快で、<strong>WHEREは個々の行に対する条件、HAVINGはGROUP BYでまとめた後の集合に対する条件</strong>です。集約関数（COUNT, SUM…）を使った条件はHAVINGに書きます。</p>
+
+    <div class="fig">
+      <svg viewBox="0 0 600 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="WHEREとHAVINGの違い">
+        <defs><marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#3a44a0"/></marker></defs>
+        <g font-family="'IBM Plex Mono',monospace" font-size="12">
+          <rect x="20" y="55" width="110" height="40" rx="8" fill="#f6f7fc" stroke="#3a44a0" stroke-width="2"/>
+          <text x="75" y="80" text-anchor="middle" fill="#212a6b">元の行</text>
+          <rect x="190" y="55" width="110" height="40" rx="8" fill="#f6f7fc" stroke="#3a44a0" stroke-width="2"/>
+          <text x="245" y="80" text-anchor="middle" fill="#212a6b">残った行</text>
+          <rect x="360" y="55" width="110" height="40" rx="8" fill="#e1e3f3" stroke="#3a44a0" stroke-width="2"/>
+          <text x="415" y="80" text-anchor="middle" fill="#212a6b">グループ集合</text>
+          <rect x="500" y="55" width="90" height="40" rx="8" fill="#dbeee4" stroke="#2c7a58" stroke-width="2"/>
+          <text x="545" y="80" text-anchor="middle" fill="#2c7a58">結果</text>
+          <line x1="130" y1="75" x2="188" y2="75" stroke="#3a44a0" stroke-width="2" marker-end="url(#ah)"/>
+          <text x="159" y="45" text-anchor="middle" fill="#bd3a2c" font-size="11">WHERE</text>
+          <line x1="300" y1="75" x2="358" y2="75" stroke="#3a44a0" stroke-width="2" marker-end="url(#ah)"/>
+          <text x="329" y="45" text-anchor="middle" fill="#212a6b" font-size="11">GROUP BY</text>
+          <line x1="470" y1="75" x2="498" y2="75" stroke="#3a44a0" stroke-width="2" marker-end="url(#ah)"/>
+          <text x="484" y="45" text-anchor="middle" fill="#a9790f" font-size="11">HAVING</text>
+        </g>
+      </svg>
+      <div class="cap">図: 処理順 ― WHERE(行を絞る) → GROUP BY(集合化) → HAVING(集合を絞る)</div>
+    </div>
+
+    <div class="code">
+      <div class="code-top"><span class="fn">having.sql ― 重複データを集合の性質で見つける</span><button class="copy">copy</button></div>
+      <pre><code><span class="tok-c">-- 同じ氏名が2件以上ある「グループ」だけを残す</span>
+<span class="tok-k">SELECT</span> 氏名, <span class="tok-k">COUNT</span>(*) <span class="tok-k">AS</span> 件数
+<span class="tok-k">FROM</span>   会員
+<span class="tok-k">GROUP BY</span> 氏名
+<span class="tok-k">HAVING</span> <span class="tok-k">COUNT</span>(*) &gt;= <span class="tok-n">2</span>;</code></pre>
+    </div>
+
+    <div class="panel point">
+      <span class="pt">要点</span>
+      <p>HAVINGは「<strong>集合に対する条件</strong>」を書く場所。データの歯抜けチェック（<span class="mono">HAVING COUNT(*) &lt;&gt; MAX(連番)</span> など）や、「条件を満たす要素だけからなる集合か」を問う <strong>特性関数</strong>的な使い方もできます。集合をひとつのモノとして扱う感覚が、ここで鍛えられます。</p>
+    </div>
+  </section>
+
+  <!-- 07 -->
+  <section id="s07" class="reveal">
+    <div class="sec-head"><span class="sec-num">07</span><h2 class="sec-title">EXISTS述語と量化 ― 「すべて」をどう書くか</h2></div>
+    <div class="oneliner"><p>SQLに「すべて(∀)」を直接書く構文はない。「〜でない行が存在しない」と裏返して NOT EXISTS で表す。</p></div>
+
+    <p><span class="mono">EXISTS</span> は「サブクエリが1行でも返すか？」を判定する述語で、これは論理学でいう <strong>存在量化（∃：〜が存在する）</strong> に対応します。一方、SQLには <strong>全称量化（∀：すべての〜について）</strong> を直接書く構文がありません。</p>
+
+    <div class="panel why">
+      <span class="pt">発想の核心 ― 裏返す</span>
+      <p>「すべてのxについてP(x)が成り立つ」は、論理的に「<strong>P(x)が成り立たないxは1つも存在しない</strong>」と同値です。SQLには∀がない代わりに∃（EXISTS）があるので、全称を <span class="mono">NOT EXISTS</span> で表現します。これは本書屈指の重要テクニックです。</p>
+    </div>
+
+    <div class="fig">
+      <svg viewBox="0 0 600 110" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="全称量化をNOT EXISTSで表す">
+        <g font-family="'Zen Old Mincho',serif">
+          <rect x="20" y="35" width="250" height="46" rx="10" fill="#e1e3f3" stroke="#3a44a0" stroke-width="2"/>
+          <text x="145" y="56" text-anchor="middle" font-size="14" fill="#212a6b">「すべての科目に合格」(∀)</text>
+          <text x="145" y="74" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="11" fill="#474c63">＝直接は書けない</text>
+          <text x="300" y="63" text-anchor="middle" font-size="22" fill="#d2563b">≡</text>
+          <rect x="330" y="35" width="250" height="46" rx="10" fill="#f6e0d8" stroke="#d2563b" stroke-width="2"/>
+          <text x="455" y="56" text-anchor="middle" font-size="14" fill="#212a6b">「不合格の科目が無い」</text>
+          <text x="455" y="74" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="11" fill="#474c63">＝ NOT EXISTS で書ける</text>
+        </g>
+      </svg>
+      <div class="cap">図: 全称量化は「否定の存在しない」へ裏返して表現する</div>
+    </div>
+
+    <div class="code">
+      <div class="code-top"><span class="fn">all_pass.sql ― 全科目に合格した学生を探す</span><button class="copy">copy</button></div>
+      <pre><code><span class="tok-k">SELECT</span> <span class="tok-k">DISTINCT</span> 学生ID
+<span class="tok-k">FROM</span> 成績 s1
+<span class="tok-k">WHERE</span> <span class="tok-k">NOT EXISTS</span> (        <span class="tok-c">-- 次のような行が「存在しない」</span>
+  <span class="tok-k">SELECT</span> * <span class="tok-k">FROM</span> 成績 s2
+  <span class="tok-k">WHERE</span> s2.学生ID = s1.学生ID
+    <span class="tok-k">AND</span> s2.点数 &lt; <span class="tok-n">60</span>      <span class="tok-c">-- 不合格の科目</span>
+);</code></pre>
+    </div>
+
+    <div class="panel tip">
+      <span class="pt">tip ― EXISTS は速くて安全</span>
+      <p>EXISTSは「1行見つかった時点で打ち切る」ため大規模データで効率的なことが多く、04章で見たNULLの罠も避けられます。<strong>「IN / NOT IN で詰まったら EXISTS / NOT EXISTS」</strong>は実務でも有効な定石です。</p>
+    </div>
+  </section>
+
+  <!-- 08 -->
+  <section id="s08" class="reveal">
+    <div class="sec-head"><span class="sec-num">08</span><h2 class="sec-title">ウィンドウ関数 ― 行と行を比較する</h2></div>
+    <div class="oneliner"><p>GROUP BYは行を畳んでしまう。ウィンドウ関数は行を残したまま、各行に「集計値」や「順位」を添える。</p></div>
+
+    <p>「順位をつけたい」「累計を出したい」「前月と比べたい」 ― こうした<strong>行間比較</strong>は、かつて自己結合や相関サブクエリで苦労して書いていました。ウィンドウ関数はこれを宣言的に、しかも行を減らさずに実現します。構文の核は <span class="mono">OVER (PARTITION BY … ORDER BY …)</span> です。</p>
+
+    <div class="fig">
+      <svg viewBox="0 0 600 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="GROUP BYとウィンドウ関数の違い">
+        <g font-family="'Zen Old Mincho',serif" font-size="13">
+          <text x="150" y="20" text-anchor="middle" font-weight="700" fill="#bd3a2c">GROUP BY</text>
+          <text x="450" y="20" text-anchor="middle" font-weight="700" fill="#3a44a0">ウィンドウ関数</text>
+        </g>
+        <g font-family="'IBM Plex Mono',monospace" font-size="10">
+          <rect x="60" y="32" width="180" height="18" fill="#f6f7fc" stroke="#c6cae0"/><text x="150" y="45" text-anchor="middle" fill="#474c63">5行</text>
+          <text x="150" y="72" text-anchor="middle" fill="#bd3a2c" font-size="12">↓ 畳む</text>
+          <rect x="100" y="80" width="100" height="18" fill="#f6ddd6" stroke="#bd3a2c"/><text x="150" y="93" text-anchor="middle" fill="#1a1d2c">2行に減る</text>
+          <text x="150" y="120" text-anchor="middle" fill="#474c63" font-size="11">行が消える＝明細は失う</text>
+
+          <rect x="360" y="32" width="180" height="18" fill="#e1e3f3" stroke="#3a44a0"/><text x="450" y="45" text-anchor="middle" fill="#212a6b">5行</text>
+          <text x="450" y="72" text-anchor="middle" fill="#3a44a0" font-size="12">↓ 列を添える</text>
+          <rect x="360" y="80" width="180" height="18" fill="#dbeee4" stroke="#2c7a58"/><text x="450" y="93" text-anchor="middle" fill="#1a1d2c">5行のまま＋順位列</text>
+          <text x="450" y="120" text-anchor="middle" fill="#474c63" font-size="11">明細を保ったまま集計が見える</text>
+        </g>
+      </svg>
+      <div class="cap">図: GROUP BYは行を集約して減らす／ウィンドウ関数は行を保ち列を足す</div>
+    </div>
+
+    <div class="code">
+      <div class="code-top"><span class="fn">window.sql ― 部署ごとの順位と合計を同時に出す</span><button class="copy">copy</button></div>
+      <pre><code><span class="tok-k">SELECT</span>
+  社員名, 部署, 給与,
+  <span class="tok-k">RANK</span>() <span class="tok-k">OVER</span> (<span class="tok-k">PARTITION BY</span> 部署 <span class="tok-k">ORDER BY</span> 給与 <span class="tok-k">DESC</span>) <span class="tok-k">AS</span> 部署内順位,
+  <span class="tok-k">SUM</span>(給与) <span class="tok-k">OVER</span> (<span class="tok-k">PARTITION BY</span> 部署)               <span class="tok-k">AS</span> 部署合計
+<span class="tok-k">FROM</span> 社員;</code></pre>
+    </div>
+
+    <p><span class="mono">PARTITION BY</span> は集計の「区切り」（GROUP BYに似るが行は減らない）、<span class="mono">ORDER BY</span> は窓の中での「順序」です。代表的な関数を押さえましょう。</p>
+
+    <div class="tbl mini">
+      <table>
+        <tr><th>関数</th><th>用途</th></tr>
+        <tr><td>ROW_NUMBER()</td><td>単純な連番（同値でも別番号）</td></tr>
+        <tr><td>RANK()</td><td>順位（同値は同順位・次を飛ばす：1,1,3）</td></tr>
+        <tr><td>DENSE_RANK()</td><td>順位（同値は同順位・飛ばさない：1,1,2）</td></tr>
+        <tr><td>SUM/AVG() OVER</td><td>累計・移動平均などの集計</td></tr>
+        <tr><td>LAG()/LEAD()</td><td>前の行／次の行の値を参照（前月比など）</td></tr>
+      </table>
+    </div>
+
+    <div class="code">
+      <div class="code-top"><span class="fn">lag.sql ― 前月との差を出す（行間比較の宣言的な書き方）</span><button class="copy">copy</button></div>
+      <pre><code><span class="tok-k">SELECT</span> 月, 売上,
+  売上 - <span class="tok-k">LAG</span>(売上) <span class="tok-k">OVER</span> (<span class="tok-k">ORDER BY</span> 月) <span class="tok-k">AS</span> 前月差
+<span class="tok-k">FROM</span> 月次売上;</code></pre>
+    </div>
+
+    <div class="panel point">
+      <span class="pt">要点</span>
+      <p>「明細も見たいが集計も添えたい」「順位や前後比較がしたい」ときはウィンドウ関数。<strong>自己結合や相関サブクエリで書いていた行間比較の多くが、これで簡潔かつ高速になります</strong>。集合指向の発想が最も鮮やかに効く道具です。</p>
+    </div>
+  </section>
+
+  <!-- 09 -->
+  <section id="s09" class="reveal">
+    <div class="sec-head"><span class="sec-num">09</span><h2 class="sec-title">相関サブクエリ ― 行ごとの小さな問い合わせ</h2></div>
+    <div class="oneliner"><p>外側の各行を参照しながら、その行ごとにサブクエリを評価する。「行と集合」を結びつける橋。</p></div>
+
+    <p>通常のサブクエリは1回だけ評価され、外側とは独立です。<strong>相関サブクエリ</strong>は内側から外側の行を参照するため、外側の行ごとに評価されます。「各行を、それが属するグループの集計と比べる」といった処理の基礎になります。</p>
+
+    <div class="code">
+      <div class="code-top"><span class="fn">correlated.sql ― 自部署の平均より給与が高い社員</span><button class="copy">copy</button></div>
+      <pre><code><span class="tok-k">SELECT</span> 社員名, 部署, 給与
+<span class="tok-k">FROM</span>   社員 e1
+<span class="tok-k">WHERE</span>  給与 &gt; (
+  <span class="tok-k">SELECT</span> <span class="tok-k">AVG</span>(給与) <span class="tok-k">FROM</span> 社員 e2
+  <span class="tok-k">WHERE</span>  e2.部署 = e1.部署   <span class="tok-c">-- 外側の行(e1)を参照＝相関</span>
+);</code></pre>
+    </div>
+
+    <div class="panel tip">
+      <span class="pt">tip ― 今ならウィンドウ関数も候補</span>
+      <p>上の例はウィンドウ関数 <span class="mono">AVG(給与) OVER (PARTITION BY 部署)</span> でも書けます。相関サブクエリは行ごとに繰り返し評価され重くなりがちなので、<strong>同じことができるならウィンドウ関数の方が読みやすく速いことが多い</strong>です。とはいえ相関サブクエリは思考の土台なので、両方書けるようにしておくと理解が深まります。</p>
+    </div>
+  </section>
+
+  <!-- 10 -->
+  <section id="s10" class="reveal">
+    <div class="sec-head"><span class="sec-num">10</span><h2 class="sec-title">集合演算 ― UNION / INTERSECT / EXCEPT</h2></div>
+    <div class="oneliner"><p>テーブルを「集合」として、和・積・差で組み合わせる。集合指向の最も直接的な表現。</p></div>
+
+    <p>SQLは集合の言語なので、数学の集合演算をそのまま持っています。<strong>和（UNION）・積（INTERSECT）・差（EXCEPT）</strong>です。2つのSELECT結果を1つの集合として束ねたり、比べたりできます。</p>
+
+    <div class="fig">
+      <svg viewBox="0 0 600 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="集合演算のベン図">
+        <g font-family="'Zen Old Mincho',serif" font-size="13" font-weight="700">
+          <!-- UNION -->
+          <circle cx="70" cy="60" r="34" fill="#3a44a0" fill-opacity="0.35" stroke="#3a44a0" stroke-width="2"/>
+          <circle cx="100" cy="60" r="34" fill="#3a44a0" fill-opacity="0.35" stroke="#3a44a0" stroke-width="2"/>
+          <text x="85" y="120" text-anchor="middle" fill="#212a6b">UNION（和）</text>
+          <!-- INTERSECT -->
+          <circle cx="270" cy="60" r="34" fill="none" stroke="#3a44a0" stroke-width="2"/>
+          <circle cx="300" cy="60" r="34" fill="none" stroke="#3a44a0" stroke-width="2"/>
+          <path d="M285 33 A34 34 0 0 1 285 87 A34 34 0 0 1 285 33" fill="#d2563b" fill-opacity="0.5"/>
+          <text x="285" y="120" text-anchor="middle" fill="#212a6b">INTERSECT（積）</text>
+          <!-- EXCEPT -->
+          <clipPath id="cl"><circle cx="470" cy="60" r="34"/></clipPath>
+          <circle cx="470" cy="60" r="34" fill="#3a44a0" fill-opacity="0.35" stroke="#3a44a0" stroke-width="2"/>
+          <circle cx="500" cy="60" r="34" fill="#e9ebf4" clip-path="url(#cl)"/>
+          <circle cx="470" cy="60" r="34" fill="none" stroke="#3a44a0" stroke-width="2"/>
+          <circle cx="500" cy="60" r="34" fill="none" stroke="#3a44a0" stroke-width="2"/>
+          <text x="485" y="120" text-anchor="middle" fill="#212a6b">EXCEPT（差）</text>
+        </g>
+      </svg>
+      <div class="cap">図: 2つのSELECT結果を集合として 和・積・差 で組み合わせる</div>
+    </div>
+
+    <div class="code">
+      <div class="code-top"><span class="fn">setops.sql ― 2つの表の差分を取る</span><button class="copy">copy</button></div>
+      <pre><code><span class="tok-c">-- 旧名簿にいて新名簿にいない人（＝退会者）を抽出</span>
+<span class="tok-k">SELECT</span> 会員ID <span class="tok-k">FROM</span> 旧名簿
+<span class="tok-k">EXCEPT</span>
+<span class="tok-k">SELECT</span> 会員ID <span class="tok-k">FROM</span> 新名簿;</code></pre>
+    </div>
+
+    <div class="panel warn">
+      <span class="pt">warn ― UNION と UNION ALL / DBMS差</span>
+      <p><span class="mono">UNION</span> は重複を除くため内部でソートが走り遅くなります。重複を気にしない（または起きない）なら、ソートしない <span class="mono">UNION ALL</span> の方が速いです。また <span class="mono">INTERSECT</span> / <span class="mono">EXCEPT</span> は<strong>対応しないDBMSやバージョンがあり、名称も異なる場合があります</strong>（差を <span class="mono">MINUS</span> と呼ぶ製品など）。使う前にお使いのDBMSの最新ドキュメントで確認してください。</p>
+    </div>
+    <p>なお「ある集合の要素を<strong>すべて</strong>含む行を探す」関係除算（division）も集合演算の一種で、07章の <span class="mono">NOT EXISTS</span> の二重否定で表現できます。「全称量化＝NOT EXISTS」がここでも効いてきます。</p>
+  </section>
+
+  <!-- PART 3 -->
+  <div class="part reveal">
+    <div class="pl">PART 3</div>
+    <h2>仕上げ ― 速く、読みやすく</h2>
+    <p>正しく書けるようになったSQLを、現場で通用する品質に引き上げます。性能の勘所と、読みやすさの作法です。</p>
+  </div>
+
+  <!-- 11 -->
+  <section id="s11" class="reveal">
+    <div class="sec-head"><span class="sec-num">11</span><h2 class="sec-title">SQLを速くする ― 性能の勘所</h2></div>
+    <div class="oneliner"><p>速いSQLの基本は「無駄なソートを減らす」「インデックスを活かす」「中間結果を小さく保つ」。</p></div>
+
+    <div class="cards">
+      <div class="card"><h4>無駄なソートを削る</h4><p><span class="mono">DISTINCT</span>・<span class="mono">UNION</span>・<span class="mono">ORDER BY</span>・<span class="mono">GROUP BY</span> は暗黙のソートを伴う。重複除去が不要なら <span class="mono">UNION ALL</span> を選ぶ。</p></div>
+      <div class="card"><h4>インデックスを殺さない</h4><p>WHEREでインデックス列を<strong>加工しない</strong>（<span class="mono">WHERE 関数(列)=…</span>は索引が効きにくい）。<span class="mono">LIKE '%語'</span> の前方ワイルドカードも索引が効かない。</p></div>
+      <div class="card"><h4>EXISTSを活かす</h4><p>存在確認は <span class="mono">IN</span> より <span class="mono">EXISTS</span> が有利なことが多く、見つかり次第打ち切れる。NULLの罠も回避できる。</p></div>
+      <div class="card"><h4>早く絞る</h4><p>結合や集計の前に、WHEREで対象行をできるだけ減らす。中間結果が小さいほど後段が軽くなる。</p></div>
+    </div>
+
+    <div class="panel why">
+      <span class="pt">なぜ ― 最後は実測</span>
+      <p>性能の最終判断は推測ではなく<strong>実行計画の確認と実測</strong>です（多くのDBMSの <span class="mono">EXPLAIN</span> 等で確認できます）。DBMSやデータ量で最適な書き方は変わるため、「この書き方が常に速い」と決めつけないこと。前作のDB設計編で触れたインデックス・統計情報の話と、ここはひと続きです。</p>
+    </div>
+  </section>
+
+  <!-- 12 -->
+  <section id="s12" class="reveal">
+    <div class="sec-head"><span class="sec-num">12</span><h2 class="sec-title">SQLプログラミング作法</h2></div>
+    <div class="oneliner"><p>SQLは「あとで他人（と未来の自分）が読む文書」。集合指向で短く、構造を見せて書く。</p></div>
+
+    <p>動くだけのSQLと、保守できるSQLは違います。最後に、達人が共有する作法をまとめます。</p>
+
+    <div class="cards">
+      <div class="card"><h4>段階はCTEで名付ける</h4><p>入れ子サブクエリを深く重ねるより、<span class="mono">WITH</span>句（CTE）で各段に名前を付けると、処理の流れが上から読める。</p></div>
+      <div class="card"><h4>ループ的発想を疑う</h4><p>カーソルで1行ずつ回す前に、CASE式・ウィンドウ関数・集合演算で書けないか考える（01〜10章の総まとめ）。</p></div>
+      <div class="card"><h4>NULLを明示的に扱う</h4><p><span class="mono">COALESCE</span> で既定値を与える、<span class="mono">NOT NULL</span> 制約で源を断つ。NULLを放置しない。</p></div>
+      <div class="card"><h4>標準SQLを意識</h4><p>製品独自の構文に頼りすぎない。移植性と可読性のため、まずは標準的な書き方を選ぶ。</p></div>
+    </div>
+
+    <div class="code">
+      <div class="code-top"><span class="fn">cte.sql ― WITH句で処理を段階的に名付ける</span><button class="copy">copy</button></div>
+      <pre><code><span class="tok-k">WITH</span> 部署別平均 <span class="tok-k">AS</span> (
+  <span class="tok-k">SELECT</span> 部署, <span class="tok-k">AVG</span>(給与) <span class="tok-k">AS</span> 平均給与
+  <span class="tok-k">FROM</span> 社員 <span class="tok-k">GROUP BY</span> 部署
+)
+<span class="tok-k">SELECT</span> e.社員名, e.給与, a.平均給与
+<span class="tok-k">FROM</span> 社員 e
+<span class="tok-k">JOIN</span> 部署別平均 a <span class="tok-k">ON</span> e.部署 = a.部署
+<span class="tok-k">WHERE</span> e.給与 &gt; a.平均給与;</code></pre>
+    </div>
+
+    <div class="panel point">
+      <span class="pt">本書を貫く一文</span>
+      <p>結局すべては01章に戻ります ―<strong>「ループで考えず、集合で考える」</strong>。CASE式もEXISTSもウィンドウ関数も、この一つの発想を実現するための道具でした。構文を増やすより、この見方を体に入れることが、達人への最短距離です。</p>
+    </div>
+  </section>
+
+  <!-- CHEAT -->
+  <section id="cheat" class="reveal">
+    <div class="sec-head"><span class="sec-num">★</span><h2 class="sec-title">チートシート</h2></div>
+
+    <h3>WHERE / HAVING / ON の役割</h3>
+    <div class="tbl mini">
+      <table>
+        <tr><th>句</th><th>かける対象</th><th>集約関数</th></tr>
+        <tr><td>ON</td><td>結合の条件（どの行同士を繋ぐか）</td><td>不可</td></tr>
+        <tr><td>WHERE</td><td>1行ごとの条件（グループ化の前）</td><td>不可</td></tr>
+        <tr><td>HAVING</td><td>グループ＝集合の条件（グループ化の後）</td><td>可</td></tr>
+      </table>
+    </div>
+
+    <h3>覚える定石</h3>
+    <div class="tbl mini">
+      <table>
+        <tr><th>やりたいこと</th><th>定石</th></tr>
+        <tr><td>ループで1件ずつ集計</td><td>GROUP BY + SUM(CASE WHEN…)</td></tr>
+        <tr><td>NULLを含むかも+否定</td><td>NOT IN ではなく NOT EXISTS</td></tr>
+        <tr><td>「すべて〜」(全称量化)</td><td>NOT EXISTS（〜でない行が無い）</td></tr>
+        <tr><td>NULL判定</td><td>IS NULL / IS NOT NULL（= NULL不可）</td></tr>
+        <tr><td>順位・累計・前後比較</td><td>ウィンドウ関数 OVER(...)</td></tr>
+        <tr><td>明細を残して集計を添える</td><td>GROUP BYではなくウィンドウ関数</td></tr>
+        <tr><td>組み合わせを重複なく列挙</td><td>自己結合 + 非等値( &lt; )</td></tr>
+        <tr><td>2表の差分</td><td>EXCEPT（重複不要ならUNION ALL）</td></tr>
+        <tr><td>深い入れ子サブクエリ</td><td>WITH句(CTE)で段階に名前を付ける</td></tr>
+      </table>
+    </div>
+
+    <div class="panel point">
+      <span class="pt">最重要の合言葉</span>
+      <p><strong>ループを捨て、集合で考える。</strong> 全称量化は <strong>NOT EXISTS</strong>。NULL比較は必ず <strong>IS NULL</strong>。</p>
+    </div>
+  </section>
+
+  <!-- GLOSSARY -->
+  <section id="gloss" class="reveal">
+    <div class="sec-head"><span class="sec-num">＃</span><h2 class="sec-title">用語集</h2></div>
+    <dl class="gloss">
+      <dt>宣言型 / 手続き型</dt><dd>欲しい結果だけ書く(SQL) / 手順を逐一書く(一般の言語)。</dd>
+      <dt>集合指向</dt><dd>処理単位を行の集まり(集合)とみなす考え方。SQLの根本思想。</dd>
+      <dt>CASE式</dt><dd>値を返す条件式。SELECT/WHERE/GROUP BY/ORDER BY/集約の中など、値を書ける場所すべてに置ける。</dd>
+      <dt>NULL</dt><dd>「不明・未確定」を表す状態。値ではない。0や空文字とも別物。</dd>
+      <dt>3値論理</dt><dd>真・偽に加え第3の値「不明(UNKNOWN)」を持つ論理。NULL比較が不明を生む。</dd>
+      <dt>UNKNOWN</dt><dd>NULLとの比較結果。WHEREはこれを通さない（偽と同様に除外）。</dd>
+      <dt>自己結合</dt><dd>同じ表に別名を付けて自分自身と結合する技法。</dd>
+      <dt>非等値結合</dt><dd>= 以外（&lt; や &gt; など）で結合すること。組み合わせ列挙などに使う。</dd>
+      <dt>EXISTS</dt><dd>サブクエリが1行でも返すかを判定する述語。存在量化に対応。</dd>
+      <dt>存在量化 / 全称量化</dt><dd>「〜が存在する(∃)」/「すべての〜について(∀)」。全称はNOT EXISTSで表す。</dd>
+      <dt>相関サブクエリ</dt><dd>外側の行を参照し、行ごとに評価されるサブクエリ。</dd>
+      <dt>ウィンドウ関数</dt><dd>行を畳まずに、関連行の集合に対する集計・順位を各行へ付与する関数。OVER句で指定。</dd>
+      <dt>PARTITION BY</dt><dd>ウィンドウ関数で集計を区切る単位（GROUP BY似だが行は減らない）。</dd>
+      <dt>ランキング関数</dt><dd>ROW_NUMBER / RANK / DENSE_RANK など順位付けの関数。</dd>
+      <dt>集合演算</dt><dd>UNION(和)・INTERSECT(積)・EXCEPT/MINUS(差)。表を集合として組み合わせる。</dd>
+      <dt>関係除算</dt><dd>「指定集合の要素をすべて含む」行を求める演算。NOT EXISTSの二重否定で表現可。</dd>
+      <dt>CTE (WITH句)</dt><dd>クエリ内で名前付きの一時結果を定義する仕組み。可読性を高める。</dd>
+    </dl>
+  </section>
+
+  <div class="foot reveal">
+    <p><b>このガイドについて：</b> 書籍『達人に学ぶSQL徹底指南書』（ミック 著）の主要テーマ ― 集合指向・宣言型という思想、CASE式、3値論理とNULL、自己結合、HAVING句、EXISTSと量化、ウィンドウ関数、相関サブクエリ、集合演算、パフォーマンスとプログラミング作法 ― を、SQLを少し書ける初学者向けに自分の言葉で再構成した独立教材です。原書の逐語引用は含みません。姉妹編「達人に学ぶDB設計」と対になる構成にしています。</p>
+    <p style="margin-top:10px"><b>注記：</b> コード例は概念理解のため簡略化しています。集合演算やウィンドウ関数の対応状況・構文・挙動はDBMSやバージョンによって異なり、仕様は将来変わり得ます。実装時はお使いのDBMSの公式ドキュメントで最新仕様をご確認ください。</p>
+  </div>
+</main>
+</div>
+
+<button id="top-btn" aria-label="トップへ戻る">↑</button>
+
+<script>
+const progress=document.getElementById('progress');
+const topBtn=document.getElementById('top-btn');
+function onScroll(){
+  const h=document.documentElement,sc=h.scrollTop,max=h.scrollHeight-h.clientHeight;
+  progress.style.width=(max>0?(sc/max*100):0)+'%';
+  if(sc>500)topBtn.classList.add('show');else topBtn.classList.remove('show');
+}
+window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+topBtn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+
+const revObs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');revObs.unobserve(e.target);}});},{threshold:0.08});
+document.querySelectorAll('.reveal').forEach(el=>revObs.observe(el));
+
+const tocLinks=[...document.querySelectorAll('#toc a')];
+const sections=tocLinks.map(a=>document.querySelector(a.getAttribute('href'))).filter(Boolean);
+const linkFor=id=>tocLinks.find(a=>a.getAttribute('href')==='#'+id);
+const secObs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){tocLinks.forEach(a=>a.classList.remove('active'));const l=linkFor(e.target.id);if(l){l.classList.add('active');l.scrollIntoView({block:'nearest'});}}});},{rootMargin:'-20% 0px -70% 0px',threshold:0});
+sections.forEach(s=>secObs.observe(s));
+
+document.querySelectorAll('.copy').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const code=btn.closest('.code').querySelector('code');
+    navigator.clipboard.writeText(code.innerText).then(()=>{
+      const o=btn.textContent;btn.textContent='copied ✓';setTimeout(()=>btn.textContent=o,1400);
+    }).catch(()=>btn.textContent='error');
+  });
+});
+</script>
+</body>
+</html>

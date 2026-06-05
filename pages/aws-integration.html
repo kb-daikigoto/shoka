@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CloudFront × ALB × Lambda 連携 — 3層を1つの構成につなぐ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F2F5F8;--surface:#FFFFFF;--surface-2:#F7FAFC;--ink:#142235;--muted:#54637A;--faint:#8B98A8;
+    --line:#DCE3EC;--line-2:#C9D4E0;
+    --navy:#142235;
+    --blue:#1668E3;--blue-soft:#E4EEFC;--blue-dark:#0E4496;
+    --green:#0E9E6E;--green-soft:#E0F3EC;--green-dark:#0A6B4B;
+    --orange:#D2730A;--orange-soft:#FBECD7;--orange-dark:#995107;
+    --amber:#9A6606;--amber-soft:#FBEFD9;
+    --term-bg:#13202E;--term-ink:#E6EDF3;--term-dim:#8597A6;
+    --radius:14px;--maxw:830px;
+    --fs:"IBM Plex Sans JP",sans-serif;--fm:"IBM Plex Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--fs);line-height:1.85;font-size:16.5px;-webkit-font-smoothing:antialiased;
+    background-image:linear-gradient(#E2E8F0 1px,transparent 1px),linear-gradient(90deg,#E2E8F0 1px,transparent 1px);background-size:30px 30px}
+  ::selection{background:var(--navy);color:#fff}
+  #progress{position:fixed;top:0;left:0;height:3px;width:0%;background:linear-gradient(90deg,var(--blue),var(--green),var(--orange));z-index:100;transition:width .12s linear}
+  .layout{max-width:1240px;margin:0 auto;display:grid;grid-template-columns:250px minmax(0,1fr);gap:46px;padding:0 28px}
+  .content{max-width:var(--maxw);padding:0 0 120px}
+  nav.toc{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding:34px 0 40px}
+  nav.toc .tt{font-family:var(--fm);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin:0 0 14px;font-weight:600}
+  nav.toc ol{list-style:none;margin:0;padding:0;counter-reset:t}nav.toc li{counter-increment:t}
+  nav.toc a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--muted);font-size:13.5px;line-height:1.4;padding:6px 12px 6px 14px;border-left:2px solid transparent;transition:all .15s;font-weight:500}
+  nav.toc a::before{content:counter(t,decimal-leading-zero);font-family:var(--fm);font-size:11px;color:var(--faint)}
+  nav.toc a:hover{color:var(--ink)}
+  nav.toc a.active{color:var(--navy);border-left-color:var(--navy)}nav.toc a.active::before{color:var(--navy)}
+  header.hero{padding:64px 0 34px}
+  .badge-aws{display:inline-flex;align-items:center;gap:8px;font-family:var(--fm);font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#fff;background:var(--navy);padding:6px 12px;border-radius:6px;margin-bottom:20px}
+  .badge-aws .dots{display:inline-flex;gap:4px}.badge-aws .dots i{width:7px;height:7px;border-radius:50%;display:inline-block}
+  .kicker{font-family:var(--fm);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:14px}
+  h1{font-weight:700;font-size:clamp(29px,4.8vw,45px);line-height:1.22;margin:0 0 20px;letter-spacing:-.01em}
+  h1 .cf{color:var(--blue)}h1 .al{color:var(--green)}h1 .la{color:var(--orange)}
+  .lede{font-size:18.5px;color:var(--muted);margin:0 0 26px;max-width:43em}
+  .meta{display:flex;flex-wrap:wrap;gap:9px}
+  .chip{font-family:var(--fm);font-size:12px;font-weight:500;padding:7px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--line-2);color:var(--muted)}.chip b{color:var(--ink);font-weight:600}
+  section{padding:44px 0 6px;scroll-margin-top:24px;border-top:1px solid var(--line)}section:first-of-type{border-top:none}
+  .sn{font-family:var(--fm);font-size:13px;color:var(--navy);letter-spacing:.08em;font-weight:600}
+  h2{font-weight:700;font-size:clamp(22px,3.4vw,29px);line-height:1.3;margin:7px 0 18px;letter-spacing:-.01em}
+  h3{font-weight:700;font-size:19px;margin:28px 0 10px}
+  p{margin:0 0 17px}strong{font-weight:700}
+  a.inline{color:var(--blue);text-decoration:none;border-bottom:1.5px solid var(--blue-soft);font-weight:500}a.inline:hover{border-bottom-color:var(--blue)}
+  code.k{font-family:var(--fm);font-size:.84em;background:var(--surface);border:1px solid var(--line-2);padding:1px 6px;border-radius:6px;color:var(--navy);font-weight:500;white-space:nowrap}
+  .cf-t{color:var(--blue-dark);font-weight:700}.al-t{color:var(--green-dark);font-weight:700}.la-t{color:var(--orange-dark);font-weight:700}
+  .mark{background:linear-gradient(transparent 60%,#E7EDF4 60%);padding:0 1px}
+  ul.list,ol.list{margin:0 0 17px;padding-left:1.35em}ul.list li,ol.list li{margin:0 0 9px}
+  .panel{border-radius:var(--radius);padding:20px 22px;margin:22px 0;border:1px solid var(--line-2);background:var(--surface)}
+  .panel .lb{font-family:var(--fm);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;display:inline-block;margin-bottom:9px}
+  .panel p:last-child{margin-bottom:0}
+  .note{background:var(--surface-2);border-left:4px solid var(--navy)}.note .lb{color:var(--navy)}
+  .p-cf{background:var(--blue-soft);border-color:#BFD7F6;border-left:4px solid var(--blue)}.p-cf .lb{color:var(--blue-dark)}
+  .p-alb{background:var(--green-soft);border-color:#BBE0D1;border-left:4px solid var(--green)}.p-alb .lb{color:var(--green-dark)}
+  .p-lam{background:var(--orange-soft);border-color:#EAD2AC;border-left:4px solid var(--orange)}.p-lam .lb{color:var(--orange-dark)}
+  .warn{background:var(--amber-soft);border-color:#EAD9B4;border-left:4px solid var(--amber)}.warn .lb{color:var(--amber)}
+  figure.dgm{margin:26px 0;padding:22px 14px;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius)}
+  figure.dgm svg{width:100%;height:auto;display:block}figure.dgm figcaption{font-size:13.5px;color:var(--muted);text-align:center;margin-top:12px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:22px 0}
+  .card{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius);padding:18px;border-top:3px solid var(--line-2)}
+  .card.cf{border-top-color:var(--blue)}.card.al{border-top-color:var(--green)}.card.la{border-top-color:var(--orange)}
+  .card .cn{font-family:var(--fm);font-size:11.5px;font-weight:600;margin-bottom:7px}
+  .card.cf .cn{color:var(--blue)}.card.al .cn{color:var(--green)}.card.la .cn{color:var(--orange)}
+  .card h4{font-weight:700;font-size:16.5px;margin:0 0 7px}.card p{font-size:14px;color:var(--muted);margin:0;line-height:1.7}
+  pre{margin:14px 0;background:var(--term-bg);border:1px solid #2A3947;border-radius:10px;padding:16px 18px;overflow-x:auto}
+  pre code{font-family:var(--fm);font-size:12.5px;line-height:1.65;color:var(--term-ink);white-space:pre;display:block}
+  pre code .cm{color:var(--term-dim)}pre code .k2{color:#7FB6E8}pre code .st{color:#A6D88A}
+  .codecap{font-family:var(--fm);font-size:11px;color:var(--muted);margin:14px 0 -6px;letter-spacing:.04em}
+  table.tb{width:100%;border-collapse:collapse;margin:18px 0;font-size:14px;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius);overflow:hidden}
+  table.tb th,table.tb td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  table.tb th{font-family:var(--fm);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-weight:600;background:var(--surface-2)}
+  table.tb tr:last-child td{border-bottom:none}table.tb td code{font-family:var(--fm);font-size:12.5px;color:var(--navy)}
+  .flowstep{display:grid;grid-template-columns:42px 1fr;gap:16px;margin:16px 0;align-items:start}
+  .flowstep .n{width:42px;height:42px;border-radius:10px;color:#fff;font-family:var(--fm);font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center}
+  .n.cf{background:var(--blue)}.n.al{background:var(--green)}.n.la{background:var(--orange)}.n.nv{background:var(--navy)}
+  .flowstep .b{padding-top:7px}.flowstep .b p{margin:0}
+  footer{border-top:1px solid var(--line);padding:36px 0 70px;color:var(--muted);font-size:13.5px}footer a{color:var(--blue);text-decoration:none;font-weight:500}
+  .totop{position:fixed;right:22px;bottom:22px;width:44px;height:44px;border-radius:12px;background:var(--navy);color:#fff;border:none;cursor:pointer;font-size:18px;opacity:0;transform:translateY(10px);transition:all .25s;z-index:60}.totop.show{opacity:1;transform:translateY(0)}
+  @media (max-width:900px){.layout{grid-template-columns:1fr;gap:0}nav.toc{display:none}header.hero{padding:48px 0 24px}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+  .reveal{opacity:0;transform:translateY(12px);animation:rise .65s cubic-bezier(.2,.7,.2,1) forwards}@keyframes rise{to{opacity:1;transform:none}}
+  .d1{animation-delay:.04s}.d2{animation-delay:.12s}.d3{animation-delay:.2s}.d4{animation-delay:.28s}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="layout">
+  <nav class="toc" aria-label="目次">
+    <p class="tt">目次</p>
+    <ol id="toc-list">
+      <li><a href="#whole">3 層を 1 つにつなぐ</a></li>
+      <li><a href="#roles">それぞれの役割分担</a></li>
+      <li><a href="#flow">リクエストの一気通貫</a></li>
+      <li><a href="#split">静的と動的の分岐</a></li>
+      <li><a href="#glue">ALB → Lambda の連携</a></li>
+      <li><a href="#scale">スケールと耐障害</a></li>
+      <li><a href="#sec">セキュリティの重ね方</a></li>
+      <li><a href="#variation">構成のバリエーション</a></li>
+      <li><a href="#cheat">まとめ・早見表</a></li>
+    </ol>
+  </nav>
+  <main class="content">
+    <header class="hero">
+      <div class="badge-aws reveal d1"><span class="dots"><i style="background:var(--blue)"></i><i style="background:var(--green)"></i><i style="background:var(--orange)"></i></span>AWS Infrastructure · Capstone</div>
+      <div class="kicker reveal d1">CloudFront × ALB × Lambda — Integration</div>
+      <h1 class="reveal d2"><span class="cf">CloudFront</span> × <span class="al">ALB</span> × <span class="la">Lambda</span><br>3 層を 1 つの構成につなぐ</h1>
+      <p class="lede reveal d3">三部作の総まとめ。これまで個別に見てきた 3 つのサービスは、<strong>「届ける・振り分ける・処理する」</strong>という役割で重なり合い、1 本の Web アプリ構成として組み合わさります。リクエストが端から端までどう流れるのかを通して見ていきましょう。</p>
+      <div class="meta reveal d4">
+        <span class="chip"><span class="cf-t">CloudFront</span> 届ける</span>
+        <span class="chip"><span class="al-t">ALB</span> 振り分ける</span>
+        <span class="chip"><span class="la-t">Lambda</span> 処理する</span>
+      </div>
+    </header>
+
+    <section id="whole">
+      <div class="sn">01</div>
+      <h2>3 層を 1 つにつなぐ</h2>
+      <p>典型的な構成はこうなります。利用者の最前面に <span class="cf-t">CloudFront</span> が立ち、静的ファイルはエッジから配り、動的なリクエストだけを後段へ転送。その動的リクエストを <span class="al-t">ALB</span> が受けて中身を見て振り分け、実際の処理を <span class="la-t">Lambda</span> が実行して、データ層へ読み書きします。</p>
+      <figure class="dgm">
+        <svg viewBox="0 0 720 556" role="img" aria-label="CloudFront・ALB・Lambdaの連携アーキテクチャ図">
+          <defs><marker id="m1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#6E7E8D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+          <g font-family="IBM Plex Sans JP, sans-serif">
+            <rect x="288" y="14" width="144" height="46" rx="10" fill="#F7FAFC" stroke="#C9D4E0"/>
+            <text x="360" y="42" text-anchor="middle" font-size="13.5" font-weight="700" fill="#142235">クライアント</text>
+            <line x1="360" y1="60" x2="360" y2="88" stroke="#6E7E8D" stroke-width="1.5" marker-end="url(#m1)"/>
+            <text x="372" y="80" font-size="11" fill="#54637A">① リクエスト</text>
+
+            <rect x="96" y="90" width="528" height="74" rx="12" fill="#E4EEFC" stroke="#1668E3"/>
+            <text x="360" y="120" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0E4496">Amazon CloudFront — エッジ</text>
+            <text x="360" y="142" text-anchor="middle" font-size="11.5" fill="#1668E3">TLS 終端 ・ WAF ・ キャッシュ ・ 最寄り配信</text>
+
+            <line x1="250" y1="164" x2="214" y2="212" stroke="#6E7E8D" stroke-width="1.5" marker-end="url(#m1)"/>
+            <text x="150" y="194" text-anchor="middle" font-size="11" fill="#0E4496">静的 /static/*</text>
+            <line x1="470" y1="164" x2="506" y2="212" stroke="#6E7E8D" stroke-width="1.5" marker-end="url(#m1)"/>
+            <text x="585" y="194" text-anchor="middle" font-size="11" fill="#0A6B4B">動的 /api/*（オリジン）</text>
+
+            <rect x="96" y="214" width="236" height="66" rx="11" fill="#F7FAFC" stroke="#C9D4E0"/>
+            <text x="214" y="242" text-anchor="middle" font-size="13" font-weight="700" fill="#142235">Amazon S3（静的）</text>
+            <text x="214" y="262" text-anchor="middle" font-size="11" fill="#54637A">OAC で非公開のまま配信</text>
+
+            <rect x="388" y="214" width="236" height="66" rx="11" fill="#E0F3EC" stroke="#0E9E6E"/>
+            <text x="506" y="242" text-anchor="middle" font-size="13.5" font-weight="700" fill="#0A6B4B">ALB — L7 振り分け</text>
+            <text x="506" y="262" text-anchor="middle" font-size="11.5" fill="#0E9E6E">/api/* を受ける</text>
+
+            <line x1="506" y1="280" x2="506" y2="318" stroke="#6E7E8D" stroke-width="1.5" marker-end="url(#m1)"/>
+            <text x="516" y="303" font-size="10.5" fill="#0A6B4B">ルール → Lambda TG</text>
+
+            <rect x="388" y="320" width="236" height="66" rx="11" fill="#FBECD7" stroke="#D2730A"/>
+            <text x="506" y="348" text-anchor="middle" font-size="13.5" font-weight="700" fill="#995107">AWS Lambda（ターゲット）</text>
+            <text x="506" y="368" text-anchor="middle" font-size="11.5" fill="#D2730A">ビジネスロジックを実行</text>
+
+            <line x1="506" y1="386" x2="506" y2="424" stroke="#6E7E8D" stroke-width="1.5" marker-end="url(#m1)"/>
+            <rect x="388" y="426" width="236" height="62" rx="11" fill="#F7FAFC" stroke="#C9D4E0"/>
+            <text x="506" y="452" text-anchor="middle" font-size="13" font-weight="700" fill="#142235">データ層</text>
+            <text x="506" y="471" text-anchor="middle" font-size="11" fill="#54637A">DynamoDB / RDS / S3</text>
+
+            <text x="360" y="524" text-anchor="middle" font-size="12.5" fill="#54637A">応答は逆順に戻り、CloudFront がキャッシュ可能なものは保持して次回に備える。</text>
+          </g>
+        </svg>
+        <figcaption>青=CloudFront、緑=ALB、橙=Lambda。前作 3 本の色がそのまま 3 層に対応。</figcaption>
+      </figure>
+    </section>
+
+    <section id="roles">
+      <div class="sn">02</div>
+      <h2>それぞれの役割分担</h2>
+      <p>3 つは競合せず、責務がきれいに分かれます。「外向き・入口・中身」と覚えると整理しやすいです。</p>
+      <div class="cards">
+        <div class="card cf"><div class="cn">LAYER 01 · 届ける</div><h4>CloudFront</h4><p>世界中のエッジから配信。静的をキャッシュして高速化し、オリジン負荷を減らす。TLS・WAF の入口も兼ねる。</p></div>
+        <div class="card al"><div class="cn">LAYER 02 · 振り分ける</div><h4>ALB</h4><p>動的リクエストの入口。L7 でパスやホストを見て、適切なターゲット（ここでは Lambda）へ振り分ける。</p></div>
+        <div class="card la"><div class="cn">LAYER 03 · 処理する</div><h4>Lambda</h4><p>実際のビジネスロジック。イベントに反応して起動し、データ層を読み書きして応答を返す。</p></div>
+      </div>
+      <div class="panel note">
+        <span class="lb">分業の効用</span>
+        <p>各層が独立して<strong>別々にスケール・別々に保守</strong>できます。キャッシュは CloudFront、ルーティング変更は ALB、ロジック変更は Lambda、と変更の影響範囲が閉じるのが、この構成の大きな利点です。</p>
+      </div>
+    </section>
+
+    <section id="flow">
+      <div class="sn">03</div>
+      <h2>リクエストの一気通貫フロー</h2>
+      <p>1 本のリクエストが、どの層をどう通るか。静的と動的で道が分かれます。</p>
+      <div class="flowstep"><div class="n cf">1</div><div class="b"><p>利用者のリクエストが、最寄りの <span class="cf-t">CloudFront</span> エッジに届く。ここで TLS を終端し、WAF を適用。</p></div></div>
+      <div class="flowstep"><div class="n cf">2</div><div class="b"><p><strong>静的（例 <code class="k">/static/app.js</code>）</strong>なら、エッジのキャッシュにヒットすれば即返す。無ければ S3 から取得してキャッシュし返す。<span class="al-t">ALB</span> も <span class="la-t">Lambda</span> も動かない。</p></div></div>
+      <div class="flowstep"><div class="n al">3</div><div class="b"><p><strong>動的（例 <code class="k">/api/todos</code>）</strong>なら、CloudFront はオリジンである <span class="al-t">ALB</span> へ転送。ALB はリスナールールで <code class="k">/api/*</code> を判定し、Lambda のターゲットグループを選ぶ。</p></div></div>
+      <div class="flowstep"><div class="n la">4</div><div class="b"><p>ALB が <span class="la-t">Lambda</span> を同期呼び出し。Lambda はリクエスト内容（イベント JSON）を受け取り、データ層を読み書きしてロジックを実行。</p></div></div>
+      <div class="flowstep"><div class="n nv">5</div><div class="b"><p>Lambda の応答 → ALB → CloudFront と逆順に戻り、利用者へ。キャッシュ可能な応答なら CloudFront が保持し、次回を高速化する。</p></div></div>
+      <div class="panel note">
+        <span class="lb">要点</span>
+        <p>静的は <span class="cf-t">CloudFront＋S3</span> で完結し、後段を一切使わない。動的だけが <span class="al-t">ALB</span>→<span class="la-t">Lambda</span> へ降りる。<span class="mark">「重い処理はなるべく後段へ流さない」</span>のが、この構成の速さとコスト効率の源泉です。</p>
+      </div>
+    </section>
+
+    <section id="split">
+      <div class="sn">04</div>
+      <h2>静的と動的の分岐（CloudFront の振る舞い）</h2>
+      <p>CloudFront は<strong>パスごとに「振る舞い（ビヘイビア）」</strong>を設定でき、行き先（オリジン）とキャッシュ方針を変えられます。これが静的・動的を分ける要です。</p>
+      <table class="tb">
+        <thead><tr><th>パスパターン</th><th>オリジン</th><th>キャッシュ方針</th></tr></thead>
+        <tbody>
+          <tr><td><code>/static/*</code>, 画像, JS, CSS</td><td>S3</td><td>長め（積極的にキャッシュ）</td></tr>
+          <tr><td><code>/api/*</code> など動的</td><td>ALB</td><td>原則オフ or 短め。ヘッダ・クッキー・クエリを転送</td></tr>
+        </tbody>
+      </table>
+      <p>静的アセットは思い切りキャッシュして高速化、API はキャッシュせず（または短時間）に毎回 ALB→Lambda へ通す、という出し分けです。バージョン付きファイル名（<code class="k">app.v2.js</code>）と組み合わせると、静的の更新反映も安全になります。</p>
+    </section>
+
+    <section id="glue">
+      <div class="sn">05</div>
+      <h2>ALB → Lambda の連携（接着面の正体）</h2>
+      <p>この構成の“接着剤”は、<strong>Lambda を ALB のターゲットに登録できる</strong>こと（ターゲットグループの種別を <code class="k">lambda</code> にする）。ALB は Lambda を<strong>同期呼び出し</strong>し、HTTP リクエストを特定の<strong>イベント JSON</strong>に変換して渡します。</p>
+      <p class="codecap">ALB が Lambda に渡すイベント（抜粋）</p>
+      <pre><code>{
+  <span class="k2">"requestContext"</span>: { <span class="k2">"elb"</span>: { <span class="k2">"targetGroupArn"</span>: <span class="st">"arn:aws:...:targetgroup/..."</span> } },
+  <span class="k2">"httpMethod"</span>: <span class="st">"GET"</span>,
+  <span class="k2">"path"</span>: <span class="st">"/api/todos"</span>,
+  <span class="k2">"queryStringParameters"</span>: { <span class="st">"limit"</span>: <span class="st">"10"</span> },
+  <span class="k2">"headers"</span>: { <span class="st">"host"</span>: <span class="st">"example.com"</span> },
+  <span class="k2">"body"</span>: <span class="st">""</span>,
+  <span class="k2">"isBase64Encoded"</span>: false
+}</code></pre>
+      <p>Lambda 側は、ALB が解釈できる形で<strong>必ず特定の形の応答</strong>を返す必要があります。<code class="k">statusCode</code> と <code class="k">body</code> を含む JSON です。</p>
+      <p class="codecap">Lambda が返すべき応答</p>
+      <pre><code>{
+  <span class="k2">"statusCode"</span>: 200,
+  <span class="k2">"statusDescription"</span>: <span class="st">"200 OK"</span>,
+  <span class="k2">"headers"</span>: { <span class="st">"Content-Type"</span>: <span class="st">"application/json"</span> },
+  <span class="k2">"isBase64Encoded"</span>: false,
+  <span class="k2">"body"</span>: <span class="st">"{\"items\":[...]}"</span>
+}</code></pre>
+      <div class="panel p-lam">
+        <span class="lb">ポイント</span>
+        <p>API Gateway の Lambda 統合と似た発想ですが、<strong>イベントの形は ALB 専用</strong>（<code class="k">requestContext.elb</code> が目印）。この形に沿って受け取り・返すだけで、ALB の後ろに Lambda がぶら下がります。前作「ALB」で触れた “ターゲット＝EC2 / IP / Lambda” の Lambda が、まさにこれです。</p>
+      </div>
+    </section>
+
+    <section id="scale">
+      <div class="sn">06</div>
+      <h2>スケールと耐障害</h2>
+      <p>3 層それぞれが、別の仕組みで伸び縮みし、別の方法で障害に耐えます。</p>
+      <ul class="list">
+        <li><span class="cf-t">CloudFront</span>：エッジでキャッシュヒットした分は後段に届かない。<strong>アクセス増の多くをエッジで吸収</strong>し、オリジンを守る。</li>
+        <li><span class="al-t">ALB</span>：トラフィックに応じて自動スケール。複数 AZ のターゲットへ分散し、ヘルスチェックで<strong>不健全なターゲットを自動的に外す</strong>。</li>
+        <li><span class="la-t">Lambda</span>：同時実行ぶん環境を自動複製。<strong>サーバー台数を意識せず</strong>急増に追従（同時実行上限と後段 DB の接続数には注意）。</li>
+      </ul>
+      <div class="panel warn">
+        <span class="lb">注意 — 後段がボトルネック</span>
+        <p>Lambda は急にスケールできても、その先の RDS などが<strong>同時接続数で詰まる</strong>ことがあります。RDS Proxy で接続をまとめる、DynamoDB を使う、同時実行数を予約する、などの対策を構成段階で検討しましょう。</p>
+      </div>
+    </section>
+
+    <section id="sec">
+      <div class="sn">07</div>
+      <h2>セキュリティの重ね方</h2>
+      <p>各層がそれぞれセキュリティの役割を持ち、多層防御になります。</p>
+      <ul class="list">
+        <li><strong>エッジで弾く</strong>：<span class="cf-t">CloudFront</span> に WAF / Shield を付け、悪意あるリクエストや DDoS を最前線で遮断。TLS もここで終端。</li>
+        <li><strong>S3 を隠す</strong>：OAC で S3 を非公開にし、CloudFront 経由のアクセスだけ許可。バケットを世界に晒さない。</li>
+        <li><strong>ALB でも WAF</strong>：必要なら <span class="al-t">ALB</span> にも Web ACL を付け、認証（Cognito/OIDC）を振り分け前に挟める。</li>
+        <li><strong>最小権限</strong>：<span class="la-t">Lambda</span> は実行ロールで、触れる AWS リソースを必要最小限に。プライベートサブネット内のリソースには VPC 接続で。</li>
+      </ul>
+    </section>
+
+    <section id="variation">
+      <div class="sn">08</div>
+      <h2>構成のバリエーション</h2>
+      <p>同じ「届ける・振り分ける・処理する」でも、要件によって部品の選び方が変わります。</p>
+      <table class="tb">
+        <thead><tr><th>パターン</th><th>後段</th><th>向いている場面</th></tr></thead>
+        <tbody>
+          <tr><td>CloudFront → ALB → <strong>Lambda</strong></td><td>サーバーレス</td><td>断片的な API、アクセスにムラ、運用を最小化したい</td></tr>
+          <tr><td>CloudFront → ALB → <strong>ECS / EC2</strong></td><td>コンテナ / VM</td><td>常時負荷が高い、長時間処理、既存アプリの移行</td></tr>
+          <tr><td>CloudFront → <strong>API Gateway</strong> → Lambda</td><td>サーバーレス</td><td>API 管理機能（認可・スロットリング・スキーマ）を厚く使いたい</td></tr>
+        </tbody>
+      </table>
+      <div class="panel note">
+        <span class="lb">ALB か API Gateway か</span>
+        <p>Lambda を HTTP で公開する入口は、ALB でも API Gateway でも可。<strong>すでに ALB で他の EC2/ECS も束ねている</strong>なら ALB に Lambda も相乗りさせるのが素直。<strong>API としての管理機能</strong>を重視するなら API Gateway が有力です。</p>
+      </div>
+    </section>
+
+    <section id="cheat">
+      <div class="sn">09</div>
+      <h2>まとめ・早見表</h2>
+      <table class="tb">
+        <thead><tr><th>層</th><th>役割</th><th>主な仕事</th></tr></thead>
+        <tbody>
+          <tr><td><span class="cf-t">CloudFront</span></td><td>届ける</td><td>エッジ配信・キャッシュ・TLS・WAF。静的を吸収し後段を守る</td></tr>
+          <tr><td><span class="al-t">ALB</span></td><td>振り分ける</td><td>L7 でパス判定し、Lambda ターゲットへ同期呼び出し</td></tr>
+          <tr><td><span class="la-t">Lambda</span></td><td>処理する</td><td>イベントを受けてロジック実行、データ層を読み書き</td></tr>
+        </tbody>
+      </table>
+      <div class="panel note">
+        <span class="lb">連携の一言まとめ</span>
+        <p><span class="cf-t">CloudFront</span> が静的を捌いて動的だけを通し、<span class="al-t">ALB</span> が <code class="k">/api/*</code> を <span class="la-t">Lambda</span> ターゲットへ流し、Lambda がイベント JSON を受けて応答を返す。<span class="mark">3 つの「型安全ならぬ役割安全」な分業</span>で、速く・安全に・伸縮自在な Web 構成ができあがります。</p>
+      </div>
+    </section>
+
+    <footer>
+      <p>本記事は AWS 公式ドキュメント（<a href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Introduction.html">CloudFront</a> / <a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/introduction.html">ALB</a> / <a href="https://docs.aws.amazon.com/lambda/latest/dg/welcome.html">Lambda</a>）をもとに、連携構成として再構成したものです。イベント／応答の形・仕様・料金は時期で変わるため、実装時は公式と手元の設定を確認してください。<br>AWS インフラ三部作 ＋ 連携編: ① CloudFront ／ ② Application Load Balancer ／ ③ AWS Lambda ／ ④ 連携（本記事）</p>
+    </footer>
+  </main>
+</div>
+<button class="totop" id="totop" aria-label="トップへ戻る">↑</button>
+<script>
+  var prog=document.getElementById('progress'),totop=document.getElementById('totop');
+  function s(){var h=document.documentElement,m=h.scrollHeight-h.clientHeight;prog.style.width=(m>0?h.scrollTop/m*100:0)+'%';if(h.scrollTop>600)totop.classList.add('show');else totop.classList.remove('show');}
+  document.addEventListener('scroll',s,{passive:true});s();
+  totop.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  var links=[].slice.call(document.querySelectorAll('nav.toc a')),map={};
+  links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(l){l.classList.remove('active');});var a=map[e.target.id];if(a)a.classList.add('active');}});},{rootMargin:'-20% 0px -70% 0px',threshold:0});
+  document.querySelectorAll('main section').forEach(function(x){io.observe(x);});
+</script>
+</body>
+</html>
