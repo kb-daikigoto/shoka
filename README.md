@@ -65,11 +65,13 @@ git push -u origin main
 | `/create [書籍名 または 学習内容]` | 新記事を `pages/<棚>/` に作り、ハブ（ARTICLES）と catalog.json に追記 |
 | `/update [識別ワード or file名] [変更内容]` | catalog.json で対象記事を一意に特定し、変更範囲を確認のうえ外科的に編集 |
 | `/org` | `pages/` を棚別サブディレクトリに整頓し、catalog.json を再生成して参照パスを揃える |
+| `/publish [メッセージ]` | 変更を commit & push し、公開サイトに反映（git リポジトリのある環境専用） |
 
 `/update` の第1引数は正確なファイル名でなくてよい。記事を一意に特定できる言葉でも解決する。
 例: `/update sql指南書 〇〇に変更して` → `pages/db/sql-mastery.html` を特定して編集。
 
-更新で受け取った新ファイルをコミット → push すれば公開サイトに反映される。
+`/create`・`/update`・`/org` はファイルを提示するところまで（自動pushはしない）。公開したいときに
+続けて **`/publish`** を叩くと commit & push まで行い、GitHub Pages に反映される。
 
 ## 新しい記事を手で追加する場合
 
