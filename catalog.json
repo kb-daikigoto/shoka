@@ -1,0 +1,178 @@
+{
+  "_comment": "派生インデックス。真実は index.html の ARTICLES。これは /org が再生成する検索用カタログで、/update がワード解決に使う（手で編集しない）。",
+  "generatedBy": "/org",
+  "shelves": {
+    "db": "データの土台 (Database & Query)",
+    "backend": "バックエンド & API (Backend & API)",
+    "design": "ソフトウェア設計 (Software Design)",
+    "infra": "クラウド & インフラ (Cloud & Infra)",
+    "dist": "分散データシステム (Distributed Data)",
+    "tools": "開発ツール (Dev Tools)"
+  },
+  "articles": [
+    {
+      "slug": "db-design",
+      "file": "pages/db/db-design.html",
+      "shelf": "db",
+      "title": "達人に学ぶ DB設計",
+      "book": "達人に学ぶDB設計徹底指南書",
+      "cat": "DATABASE",
+      "tags": ["正規化", "ER図", "インデックス", "バッドノウハウ"],
+      "aliases": ["DB設計", "データベース設計", "DB設計指南書", "達人DB", "db-design"]
+    },
+    {
+      "slug": "sql-mastery",
+      "file": "pages/db/sql-mastery.html",
+      "shelf": "db",
+      "title": "達人に学ぶ SQL",
+      "book": "達人に学ぶSQL徹底指南書",
+      "cat": "SQL",
+      "tags": ["集合指向", "3値論理", "EXISTS", "ウィンドウ関数"],
+      "aliases": ["SQL", "SQL指南書", "達人SQL", "SQL徹底指南書", "sql-mastery"]
+    },
+    {
+      "slug": "graphql-complete-guide",
+      "file": "pages/backend/graphql-complete-guide.html",
+      "shelf": "backend",
+      "title": "GraphQL 完全学習ガイド",
+      "book": "GraphQL 完全学習ガイド",
+      "cat": "GraphQL",
+      "tags": ["スキーマ", "クエリ", "リゾルバ", "N+1"],
+      "aliases": ["GraphQL", "グラフQL", "GraphQLガイド", "graphql"]
+    },
+    {
+      "slug": "gqlgen-tutorial",
+      "file": "pages/backend/gqlgen-tutorial.html",
+      "shelf": "backend",
+      "title": "gqlgen コード解剖",
+      "book": "gqlgen コード解剖",
+      "cat": "gqlgen / Go",
+      "tags": ["gqlgen", "コード生成", "リゾルバ", "Go"],
+      "aliases": ["gqlgen", "gqlgenチュートリアル", "gqlgen解剖", "gqlgen-tutorial"]
+    },
+    {
+      "slug": "gqlgen-sqlc-full",
+      "file": "pages/backend/gqlgen-sqlc-full.html",
+      "shelf": "backend",
+      "title": "gqlgen × sqlc 完全版",
+      "book": "gqlgen × sqlc 完全版",
+      "cat": "gqlgen × sqlc",
+      "tags": ["gqlgen", "sqlc", "Go", "スキーマ駆動"],
+      "aliases": ["gqlgen sqlc", "gqlgen×sqlc", "gqlgen sqlc 完全版", "gqlgen-sqlc-full"]
+    },
+    {
+      "slug": "sqlc-intro",
+      "file": "pages/backend/sqlc-intro.html",
+      "shelf": "backend",
+      "title": "sqlc 完全入門",
+      "book": "sqlc 完全入門 — 型安全なGoとgqlgen連携",
+      "cat": "sqlc / Go",
+      "tags": ["sqlc", "型安全", "Go", "SQL"],
+      "aliases": ["sqlc", "sqlc入門", "sqlc完全入門", "sqlc-intro"]
+    },
+    {
+      "slug": "software-design",
+      "file": "pages/design/software-design.html",
+      "shelf": "design",
+      "title": "ちょうぜつソフトウェア設計入門",
+      "book": "ちょうぜつソフトウェア設計入門",
+      "cat": "DESIGN",
+      "tags": ["クリーンアーキテクチャ", "SOLID", "DI", "TDD"],
+      "aliases": ["ソフトウェア設計", "ちょうぜつ", "設計入門", "クリーンアーキテクチャ", "software-design"]
+    },
+    {
+      "slug": "aws-lambda",
+      "file": "pages/infra/aws-lambda.html",
+      "shelf": "infra",
+      "title": "AWS Lambda 入門",
+      "book": "AWS Lambda 入門",
+      "cat": "AWS / Serverless",
+      "tags": ["サーバーレス", "関数", "イベント駆動", "スケール"],
+      "aliases": ["Lambda", "ラムダ", "AWS Lambda", "サーバーレス", "aws-lambda"]
+    },
+    {
+      "slug": "aws-alb",
+      "file": "pages/infra/aws-alb.html",
+      "shelf": "infra",
+      "title": "Application Load Balancer 入門",
+      "book": "ALB 入門 — L7で賢く振り分ける",
+      "cat": "AWS / Network",
+      "tags": ["ロードバランサ", "L7", "ルーティング", "ターゲットグループ"],
+      "aliases": ["ALB", "ロードバランサ", "Application Load Balancer", "aws-alb"]
+    },
+    {
+      "slug": "aws-cloudfront",
+      "file": "pages/infra/aws-cloudfront.html",
+      "shelf": "infra",
+      "title": "Amazon CloudFront 入門",
+      "book": "CloudFront 入門 — 速く届けるCDN",
+      "cat": "AWS / CDN",
+      "tags": ["CDN", "キャッシュ", "エッジ", "配信"],
+      "aliases": ["CloudFront", "クラウドフロント", "CDN", "aws-cloudfront"]
+    },
+    {
+      "slug": "aws-integration",
+      "file": "pages/infra/aws-integration.html",
+      "shelf": "infra",
+      "title": "CloudFront × ALB × Lambda 連携",
+      "book": "3層を1つの構成につなぐ",
+      "cat": "AWS / Architecture",
+      "tags": ["構成", "CloudFront", "ALB", "Lambda"],
+      "aliases": ["AWS連携", "3層構成", "CloudFront ALB Lambda", "統合構成", "aws-integration"]
+    },
+    {
+      "slug": "ddia-vol1",
+      "file": "pages/dist/ddia-vol1.html",
+      "shelf": "dist",
+      "title": "データ指向AP ― 土台",
+      "book": "データ指向アプリケーションデザイン",
+      "cat": "DDIA Vol.1",
+      "vol": "全4巻 第1巻",
+      "tags": ["三つの関心事", "データモデル", "LSM/Bツリー", "互換性"],
+      "aliases": ["DDIA", "DDIA1", "DDIA第1巻", "データ指向", "データ指向アプリケーションデザイン 第1巻", "ddia-vol1"]
+    },
+    {
+      "slug": "ddia-vol2",
+      "file": "pages/dist/ddia-vol2.html",
+      "shelf": "dist",
+      "title": "データ指向AP ― 複製と分割",
+      "book": "データ指向アプリケーションデザイン",
+      "cat": "DDIA Vol.2",
+      "vol": "全4巻 第2巻",
+      "tags": ["複製", "分割", "クォーラム", "ルーティング"],
+      "aliases": ["DDIA2", "DDIA第2巻", "データ指向 複製と分割", "データ指向アプリケーションデザイン 第2巻", "ddia-vol2"]
+    },
+    {
+      "slug": "ddia-vol3",
+      "file": "pages/dist/ddia-vol3.html",
+      "shelf": "dist",
+      "title": "データ指向AP ― 分散の難所",
+      "book": "データ指向アプリケーションデザイン",
+      "cat": "DDIA Vol.3",
+      "vol": "全4巻 第3巻",
+      "tags": ["分離レベル", "CAP", "2相コミット", "合意"],
+      "aliases": ["DDIA3", "DDIA第3巻", "データ指向 分散の難所", "データ指向アプリケーションデザイン 第3巻", "ddia-vol3"]
+    },
+    {
+      "slug": "ddia-vol4",
+      "file": "pages/dist/ddia-vol4.html",
+      "shelf": "dist",
+      "title": "データ指向AP ― 派生データ",
+      "book": "データ指向アプリケーションデザイン",
+      "cat": "DDIA Vol.4",
+      "vol": "全4巻 第4巻",
+      "tags": ["MapReduce", "Kafka", "CDC", "データ統合"],
+      "aliases": ["DDIA4", "DDIA第4巻", "データ指向 派生データ", "データ指向アプリケーションデザイン 第4巻", "ddia-vol4"]
+    },
+    {
+      "slug": "git-complete-guide",
+      "file": "pages/tools/git-complete-guide.html",
+      "shelf": "tools",
+      "title": "Git 操作 完全ガイド",
+      "book": "Git 操作 完全ガイド — 基礎から救出術まで",
+      "cat": "Git",
+      "tags": ["コミット", "ブランチ", "マージ/リベース", "救出術"],
+      "aliases": ["Git", "ギット", "Gitガイド", "Git完全ガイド", "git-complete-guide"]
+    }
+  ]
+}
