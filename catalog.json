@@ -133,6 +133,16 @@
       "aliases": ["AWS連携", "3層構成", "CloudFront ALB Lambda", "統合構成", "aws-integration"]
     },
     {
+      "slug": "linux-no-shikumi",
+      "file": "pages/infra/linux-no-shikumi.html",
+      "shelf": "infra",
+      "title": "試して理解 Linuxのしくみ",
+      "book": "［試して理解］Linuxのしくみ（増補改訂版）",
+      "cat": "Linux / OS",
+      "tags": ["プロセス", "仮想メモリ", "スケジューラ", "コンテナ"],
+      "aliases": ["Linuxのしくみ", "Linux しくみ", "試して理解Linux", "Linux内部", "OSのしくみ", "Linux", "linux-no-shikumi"]
+    },
+    {
       "slug": "ddia-vol1",
       "file": "pages/dist/ddia-vol1.html",
       "shelf": "dist",
