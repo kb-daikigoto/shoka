@@ -143,6 +143,26 @@
       "aliases": ["Linuxのしくみ", "Linux しくみ", "試して理解Linux", "Linux内部", "OSのしくみ", "Linux", "linux-no-shikumi"]
     },
     {
+      "slug": "new-linux-textbook",
+      "file": "pages/infra/new-linux-textbook.html",
+      "shelf": "infra",
+      "title": "新しいLinuxの教科書",
+      "book": "新しいLinuxの教科書（改訂第2版）",
+      "cat": "Linux / CLI",
+      "tags": ["シェル", "パイプ", "パーミッション", "シェルスクリプト"],
+      "aliases": ["Linuxの教科書", "新しいLinux", "新しいLinuxの教科書", "Linux教科書", "Linuxコマンド", "コマンドライン入門", "new-linux-textbook"]
+    },
+    {
+      "slug": "mastering-tcp-ip",
+      "file": "pages/infra/mastering-tcp-ip.html",
+      "shelf": "infra",
+      "title": "マスタリングTCP/IP 入門編",
+      "book": "マスタリングTCP/IP 入門編（第6版）",
+      "cat": "Network / TCP-IP",
+      "tags": ["階層モデル", "IPアドレス", "TCP/UDP", "DNS"],
+      "aliases": ["マスタリングTCP/IP", "TCP/IP", "TCPIP", "マスタリング", "ネットワーク入門", "TCP/IP入門", "mastering-tcp-ip"]
+    },
+    {
       "slug": "ddia-vol1",
       "file": "pages/dist/ddia-vol1.html",
       "shelf": "dist",

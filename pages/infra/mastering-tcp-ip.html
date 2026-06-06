@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>マスタリングTCP/IP 入門編 — 階層で読み解くネットワークの地図</title>
+<link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+<meta name="theme-color" content="#1B1A2E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=IBM+Plex+Sans+JP:wght@400;500;700&family=M+PLUS+1+Code:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F3F3F8;--surface:#FFFFFF;--surface-2:#F1F1F8;--ink:#1C1B26;--muted:#4E4C5E;--faint:#8A889B;
+    --line:#E4E3EC;--line-2:#D3D2DE;
+    --ac:#5350C4;--ac-soft:#E7E6FA;--ac-dark:#353299;   /* マスタリングTCP/IP = エレクトリック・インディゴ */
+    --amber:#B5781E;--amber-soft:#F8EFDB;
+    --cyan:#1F7E9A;--cyan-soft:#E0F0F5;
+    --green:#3E7C5A;--green-soft:#E4F1EA;--red:#B5483E;--red-soft:#FBECEA;
+    --navy:#1B1A2E;
+    --term-bg:#16162A;--term-ink:#E8E7F2;--term-dim:#7E7C9A;
+    --radius:13px;--maxw:820px;
+    --fs:"IBM Plex Sans JP",system-ui,sans-serif;--fm:"Fira Code",ui-monospace,monospace;--serif:"M PLUS 1 Code",monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--fs);line-height:1.9;font-size:16.5px;-webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(circle at 14% 8%,rgba(83,80,196,.06),transparent 40%),radial-gradient(circle at 88% 5%,rgba(31,126,154,.05),transparent 38%)}
+  ::selection{background:var(--ac);color:#fff}
+  #progress{position:fixed;top:0;left:0;height:3px;width:0%;background:var(--ac);z-index:100;transition:width .12s linear}
+  .layout{max-width:1230px;margin:0 auto;display:grid;grid-template-columns:248px minmax(0,1fr);gap:46px;padding:0 28px}
+  .content{max-width:var(--maxw);padding:0 0 120px}
+  nav.toc{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding:34px 0 40px}
+  nav.toc .tt{font-family:var(--fm);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin:0 0 14px;font-weight:600}
+  nav.toc ol{list-style:none;margin:0;padding:0;counter-reset:t}
+  nav.toc li{counter-increment:t}
+  nav.toc a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--muted);font-size:13.5px;line-height:1.4;padding:6px 12px 6px 14px;border-left:2px solid transparent;transition:all .15s;font-weight:500}
+  nav.toc a::before{content:counter(t,decimal-leading-zero);font-family:var(--fm);font-size:11px;color:var(--faint)}
+  nav.toc a:hover{color:var(--ink)}
+  nav.toc a.active{color:var(--ac-dark);border-left-color:var(--ac)}nav.toc a.active::before{color:var(--ac-dark)}
+  header.hero{padding:64px 0 34px;position:relative}
+  .badge{display:inline-flex;align-items:center;gap:8px;font-family:var(--fm);font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#fff;background:var(--navy);padding:6px 12px;border-radius:6px;margin-bottom:20px}
+  .badge .dot{width:7px;height:7px;border-radius:50%;background:var(--ac)}
+  .kicker{font-family:var(--fm);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ac-dark);font-weight:600;margin-bottom:14px}
+  h1{font-family:var(--serif);font-weight:700;font-size:clamp(28px,4.8vw,43px);line-height:1.3;margin:0 0 20px;letter-spacing:.005em}
+  h1 .ac{color:var(--ac)}
+  .lede{font-size:18px;color:var(--muted);margin:0 0 26px;max-width:43em}
+  .meta{display:flex;flex-wrap:wrap;gap:9px}
+  .chip{font-family:var(--fm);font-size:12px;font-weight:500;padding:7px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--line-2);color:var(--muted)}
+  .chip b{color:var(--ink);font-weight:600}
+  section{padding:44px 0 6px;scroll-margin-top:24px;border-top:1px solid var(--line)}
+  section:first-of-type{border-top:none}
+  .sn{font-family:var(--fm);font-size:13px;color:var(--ac-dark);letter-spacing:.08em;font-weight:600}
+  .pl{font-family:var(--fm);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);font-weight:600;margin:3px 0 0}
+  h2{font-family:var(--serif);font-weight:700;font-size:clamp(21px,3.2vw,28px);line-height:1.34;margin:7px 0 18px;letter-spacing:.005em}
+  h3{font-family:var(--serif);font-weight:700;font-size:18.5px;margin:28px 0 10px}
+  p{margin:0 0 17px}strong{font-weight:700}
+  a.inline{color:var(--ac-dark);text-decoration:none;border-bottom:1.5px solid var(--ac-soft);font-weight:500}a.inline:hover{border-bottom-color:var(--ac)}
+  code.k{font-family:var(--fm);font-size:.82em;background:var(--surface);border:1px solid var(--line-2);padding:1px 6px;border-radius:6px;color:var(--ac-dark);font-weight:500;white-space:nowrap}
+  .mark{background:linear-gradient(transparent 60%,var(--ac-soft) 60%);padding:0 1px}
+  ul.list,ol.list{margin:0 0 17px;padding-left:1.35em}ul.list li,ol.list li{margin:0 0 9px}
+  .panel{border-radius:var(--radius);padding:20px 22px;margin:22px 0;border:1px solid var(--line-2);background:var(--surface)}
+  .panel .lb{font-family:var(--fm);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;display:inline-block;margin-bottom:9px}
+  .panel p:last-child{margin-bottom:0}
+  .why{background:var(--surface-2);border-left:4px solid var(--ac)}.why .lb{color:var(--ac-dark)}
+  .key{background:var(--ac-soft);border-color:#C7C5F0;border-left:4px solid var(--ac)}.key .lb{color:var(--ac-dark)}
+  .tip{background:var(--green-soft);border-color:#C2DECE;border-left:4px solid var(--green)}.tip .lb{color:var(--green)}
+  .warn{background:var(--amber-soft);border-color:#EAD9B4;border-left:4px solid var(--amber)}.warn .lb{color:var(--amber)}
+  .danger{background:var(--red-soft);border-color:#EBC6C1;border-left:4px solid var(--red)}.danger .lb{color:var(--red)}
+  figure.dgm{margin:26px 0;padding:22px 14px;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius)}
+  figure.dgm svg{width:100%;height:auto;display:block}
+  figure.dgm figcaption{font-size:13.5px;color:var(--muted);text-align:center;margin-top:12px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:22px 0}
+  .card{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius);padding:18px}
+  .card .cn{font-family:var(--fm);font-size:11.5px;color:var(--ac-dark);font-weight:600;margin-bottom:7px}
+  .card h4{font-family:var(--serif);font-weight:700;font-size:16px;margin:0 0 7px}
+  .card p{font-size:14px;color:var(--muted);margin:0;line-height:1.75}
+  pre{margin:18px 0;background:var(--term-bg);border:1px solid #2C2B47;border-radius:10px;padding:16px 18px;overflow-x:auto}
+  pre code{font-family:var(--fm);font-size:13px;line-height:1.7;color:var(--term-ink);white-space:pre;display:block}
+  pre code .cm{color:var(--term-dim)}pre code .pr{color:#8E8BE6}pre code .kw{color:#9D9AF0}pre code .st{color:#9CCB8E}pre code .ty{color:#5FC9D6}pre code .fn{color:#E2C07A}pre code .ng{color:#E59A93}pre code .ot{color:#C9B7E0}
+  table.tb{width:100%;border-collapse:collapse;margin:18px 0;font-size:14px;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius);overflow:hidden}
+  table.tb th,table.tb td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  table.tb th{font-family:var(--fm);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-weight:600;background:var(--surface-2)}
+  table.tb tr:last-child td{border-bottom:none}
+  table.tb td b{color:var(--ac-dark)}
+  blockquote{margin:22px 0;padding:6px 0 6px 20px;border-left:3px solid var(--ac);color:var(--muted);font-family:var(--serif);font-weight:500;font-size:17.5px;line-height:1.7}
+  footer{border-top:1px solid var(--line);padding:36px 0 70px;color:var(--muted);font-size:13.5px}
+  footer a{color:var(--ac-dark);text-decoration:none;font-weight:500}
+  .totop{position:fixed;right:22px;bottom:22px;width:44px;height:44px;border-radius:12px;background:var(--navy);color:#fff;border:none;cursor:pointer;font-size:18px;opacity:0;transform:translateY(10px);transition:all .25s;z-index:60}
+  .totop.show{opacity:1;transform:translateY(0)}
+  @media (max-width:900px){.layout{grid-template-columns:1fr;gap:0}nav.toc{display:none}header.hero{padding:48px 0 24px}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+  .reveal{opacity:0;transform:translateY(12px);animation:rise .65s cubic-bezier(.2,.7,.2,1) forwards}
+  @keyframes rise{to{opacity:1;transform:none}}
+  .d1{animation-delay:.04s}.d2{animation-delay:.12s}.d3{animation-delay:.2s}.d4{animation-delay:.28s}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="layout">
+  <nav class="toc" aria-label="目次">
+    <p class="tt">目次</p>
+    <ol id="toc-list">
+      <li><a href="#what">一言でいうと</a></li>
+      <li><a href="#layer">階層という考え方</a></li>
+      <li><a href="#datalink">データリンク層 — Ethernet</a></li>
+      <li><a href="#ip">ネットワーク層 — IPアドレス</a></li>
+      <li><a href="#routing">経路を決める — ルーティング</a></li>
+      <li><a href="#helpers">IPを支える働き者</a></li>
+      <li><a href="#transport">トランスポート層 — TCP/UDP</a></li>
+      <li><a href="#tcp">TCPの信頼性</a></li>
+      <li><a href="#app">アプリケーション層 — DNS/HTTP</a></li>
+      <li><a href="#trace">通して見る — URLを開くと</a></li>
+      <li><a href="#cheat">まとめ・早見表・用語集</a></li>
+    </ol>
+  </nav>
+  <main class="content">
+    <header class="hero">
+      <div class="badge reveal d1"><span class="dot"></span>Network · TCP/IP</div>
+      <div class="kicker reveal d1">Reading the network, layer by layer</div>
+      <h1 class="reveal d2">マスタリング <span class="ac">TCP/IP</span> 入門編<br>階層で読み解くネットワークの地図</h1>
+      <p class="lede reveal d3">「インターネットでデータが届く」——当たり前に見えて、その裏では膨大な約束事が連携しています。本書の核心は<strong>「役割を階層に分けて考える」</strong>こと。Ethernet から IP、TCP、DNS、HTTP まで、各層が何を担い、どう積み重なって1つの通信になるのか。この記事では、その<span class="mark">層の地図と、層をまたぐ1本の流れ</span>を、初学者目線で自分の言葉に置き換えて再構成します。</p>
+      <div class="meta reveal d4">
+        <span class="chip">著者 <b>竹下隆史 ほか</b></span>
+        <span class="chip">出版 <b>オーム社（第6版）</b></span>
+        <span class="chip">分野 <b>ネットワーク / TCP-IP</b></span>
+        <span class="chip">対象 <b>ネットワーク初学者〜中級</b></span>
+      </div>
+    </header>
+
+    <section id="what">
+      <div class="sn">01</div>
+      <h2>一言でいうと</h2>
+      <p>ネットワークの全体像は複雑です。それを正気で扱うための最大の発明が<span class="mark">「階層化（レイヤリング）」</span>。通信という大仕事を、<strong>役割ごとの層に分割し、各層は「すぐ下の層」だけに頼る</strong>。物理的な信号の心配はデータリンク層に任せ、IPは「どの機械へ届けるか」だけを考える。TCPは「確実に届いたか」だけを見る。<strong>関心の分離</strong>そのものです。</p>
+      <p>本書を貫く問いは2つだけ。<strong>① 各層は何を約束するのか</strong>、<strong>② 層と層はどう受け渡すのか</strong>。この2つを軸に読むと、無数のプロトコル名が「地図上の役割」として整理されていきます。</p>
+      <figure class="dgm">
+        <svg viewBox="0 0 720 200" role="img" aria-label="TCP/IPの階層と各層の役割">
+          <g font-family="'IBM Plex Sans JP',sans-serif">
+            <rect x="120" y="20" width="480" height="34" rx="8" fill="#E7E6FA" stroke="#5350C4" stroke-width="1.5"/><text x="150" y="42" font-size="13" font-weight="700" fill="#353299">アプリケーション層</text><text x="585" y="42" text-anchor="end" font-size="11.5" fill="#4E4C5E">HTTP・DNS（何を話すか）</text>
+            <rect x="120" y="62" width="480" height="34" rx="8" fill="#E0F0F5" stroke="#1F7E9A" stroke-width="1.5"/><text x="150" y="84" font-size="13" font-weight="700" fill="#155E73">トランスポート層</text><text x="585" y="84" text-anchor="end" font-size="11.5" fill="#4E4C5E">TCP・UDP（確実に/速く届ける）</text>
+            <rect x="120" y="104" width="480" height="34" rx="8" fill="#E4F1EA" stroke="#3E7C5A" stroke-width="1.5"/><text x="150" y="126" font-size="13" font-weight="700" fill="#2C5840">ネットワーク層</text><text x="585" y="126" text-anchor="end" font-size="11.5" fill="#4E4C5E">IP（どの機械へ運ぶか）</text>
+            <rect x="120" y="146" width="480" height="34" rx="8" fill="#F8EFDB" stroke="#B5781E" stroke-width="1.5"/><text x="150" y="168" font-size="13" font-weight="700" fill="#8A5505">データリンク/物理層</text><text x="585" y="168" text-anchor="end" font-size="11.5" fill="#4E4C5E">Ethernet（隣へ信号を渡す）</text>
+            <text x="60" y="44" font-size="11" fill="#8A889B">上</text><text x="60" y="168" font-size="11" fill="#8A889B">下</text>
+          </g>
+        </svg>
+        <figcaption>上の層ほど「人の都合」、下の層ほど「機械の都合」。各層はすぐ下だけを信頼し、自分の仕事に集中する。</figcaption>
+      </figure>
+      <div class="panel key">
+        <span class="lb">この記事のゴール</span>
+        <p>「<code class="k">ping</code> が通らない」「名前解決できない」を、<strong>どの層の問題か</strong>で切り分けられるようになること。プロトコルの暗記ではなく、<strong>層の地図</strong>を持ち帰ります。</p>
+      </div>
+    </section>
+
+    <section id="layer">
+      <div class="sn">02</div>
+      <div class="pl">Part I · 地図を持つ</div>
+      <h2>階層という考え方</h2>
+      <p>歴史的な参照モデルが <strong>OSI 7階層</strong>、実際に動いているのが <strong>TCP/IP 4階層</strong>。試験では7層、現場では4層で語られることが多い、と割り切って対応を押さえれば十分です。大事なのは層の数より、<span class="mark">「各層がヘッダを付け足しながらデータを包んでいく」</span>という動き——<strong>カプセル化</strong>です。</p>
+      <figure class="dgm">
+        <svg viewBox="0 0 720 180" role="img" aria-label="カプセル化：各層でヘッダが付き、受信側で外されていく">
+          <defs>
+            <marker id="en-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#5350C4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
+          </defs>
+          <g font-family="'IBM Plex Sans JP',sans-serif" font-size="11">
+            <text x="60" y="30" font-size="12" font-weight="700" fill="#4E4C5E">送信側：下へ行くほど包まれる（カプセル化）</text>
+            <rect x="430" y="40" width="120" height="24" rx="4" fill="#E7E6FA" stroke="#5350C4"/><text x="490" y="56" text-anchor="middle" fill="#353299">データ</text>
+            <rect x="350" y="74" width="80" height="24" rx="4" fill="#E0F0F5" stroke="#1F7E9A"/><text x="390" y="90" text-anchor="middle" fill="#155E73">TCP</text>
+            <rect x="430" y="74" width="120" height="24" rx="4" fill="#E7E6FA" stroke="#5350C4"/><text x="490" y="90" text-anchor="middle" fill="#353299">データ</text>
+            <rect x="290" y="108" width="60" height="24" rx="4" fill="#E4F1EA" stroke="#3E7C5A"/><text x="320" y="124" text-anchor="middle" fill="#2C5840">IP</text>
+            <rect x="350" y="108" width="200" height="24" rx="4" fill="#EDEDF4" stroke="#B7B6C6"/><text x="450" y="124" text-anchor="middle" fill="#6A6878">TCPセグメント</text>
+            <rect x="230" y="142" width="60" height="24" rx="4" fill="#F8EFDB" stroke="#B5781E"/><text x="260" y="158" text-anchor="middle" fill="#8A5505">Eth</text>
+            <rect x="290" y="142" width="260" height="24" rx="4" fill="#EDEDF4" stroke="#B7B6C6"/><text x="420" y="158" text-anchor="middle" fill="#6A6878">IPパケット</text>
+            <path d="M150 60 L150 150" fill="none" stroke="#5350C4" stroke-width="1.6" marker-end="url(#en-a)"/>
+            <text x="135" y="105" text-anchor="end" font-size="11" fill="#5350C4">層を</text><text x="135" y="120" text-anchor="end" font-size="11" fill="#5350C4">下る</text>
+          </g>
+        </svg>
+        <figcaption>各層は前の層の成果物に自分のヘッダを足すだけ。受信側は逆順にヘッダを外していく（非カプセル化）。</figcaption>
+      </figure>
+      <p>カプセル化のおかげで、各層は<strong>中身を気にしません</strong>。IPは「TCPのセグメントだろうがUDPだろうが、ただのデータとして運ぶ」。だから新しいアプリ層プロトコルが増えても、下の層は無改修。<span class="mark">層の独立性こそ、インターネットが拡張し続けられた理由</span>です。各層のデータの呼び名（セグメント/パケット/フレーム）も、この「どの層で包まれた状態か」を表しています。</p>
+      <div class="panel why">
+        <span class="lb">なぜ層に分けるのか</span>
+        <p>もし全部を1枚岩で作ったら、無線に変えるたび、アプリを足すたびに全体を作り直すことになります。<strong>層という「契約された境界」</strong>を引けば、各層は内部を自由に進化させられる。Wi-Fi も 5G も、IP より下を差し替えただけ——上の層は何も知らずに動き続けます。</p>
+      </div>
+    </section>
+
+    <section id="datalink">
+      <div class="sn">03</div>
+      <div class="pl">Part II · 下から積む</div>
+      <h2>データリンク層 — Ethernet</h2>
+      <p>一番下、<strong>同じネットワーク内の「隣の機器」へ信号を届ける</strong>のがデータリンク層。主役は <strong>Ethernet</strong> で、機器を識別するのが <strong>MACアドレス</strong>——ネットワークカードに焼き付けられた、世界で重複しない48ビットの番号です。この層のデータの単位を<strong>フレーム</strong>と呼びます。</p>
+      <p>同じネットワーク内の橋渡しをするのが <strong>スイッチ</strong>。スイッチは「どのポートの先に、どのMACがいるか」を学習し、宛先MAC宛のフレームを<span class="mark">必要なポートだけに送ります</span>（賢い仕分け）。昔のハブが全ポートにばらまいていたのとは対照的です。</p>
+      <pre><code><span class="pr">$</span> ip link              <span class="cm"># NICとMACアドレスを確認</span>
+2: eth0: &lt;BROADCAST,MULTICAST,UP&gt; ...
+    link/ether <span class="ty">02:42:ac:11:00:02</span>   <span class="cm"># ← これがMACアドレス</span>
+
+<span class="pr">$</span> ip neigh             <span class="cm"># 近隣(同一LAN)のIP↔MAC対応表（ARPキャッシュ）</span>
+192.168.1.1 dev eth0 lladdr <span class="ty">aa:bb:cc:dd:ee:ff</span> REACHABLE</code></pre>
+      <div class="panel key">
+        <span class="lb">MAC と IP の役割分担</span>
+        <p><strong>MACは「同じネットワーク内での宛名」、IPは「世界中どこへでもの宛名」</strong>。手紙でいえば、IPが最終的な住所、MACが「次に手渡す相手」。実際の配送は、各区間で MAC を次々に書き換えながら、IP の住所を目指して進みます（§05のARPがこの橋渡し役）。</p>
+      </div>
+    </section>
+
+    <section id="ip">
+      <div class="sn">04</div>
+      <div class="pl">Part II · 下から積む</div>
+      <h2>ネットワーク層 — IPアドレス</h2>
+      <p>ネットワークをまたいで<strong>「世界中の目的の機械まで運ぶ」</strong>のがIP。住所が <strong>IPアドレス</strong>です。IPv4 は <code class="k">192.168.1.10</code> のように32ビットを8ビットずつ4つに区切って表記します（枯渇対策に128ビットの IPv6 もある）。この層のデータの単位が<strong>パケット</strong>。</p>
+      <p>肝は、IPアドレスが<span class="mark">「ネットワーク部」と「ホスト部」に分かれている</span>こと。郵便番号（どの地域か）と番地（その中の誰か）に似ています。どこまでがネットワーク部かを示すのが <strong>サブネットマスク</strong>で、<code class="k">/24</code> のような <strong>CIDR表記</strong>で「上位24ビットがネットワーク部」と表します。</p>
+      <figure class="dgm">
+        <svg viewBox="0 0 720 170" role="img" aria-label="IPアドレスのネットワーク部とホスト部、サブネットマスク">
+          <g font-family="'Fira Code',monospace">
+            <text x="60" y="48" font-size="20" fill="#1C1B26">192.168.1.</text>
+            <text x="240" y="48" font-size="20" fill="#1C1B26">10</text>
+            <rect x="52" y="26" width="190" height="30" rx="6" fill="none" stroke="#3E7C5A" stroke-width="1.6"/>
+            <rect x="234" y="26" width="44" height="30" rx="6" fill="none" stroke="#B5781E" stroke-width="1.6"/>
+          </g>
+          <g font-family="'IBM Plex Sans JP',sans-serif">
+            <text x="147" y="78" text-anchor="middle" font-size="12" fill="#2C5840">ネットワーク部 (/24)</text>
+            <text x="147" y="94" text-anchor="middle" font-size="10.5" fill="#8A889B">どのネットワークか</text>
+            <text x="256" y="78" text-anchor="middle" font-size="12" fill="#8A5505">ホスト部</text>
+            <text x="256" y="94" text-anchor="middle" font-size="10.5" fill="#8A889B">その中の誰か</text>
+            <text x="420" y="40" font-size="12.5" font-weight="700" fill="#4E4C5E">サブネットマスク</text>
+            <text x="420" y="62" font-size="12" font-family="'Fira Code',monospace" fill="#2C5840">255.255.255.0 = /24</text>
+            <text x="420" y="86" font-size="11.5" fill="#4E4C5E">同じネットワーク部どうしは</text>
+            <text x="420" y="104" font-size="11.5" fill="#4E4C5E">直接（同一LAN内で）通信できる</text>
+            <text x="420" y="128" font-size="11.5" fill="#4E4C5E">違えば → ルータ経由で外へ</text>
+            <text x="147" y="128" text-anchor="middle" font-size="11" fill="#8A889B">.0=ネットワークアドレス / .255=ブロードキャスト</text>
+          </g>
+        </svg>
+        <figcaption>IPアドレスは「ネットワーク部＋ホスト部」。マスクが境界線を引く。同じネットワーク部なら直接、違えばルータへ。</figcaption>
+      </figure>
+      <p>この区切りが、通信判断の分岐点になります。送信元は宛先IPを見て、<span class="mark">「相手は自分と同じネットワークか？」</span>を計算する。同じなら直接（データリンク層で）渡し、違えば「外への出口」＝<strong>デフォルトゲートウェイ（ルータ）</strong>へ託します。</p>
+      <pre><code><span class="pr">$</span> ip addr              <span class="cm"># 自分のIPアドレスとサブネット</span>
+    inet <span class="ty">192.168.1.10/24</span> brd 192.168.1.255 scope global eth0
+<span class="pr">$</span> ip route             <span class="cm"># 経路表。default が外への出口</span>
+default via <span class="ty">192.168.1.1</span> dev eth0        <span class="cm"># ← デフォルトゲートウェイ</span>
+192.168.1.0/24 dev eth0 proto kernel scope link</code></pre>
+    </section>
+
+    <section id="routing">
+      <div class="sn">05</div>
+      <div class="pl">Part II · 下から積む</div>
+      <h2>経路を決める — ルーティング</h2>
+      <p>相手が別のネットワークにいるとき、パケットは<strong>ルータからルータへバケツリレー</strong>で運ばれます。各ルータは自分の<strong>ルーティングテーブル（経路表）</strong>を見て、「この宛先なら次はあのルータへ」と<span class="mark">次の1ホップだけを決めて転送</span>する。全体経路を誰かが把握しているわけではなく、各ルータの局所判断の積み重ねで世界中へ届きます。</p>
+      <figure class="dgm">
+        <svg viewBox="0 0 720 150" role="img" aria-label="パケットがルータを次々ホップして宛先へ届く様子">
+          <defs>
+            <marker id="rt-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#5350C4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
+          </defs>
+          <g font-family="'IBM Plex Sans JP',sans-serif">
+            <rect x="30" y="56" width="90" height="40" rx="9" fill="#E7E6FA" stroke="#5350C4"/><text x="75" y="81" text-anchor="middle" font-size="12" fill="#353299">あなた</text>
+            <circle cx="230" cy="76" r="26" fill="#fff" stroke="#1F7E9A" stroke-width="1.5"/><text x="230" y="80" text-anchor="middle" font-size="11" fill="#155E73">R1</text>
+            <circle cx="380" cy="76" r="26" fill="#fff" stroke="#1F7E9A" stroke-width="1.5"/><text x="380" y="80" text-anchor="middle" font-size="11" fill="#155E73">R2</text>
+            <circle cx="530" cy="76" r="26" fill="#fff" stroke="#1F7E9A" stroke-width="1.5"/><text x="530" y="80" text-anchor="middle" font-size="11" fill="#155E73">R3</text>
+            <rect x="620" y="56" width="90" height="40" rx="9" fill="#E4F1EA" stroke="#3E7C5A"/><text x="665" y="81" text-anchor="middle" font-size="12" fill="#2C5840">サーバ</text>
+            <path d="M122 76 L202 76" fill="none" stroke="#5350C4" stroke-width="1.6" marker-end="url(#rt-a)"/>
+            <path d="M258 76 L352 76" fill="none" stroke="#5350C4" stroke-width="1.6" marker-end="url(#rt-a)"/>
+            <path d="M408 76 L502 76" fill="none" stroke="#5350C4" stroke-width="1.6" marker-end="url(#rt-a)"/>
+            <path d="M558 76 L618 76" fill="none" stroke="#5350C4" stroke-width="1.6" marker-end="url(#rt-a)"/>
+            <text x="360" y="128" text-anchor="middle" font-size="11" fill="#8A889B">各ルータは「次の1ホップ」だけ決める。MACは区間ごとに書き換わるが、宛先IPは終点まで不変</text>
+          </g>
+        </svg>
+        <figcaption>IP（最終住所）は不変のまま、データリンクの宛名（MAC）はホップごとに付け替えられて宛先へ近づく。</figcaption>
+      </figure>
+      <p>この「次のホップ」の連なりは <code class="k">traceroute</code> で実際に覗けます。<strong>TTL（生存時間）</strong>——パケットがルータを通るたびに1ずつ減る値——を巧みに使い、経路上の各ルータを1つずつ炙り出す仕掛けです。TTLが0になったパケットは破棄され、ループでパケットが永遠に彷徨うのを防ぎます。</p>
+      <pre><code><span class="pr">$</span> traceroute example.com   <span class="cm"># 宛先までに通るルータを順に表示</span>
+ 1  192.168.1.1      0.5 ms     <span class="cm"># 最初の1ホップ＝自宅ルータ</span>
+ 2  10.0.0.1         3.2 ms     <span class="cm"># プロバイダ</span>
+ 3  ...              12.1 ms    <span class="cm"># さらに上流へ</span></code></pre>
+    </section>
+
+    <section id="helpers">
+      <div class="sn">06</div>
+      <div class="pl">Part III · 縁の下</div>
+      <h2>IPを支える働き者</h2>
+      <p>IPだけでは通信は完結しません。表に出ないが不可欠な<strong>補助プロトコル</strong>たちがいます。本書が丁寧に扱うこの4人を押さえると、ネットワークが「実際に動く」像が結びます。</p>
+      <div class="cards">
+        <div class="card"><div class="cn">名前解決(L2)</div><h4>ARP</h4><p>「このIPの相手の<strong>MACは？</strong>」を同一LANに問い合わせる。IPからMACへの橋渡し。これが無いとフレームを作れない。</p></div>
+        <div class="card"><div class="cn">通知・診断</div><h4>ICMP</h4><p>到達不能やTTL切れなどを<strong>知らせる</strong>連絡係。<code class="k">ping</code> や <code class="k">traceroute</code> はこれを利用している。</p></div>
+        <div class="card"><div class="cn">自動設定</div><h4>DHCP</h4><p>つないだだけでIP・ゲートウェイ・DNSを<strong>自動で配る</strong>。手動設定の手間を消す。</p></div>
+        <div class="card"><div class="cn">アドレス変換</div><h4>NAT</h4><p>家庭内の<strong>プライベートIPを1つのグローバルIPに変換</strong>。IPv4枯渇をしのぐ立役者。</p></div>
+      </div>
+      <p>たとえば <code class="k">ping</code> を1回打つだけで、複数の層が連携します。宛先が同一LANなら <strong>ARP</strong> でMACを引き、<strong>ICMP</strong> のechoを <strong>IP</strong> に載せ、<strong>Ethernet</strong> フレームで送出する。<span class="mark">「ping が通る／通らない」は、この連鎖のどこが切れているか</span>を示す最初の手がかりです。</p>
+      <pre><code><span class="pr">$</span> ping -c 3 192.168.1.1     <span class="cm"># ICMPで疎通確認</span>
+64 bytes from 192.168.1.1: icmp_seq=1 ttl=64 time=0.4 ms
+<span class="pr">$</span> ping example.com          <span class="cm"># 名前で打つと、まずDNS解決→IPへping</span></code></pre>
+      <div class="panel tip">
+        <span class="lb">切り分けの順番</span>
+        <p>つながらない時は<strong>下の層から</strong>。① <code class="k">ip addr</code>（自分にIPはあるか）→ ② <code class="k">ping ゲートウェイ</code>（LAN内は届くか）→ ③ <code class="k">ping 8.8.8.8</code>（外へIPで届くか）→ ④ <code class="k">ping 名前</code>（DNSは効くか）。④だけ失敗なら、ネットワークではなく<strong>名前解決の問題</strong>と切り分けられます。</p>
+      </div>
+    </section>
+
+    <section id="transport">
+      <div class="sn">07</div>
+      <div class="pl">Part IV · 確実に届ける</div>
+      <h2>トランスポート層 — TCP/UDP</h2>
+      <p>IPは「届けようと努力する」だけで、<strong>確実さは保証しません</strong>（途中で消えても知らんぷり＝ベストエフォート）。その上で「アプリ同士の会話」を成立させるのがトランスポート層。性格の異なる2つがあります。</p>
+      <table class="tb">
+        <thead><tr><th>観点</th><th>TCP</th><th>UDP</th></tr></thead>
+        <tbody>
+          <tr><td>信頼性</td><td><b>あり</b>（到達確認・再送・順序保証）</td><td>なし（投げっぱなし）</td></tr>
+          <tr><td>接続</td><td>コネクション型（事前に握手）</td><td>コネクションレス</td></tr>
+          <tr><td>速さ・軽さ</td><td>その分オーバーヘッドあり</td><td><b>軽量・低遅延</b></td></tr>
+          <tr><td>向く用途</td><td>Web・メール・ファイル転送</td><td>動画/音声・DNS・ゲーム</td></tr>
+        </tbody>
+      </table>
+      <p>もう一つの主役が<strong>ポート番号</strong>。1台の機械では複数のアプリが同時に通信します。IPが「どの機械か」を決め、<span class="mark">ポートが「その中のどのアプリか」を決める</span>。Webは80/443、DNSは53…といった<strong>ウェルノウンポート</strong>で、サービスの入口が決まっています。「IP:ポート」の組が、通信相手を一意に指す宛名です。</p>
+      <pre><code><span class="pr">$</span> ss -tlnp           <span class="cm"># 待ち受け中(LISTEN)のTCPポート一覧</span>
+State   Local Address:Port
+LISTEN  0.0.0.0:<span class="ty">22</span>          <span class="cm"># SSH</span>
+LISTEN  0.0.0.0:<span class="ty">443</span>         <span class="cm"># HTTPS</span></code></pre>
+      <div class="panel why">
+        <span class="lb">なぜ2種類あるのか</span>
+        <p>「正確さ」と「速さ」はしばしば両立しません。1フレームの欠けも許せないファイル転送は<strong>TCP</strong>。多少の欠落より遅延ゼロが大事な音声・動画は<strong>UDP</strong>。<strong>用途に応じて代償を選べる</strong>よう、あえて両方を用意しているのです。最近のHTTP/3が（TCPでなく）UDPの上に信頼性を再実装したのも、この選択の延長です。</p>
+      </div>
+    </section>
+
+    <section id="tcp">
+      <div class="sn">08</div>
+      <div class="pl">Part IV · 確実に届ける</div>
+      <h2>TCPの信頼性</h2>
+      <p>TCPは「信頼できないIP」の上に、<strong>信頼できる通信を組み立て直します</strong>。その出発点が <strong>3ウェイハンドシェイク</strong>——通信開始前に、互いの準備が整ったことを3往復（厳密には3メッセージ）で確認する儀式です。</p>
+      <figure class="dgm">
+        <svg viewBox="0 0 720 200" role="img" aria-label="TCPの3ウェイハンドシェイク SYN, SYN-ACK, ACK">
+          <defs>
+            <marker id="hs-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#5350C4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
+          </defs>
+          <g font-family="'IBM Plex Sans JP',sans-serif">
+            <text x="150" y="30" text-anchor="middle" font-size="13" font-weight="700" fill="#353299">クライアント</text>
+            <text x="570" y="30" text-anchor="middle" font-size="13" font-weight="700" fill="#2C5840">サーバ</text>
+            <line x1="150" y1="40" x2="150" y2="185" stroke="#D3D2DE" stroke-width="1.4"/>
+            <line x1="570" y1="40" x2="570" y2="185" stroke="#D3D2DE" stroke-width="1.4"/>
+            <path d="M150 62 L568 88" fill="none" stroke="#5350C4" stroke-width="1.6" marker-end="url(#hs-a)"/><text x="360" y="68" text-anchor="middle" font-size="12" font-family="'Fira Code',monospace" fill="#5350C4">① SYN</text><text x="360" y="84" text-anchor="middle" font-size="10.5" fill="#8A889B">「つないでいい？」</text>
+            <path d="M570 108 L152 134" fill="none" stroke="#1F7E9A" stroke-width="1.6" marker-end="url(#hs-a)"/><text x="360" y="114" text-anchor="middle" font-size="12" font-family="'Fira Code',monospace" fill="#155E73">② SYN + ACK</text><text x="360" y="130" text-anchor="middle" font-size="10.5" fill="#8A889B">「いいよ、そちらは？」</text>
+            <path d="M150 156 L568 180" fill="none" stroke="#5350C4" stroke-width="1.6" marker-end="url(#hs-a)"/><text x="360" y="162" text-anchor="middle" font-size="12" font-family="'Fira Code',monospace" fill="#5350C4">③ ACK</text><text x="360" y="178" text-anchor="middle" font-size="10.5" fill="#8A889B">「了解、始めよう」</text>
+          </g>
+        </svg>
+        <figcaption>互いに「送れる・受け取れる」を確認してから通信開始。この3手で、双方向の準備が揃ったことを保証する。</figcaption>
+      </figure>
+      <p>接続後の信頼性は、いくつかの仕組みの合わせ技で支えられます。それぞれが「IPの不確かさ」のどこを埋めるのかを見ると、設計の意図が見えてきます。</p>
+      <table class="tb">
+        <thead><tr><th>仕組み</th><th>埋める穴</th><th>やること</th></tr></thead>
+        <tbody>
+          <tr><td><b>確認応答(ACK)と再送</b></td><td>パケットが消える</td><td>届いたらACKを返す。一定時間来なければ再送</td></tr>
+          <tr><td><b>シーケンス番号</b></td><td>順序が入れ替わる</td><td>各バイトに通し番号。受信側で正しい順に並べ直す</td></tr>
+          <tr><td><b>フロー制御</b></td><td>受信側があふれる</td><td>「今これだけ受け取れる」(ウィンドウ)を相手に伝える</td></tr>
+          <tr><td><b>輻輳(ふくそう)制御</b></td><td>網が混んで詰まる</td><td>送信ペースを徐々に上げ、損失を感じたら落とす</td></tr>
+        </tbody>
+      </table>
+      <p>とりわけ<strong>輻輳制御</strong>は、ネットワーク全体への思いやりです。皆が遠慮なく全力で送れば回線はパンクする。だからTCPは<span class="mark">控えめに送り始め、うまく届く間は少しずつ増やし、損失（混雑のサイン）を感じたら一気に控える</span>。この自制が、共有された網を破綻させずに保っています。</p>
+      <div class="panel warn">
+        <span class="lb">「遅い」の原因は層をまたぐ</span>
+        <p>体感の遅さは、帯域だけでなく<strong>往復遅延(RTT)</strong>に強く効きます。3ウェイハンドシェイクも、ACKを待つ仕組みも、1往復の時間に縛られるから。遠いサーバが遅いのは「細い」のではなく「<strong>遠い（往復に時間がかかる）</strong>」ことが多い。CDNでサーバを近くに置く意義は、ここにあります。</p>
+      </div>
+    </section>
+
+    <section id="app">
+      <div class="sn">09</div>
+      <div class="pl">Part V · 人の世界へ</div>
+      <h2>アプリケーション層 — DNS/HTTP</h2>
+      <p>最上層は、人やアプリが直接使う言葉。土台が <strong>DNS</strong> と <strong>HTTP</strong> です。</p>
+      <p><strong>DNS</strong>は、覚えにくいIPアドレスの代わりに<span class="mark"><code class="k">example.com</code> のような名前を使えるようにする「電話帳」</span>。実際は1台の巨大な帳簿ではなく、世界中のサーバが役割を分担する<strong>階層的な分散システム</strong>です。「<code class="k">.com</code> を管理する所」「<code class="k">example.com</code> を管理する所」と順にたどって答えにたどり着きます。</p>
+      <pre><code><span class="pr">$</span> dig example.com +short    <span class="cm"># 名前 → IPアドレスを引く</span>
+93.184.216.34
+<span class="pr">$</span> dig example.com           <span class="cm"># 詳細（どのサーバが答えたか等）</span></code></pre>
+      <p><strong>HTTP</strong>は、Webの会話を担う<strong>リクエスト／レスポンス型</strong>のプロトコル。クライアントが「これをくれ（GET）」と要求し、サーバが状態コード（200=OK、404=見つからない…）とともに返す。現在は通信を暗号化する <strong>TLS</strong> を被せた <strong>HTTPS</strong> が標準です。中身が盗み見・改ざんされないよう、TCP接続の確立後にTLSの鍵交換を行います。</p>
+      <pre><code><span class="pr">$</span> curl -v https://example.com   <span class="cm"># 通信の中身を冗長表示</span>
+* Connected to example.com (93.184.216.34) port 443   <span class="cm"># TCP確立</span>
+* TLS handshake ...                                    <span class="cm"># TLS鍵交換</span>
+&gt; GET / HTTP/2                                         <span class="cm"># リクエスト</span>
+&lt; HTTP/2 200                                           <span class="cm"># レスポンス(200=OK)</span></code></pre>
+    </section>
+
+    <section id="trace">
+      <div class="sn">10</div>
+      <div class="pl">Part V · 人の世界へ</div>
+      <h2>通して見る — URLを開くと</h2>
+      <p>最後に、ここまでの全層を1本の流れで貫きます。ブラウザに <code class="k">https://example.com</code> と打ってEnter——その瞬間に、各層がバケツリレーで動き出します。</p>
+      <figure class="dgm">
+        <svg viewBox="0 0 720 230" role="img" aria-label="URLを開いてからページが表示されるまでの層をまたぐ流れ">
+          <defs>
+            <marker id="fl-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#5350C4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+          </defs>
+          <g font-family="'IBM Plex Sans JP',sans-serif" font-size="12">
+            <rect x="60" y="24" width="600" height="30" rx="7" fill="#E7E6FA" stroke="#5350C4"/><text x="80" y="44" font-size="11.5" fill="#353299"><tspan font-weight="700">① DNS解決</tspan> — 名前 example.com を IP(93.184.216.34) に変換（アプリ層・主にUDP）</text>
+            <rect x="60" y="64" width="600" height="30" rx="7" fill="#E4F1EA" stroke="#3E7C5A"/><text x="80" y="84" font-size="11.5" fill="#2C5840"><tspan font-weight="700">② 経路判断</tspan> — 宛先IPは外 → デフォルトGW(ルータ)へ。ARPで次のMACを解決</text>
+            <rect x="60" y="104" width="600" height="30" rx="7" fill="#E0F0F5" stroke="#1F7E9A"/><text x="80" y="124" font-size="11.5" fill="#155E73"><tspan font-weight="700">③ TCP接続</tspan> — 3ウェイハンドシェイク(SYN/SYN-ACK/ACK)でポート443へ</text>
+            <rect x="60" y="144" width="600" height="30" rx="7" fill="#F8EFDB" stroke="#B5781E"/><text x="80" y="164" font-size="11.5" fill="#8A5505"><tspan font-weight="700">④ TLS</tspan> — 鍵交換して暗号化トンネルを確立</text>
+            <rect x="60" y="184" width="600" height="30" rx="7" fill="#FBECEA" stroke="#B5483E"/><text x="80" y="204" font-size="11.5" fill="#8A2F27"><tspan font-weight="700">⑤ HTTP</tspan> — GET / を送り、200 OK と HTML を受け取って描画</text>
+            <path d="M40 39 L40 199" fill="none" stroke="#5350C4" stroke-width="1.5" marker-end="url(#fl-a)"/>
+          </g>
+        </svg>
+        <figcaption>たった1回のアクセスが、DNS→IP/ARP→TCP→TLS→HTTP と全層を順に踏む。どこか1つ欠けても表示されない。</figcaption>
+      </figure>
+      <p>この流れを知っていると、トラブルの<strong>切り分けが一気に速くなります</strong>。「ページが出ない」とき、<code class="k">dig</code> で①、<code class="k">ping</code>/<code class="k">traceroute</code> で②、<code class="k">curl -v</code> で③④⑤——と段階を当てれば、<span class="mark">どの層で止まっているか</span>がたいてい特定できます。ネットワークは魔法ではなく、層の積み重ねです。</p>
+      <div class="panel key">
+        <span class="lb">つながった</span>
+        <p>DNS（名前）→ IP（住所）→ ルーティング（道）→ ARP（次の手渡し先）→ TCP（確実な配送）→ TLS（安全）→ HTTP（会話）。本記事の全要素が、URL1つで合流します。<strong>各層の役割を覚えていれば、未知の不具合も「どの層か」で攻められる</strong>——それがマスタリングの第一歩です。</p>
+      </div>
+    </section>
+
+    <section id="cheat">
+      <div class="sn">11</div>
+      <h2>まとめ・早見表・用語集</h2>
+      <table class="tb">
+        <thead><tr><th>層</th><th>役割（何を約束するか）</th><th>代表プロトコル/単位</th><th>調べるコマンド</th></tr></thead>
+        <tbody>
+          <tr><td>アプリケーション</td><td>人・アプリの会話</td><td>HTTP・DNS</td><td><code class="k">dig</code> / <code class="k">curl -v</code></td></tr>
+          <tr><td>トランスポート</td><td>確実に/速くアプリへ届ける</td><td>TCP・UDP（セグメント）/ ポート</td><td><code class="k">ss -tlnp</code></td></tr>
+          <tr><td>ネットワーク</td><td>世界中の機械へ運ぶ</td><td>IP（パケット）・ICMP</td><td><code class="k">ip addr</code> / <code class="k">ip route</code> / <code class="k">ping</code></td></tr>
+          <tr><td>データリンク/物理</td><td>隣の機器へ信号を渡す</td><td>Ethernet（フレーム）・MAC・ARP</td><td><code class="k">ip link</code> / <code class="k">ip neigh</code></td></tr>
+        </tbody>
+      </table>
+      <blockquote>ネットワークは「層に分けて、各層は下だけを信じる」。地図さえ持てば、複雑さは怖くない。</blockquote>
+      <div class="panel key">
+        <span class="lb">一言で</span>
+        <p>通信とは、<strong>カプセル化で包んで下ろし、宛先で解いて上げる</strong>こと。IPが住所で運び、TCPが確実さを足し、DNSが名前を翻訳し、HTTPが会話する。役割を層で分けたからこそ、インターネットはここまで拡張できた。<strong>層の地図</strong>を手に、数字とログから原因へ最短でたどり着けます。</p>
+      </div>
+      <h3>用語集</h3>
+      <table class="tb">
+        <tbody>
+          <tr><td><b>カプセル化</b></td><td>各層が下りるたびにヘッダを付け足してデータを包むこと。受信側は逆順に外す。</td></tr>
+          <tr><td><b>MACアドレス</b></td><td>NICに焼かれた48ビットの識別子。同一ネットワーク内の「次の手渡し先」の宛名。</td></tr>
+          <tr><td><b>IPアドレス / サブネット</b></td><td>世界中での住所。ネットワーク部とホスト部に分かれ、マスク(/24等)が境界を示す。</td></tr>
+          <tr><td><b>デフォルトゲートウェイ</b></td><td>自ネットワーク外へ出るときの出口となるルータ。</td></tr>
+          <tr><td><b>ARP</b></td><td>IPアドレスから同一LAN内のMACアドレスを問い合わせるプロトコル。</td></tr>
+          <tr><td><b>ICMP</b></td><td>到達不能やTTL超過を通知する診断・連絡係。ping/traceroute が利用。</td></tr>
+          <tr><td><b>TCP / UDP</b></td><td>信頼性重視（接続・再送・順序）と、軽量低遅延（投げっぱなし）の2つの運び方。</td></tr>
+          <tr><td><b>ポート番号</b></td><td>1台の中の「どのアプリか」を指す番号。IP:ポートで通信相手を一意に指す。</td></tr>
+          <tr><td><b>3ウェイハンドシェイク</b></td><td>SYN→SYN/ACK→ACK の3手でTCP接続を確立する手順。</td></tr>
+          <tr><td><b>輻輳制御</b></td><td>網の混雑に応じて送信ペースを自制し、ネットワーク全体の破綻を防ぐTCPの仕組み。</td></tr>
+          <tr><td><b>DNS</b></td><td>名前↔IPを変換する階層的な分散データベース。インターネットの電話帳。</td></tr>
+          <tr><td><b>NAT</b></td><td>プライベートIPをグローバルIPに変換し、限られたIPv4アドレスを共有する仕組み。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <footer>
+      <p>本記事は『マスタリングTCP/IP 入門編（第6版）』（竹下隆史・村山公保・荒井透・苅田幸雄 著／オーム社）を、ネットワーク初学者向けに自分の言葉で再構成した学習ノートです。原文の引用ではなく要点の咀嚼であり、コマンド出力や図は説明用に簡略化・模式化しています。実際の挙動はOSや機器・バージョンで異なりうるため、正確な内容は<a href="https://www.ohmsha.co.jp/book/9784274224478/">原著</a>と各RFC・公式ドキュメントでお確かめください。<br>分野: クラウド &amp; インフラ — Cloud &amp; Infra</p>
+    </footer>
+  </main>
+</div>
+<button class="totop" id="totop" aria-label="トップへ戻る">↑</button>
+<script>
+  var prog=document.getElementById('progress'),totop=document.getElementById('totop');
+  function s(){var h=document.documentElement,m=h.scrollHeight-h.clientHeight;prog.style.width=(m>0?h.scrollTop/m*100:0)+'%';if(h.scrollTop>600)totop.classList.add('show');else totop.classList.remove('show');}
+  document.addEventListener('scroll',s,{passive:true});s();
+  totop.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  var links=[].slice.call(document.querySelectorAll('nav.toc a')),map={};
+  links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(l){l.classList.remove('active');});var a=map[e.target.id];if(a)a.classList.add('active');}});},{rootMargin:'-20% 0px -70% 0px',threshold:0});
+  document.querySelectorAll('main section').forEach(function(x){io.observe(x);});
+</script>
+</body>
+</html>

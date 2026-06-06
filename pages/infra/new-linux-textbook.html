@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新しいLinuxの教科書 — コマンドラインに親しむ最初の一冊</title>
+<link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+<meta name="theme-color" content="#1C2A45">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=Zen+Kaku+Gothic+Antique:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F5F4EF;--surface:#FFFFFF;--surface-2:#F3F4F0;--ink:#1F2530;--muted:#4E5666;--faint:#8A909C;
+    --line:#E4E3DA;--line-2:#D2D2C6;
+    --ac:#2F5FA8;--ac-soft:#E3EBF7;--ac-dark:#214A85;   /* 新しいLinuxの教科書 = ペンブルー + ノート */
+    --amber:#B5781E;--amber-soft:#F8EFDB;
+    --teal:#2D7E8E;--teal-soft:#E1F0F2;
+    --green:#3E7C5A;--green-soft:#E4F1EA;--red:#B5483E;--red-soft:#FBECEA;
+    --navy:#1C2A45;
+    --term-bg:#16202E;--term-ink:#E6ECF3;--term-dim:#7C8AA0;
+    --radius:13px;--maxw:820px;
+    --fs:"Zen Kaku Gothic Antique",system-ui,sans-serif;--fm:"IBM Plex Mono",ui-monospace,monospace;--serif:"Klee One",serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--fs);line-height:1.92;font-size:16.5px;-webkit-font-smoothing:antialiased;
+    background-image:linear-gradient(transparent 31px,#E7E6DC 31px,#E7E6DC 32px,transparent 32px);background-size:100% 32px}
+  ::selection{background:var(--ac);color:#fff}
+  #progress{position:fixed;top:0;left:0;height:3px;width:0%;background:var(--ac);z-index:100;transition:width .12s linear}
+  .layout{max-width:1230px;margin:0 auto;display:grid;grid-template-columns:248px minmax(0,1fr);gap:46px;padding:0 28px}
+  .content{max-width:var(--maxw);padding:0 0 120px}
+  nav.toc{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding:34px 0 40px}
+  nav.toc .tt{font-family:var(--fm);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin:0 0 14px;font-weight:600}
+  nav.toc ol{list-style:none;margin:0;padding:0;counter-reset:t}
+  nav.toc li{counter-increment:t}
+  nav.toc a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--muted);font-size:13.5px;line-height:1.4;padding:6px 12px 6px 14px;border-left:2px solid transparent;transition:all .15s;font-weight:500}
+  nav.toc a::before{content:counter(t,decimal-leading-zero);font-family:var(--fm);font-size:11px;color:var(--faint)}
+  nav.toc a:hover{color:var(--ink)}
+  nav.toc a.active{color:var(--ac-dark);border-left-color:var(--ac)}nav.toc a.active::before{color:var(--ac-dark)}
+  header.hero{padding:64px 0 34px;position:relative}
+  .badge{display:inline-flex;align-items:center;gap:8px;font-family:var(--fm);font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#fff;background:var(--navy);padding:6px 12px;border-radius:6px;margin-bottom:20px}
+  .badge .dot{width:7px;height:7px;border-radius:50%;background:var(--ac)}
+  .kicker{font-family:var(--fm);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ac-dark);font-weight:600;margin-bottom:14px}
+  h1{font-family:var(--serif);font-weight:600;font-size:clamp(29px,5vw,45px);line-height:1.3;margin:0 0 20px;letter-spacing:.01em}
+  h1 .ac{color:var(--ac)}
+  .lede{font-size:18px;color:var(--muted);margin:0 0 26px;max-width:43em}
+  .meta{display:flex;flex-wrap:wrap;gap:9px}
+  .chip{font-family:var(--fm);font-size:12px;font-weight:500;padding:7px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--line-2);color:var(--muted)}
+  .chip b{color:var(--ink);font-weight:600}
+  section{padding:44px 0 6px;scroll-margin-top:24px;border-top:1px solid var(--line)}
+  section:first-of-type{border-top:none}
+  .sn{font-family:var(--fm);font-size:13px;color:var(--ac-dark);letter-spacing:.08em;font-weight:600}
+  .pl{font-family:var(--fm);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);font-weight:600;margin:3px 0 0}
+  h2{font-family:var(--serif);font-weight:600;font-size:clamp(22px,3.4vw,29px);line-height:1.32;margin:7px 0 18px;letter-spacing:.01em}
+  h3{font-family:var(--serif);font-weight:600;font-size:19px;margin:28px 0 10px}
+  p{margin:0 0 17px}strong{font-weight:700}
+  a.inline{color:var(--ac-dark);text-decoration:none;border-bottom:1.5px solid var(--ac-soft);font-weight:500}a.inline:hover{border-bottom-color:var(--ac)}
+  code.k{font-family:var(--fm);font-size:.84em;background:var(--surface);border:1px solid var(--line-2);padding:1px 6px;border-radius:6px;color:var(--ac-dark);font-weight:500;white-space:nowrap}
+  .mark{background:linear-gradient(transparent 60%,var(--ac-soft) 60%);padding:0 1px}
+  ul.list,ol.list{margin:0 0 17px;padding-left:1.35em}ul.list li,ol.list li{margin:0 0 9px}
+  .panel{border-radius:var(--radius);padding:20px 22px;margin:22px 0;border:1px solid var(--line-2);background:var(--surface)}
+  .panel .lb{font-family:var(--fm);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;display:inline-block;margin-bottom:9px}
+  .panel p:last-child{margin-bottom:0}
+  .why{background:var(--surface-2);border-left:4px solid var(--ac)}.why .lb{color:var(--ac-dark)}
+  .key{background:var(--ac-soft);border-color:#BFD2EE;border-left:4px solid var(--ac)}.key .lb{color:var(--ac-dark)}
+  .tip{background:var(--green-soft);border-color:#C2DECE;border-left:4px solid var(--green)}.tip .lb{color:var(--green)}
+  .warn{background:var(--amber-soft);border-color:#EAD9B4;border-left:4px solid var(--amber)}.warn .lb{color:var(--amber)}
+  .danger{background:var(--red-soft);border-color:#EBC6C1;border-left:4px solid var(--red)}.danger .lb{color:var(--red)}
+  figure.dgm{margin:26px 0;padding:22px 14px;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius)}
+  figure.dgm svg{width:100%;height:auto;display:block}
+  figure.dgm figcaption{font-size:13.5px;color:var(--muted);text-align:center;margin-top:12px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:22px 0}
+  .card{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius);padding:18px}
+  .card .cn{font-family:var(--fm);font-size:11.5px;color:var(--ac-dark);font-weight:600;margin-bottom:7px}
+  .card h4{font-family:var(--serif);font-weight:600;font-size:16.5px;margin:0 0 7px}
+  .card p{font-size:14px;color:var(--muted);margin:0;line-height:1.75}
+  pre{margin:18px 0;background:var(--term-bg);border:1px solid #2A3849;border-radius:10px;padding:16px 18px;overflow-x:auto}
+  pre code{font-family:var(--fm);font-size:13px;line-height:1.7;color:var(--term-ink);white-space:pre;display:block}
+  pre code .cm{color:var(--term-dim)}pre code .pr{color:#62A0D8}pre code .kw{color:#86B8E0}pre code .st{color:#9CCB8E}pre code .ty{color:#5FC9D6}pre code .fn{color:#E2C07A}pre code .ng{color:#E59A93}pre code .ot{color:#C9B7E0}
+  table.tb{width:100%;border-collapse:collapse;margin:18px 0;font-size:14px;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius);overflow:hidden}
+  table.tb th,table.tb td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  table.tb th{font-family:var(--fm);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-weight:600;background:var(--surface-2)}
+  table.tb tr:last-child td{border-bottom:none}
+  table.tb td b{color:var(--ac-dark)}
+  table.tb td code.k{white-space:nowrap}
+  blockquote{margin:22px 0;padding:6px 0 6px 20px;border-left:3px solid var(--ac);color:var(--muted);font-family:var(--serif);font-weight:600;font-size:18px;line-height:1.7}
+  footer{border-top:1px solid var(--line);padding:36px 0 70px;color:var(--muted);font-size:13.5px}
+  footer a{color:var(--ac-dark);text-decoration:none;font-weight:500}
+  .totop{position:fixed;right:22px;bottom:22px;width:44px;height:44px;border-radius:12px;background:var(--navy);color:#fff;border:none;cursor:pointer;font-size:18px;opacity:0;transform:translateY(10px);transition:all .25s;z-index:60}
+  .totop.show{opacity:1;transform:translateY(0)}
+  @media (max-width:900px){.layout{grid-template-columns:1fr;gap:0}nav.toc{display:none}header.hero{padding:48px 0 24px}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+  .reveal{opacity:0;transform:translateY(12px);animation:rise .65s cubic-bezier(.2,.7,.2,1) forwards}
+  @keyframes rise{to{opacity:1;transform:none}}
+  .d1{animation-delay:.04s}.d2{animation-delay:.12s}.d3{animation-delay:.2s}.d4{animation-delay:.28s}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="layout">
+  <nav class="toc" aria-label="目次">
+    <p class="tt">目次</p>
+    <ol id="toc-list">
+      <li><a href="#what">一言でいうと</a></li>
+      <li><a href="#shell">シェルとターミナル</a></li>
+      <li><a href="#path">ファイルシステムとパス</a></li>
+      <li><a href="#files">ファイル操作の基本</a></li>
+      <li><a href="#pipe">標準入出力・パイプ・リダイレクト</a></li>
+      <li><a href="#grep">テキスト処理と grep</a></li>
+      <li><a href="#vim">vim 入門</a></li>
+      <li><a href="#perm">パーミッションと sudo</a></li>
+      <li><a href="#proc">プロセスとジョブ管理</a></li>
+      <li><a href="#custom">シェルをカスタマイズする</a></li>
+      <li><a href="#script">シェルスクリプト入門</a></li>
+      <li><a href="#cheat">まとめ・早見表・用語集</a></li>
+    </ol>
+  </nav>
+  <main class="content">
+    <header class="hero">
+      <div class="badge reveal d1"><span class="dot"></span>Linux · Command Line</div>
+      <div class="kicker reveal d1">Getting comfortable at the prompt</div>
+      <h1 class="reveal d2">新しい <span class="ac">Linuxの教科書</span><br>コマンドラインに親しむ最初の一冊</h1>
+      <p class="lede reveal d3">GUIに慣れた手を、いったんキーボードに戻す。本書は<strong>「コマンドラインを怖がらずに使えるようになる」</strong>ことだけを丁寧に目指した入門書です。シェルの仕組み、ファイルとパス、パイプ、パーミッション、vim、そしてシェルスクリプトまで。この記事では、<span class="mark">「なぜそのコマンドでそう動くのか」</span>を初学者目線で自分の言葉に置き換えて再構成します。</p>
+      <div class="meta reveal d4">
+        <span class="chip">著者 <b>三宅英明・大角祐介</b></span>
+        <span class="chip">出版 <b>SBクリエイティブ（改訂第2版）</b></span>
+        <span class="chip">分野 <b>Linux / CLI入門</b></span>
+        <span class="chip">対象 <b>これからLinuxを触る人</b></span>
+      </div>
+    </header>
+
+    <section id="what">
+      <div class="sn">01</div>
+      <h2>一言でいうと</h2>
+      <p>本書の姿勢は<span class="mark">「暗記より、仕組みと手触り」</span>。コマンドを丸暗記するのではなく、<strong>シェルがどう入力を解釈し、どう実行するか</strong>の感覚をつかめば、知らないコマンドにも応用が効きます。土台になる考え方は、たった3つです。</p>
+      <div class="cards">
+        <div class="card"><div class="cn">考え方1</div><h4>すべてはコマンド</h4><p>「コマンド＋オプション＋引数」という<strong>同じ形</strong>の繰り返し。形を覚えれば、新しいコマンドも怖くない。</p></div>
+        <div class="card"><div class="cn">考え方2</div><h4>小さな道具を組み合わせる</h4><p>1つのことだけ上手にやる小道具を、<strong>パイプ</strong>でつないで大きな仕事にする。これがUNIX流。</p></div>
+        <div class="card"><div class="cn">考え方3</div><h4>すべてはファイル</h4><p>設定も、デバイスも、入出力も「ファイル」として同じ作法で扱える。だから道具が使い回せる。</p></div>
+      </div>
+      <p>この3つを意識しながら読むと、個々のコマンドが「ばらばらの呪文」ではなく、<strong>一貫した設計の現れ</strong>に見えてきます。それが、コマンドラインに親しむ最短ルートです。</p>
+      <div class="panel key">
+        <span class="lb">この記事のゴール</span>
+        <p>ターミナルを開いて固まらないこと。<code class="k">ls</code> や <code class="k">cd</code> から始めて、<strong>パイプでコマンドをつなぎ、簡単なスクリプトを書く</strong>ところまで、地続きで到達できる地図を描きます。</p>
+      </div>
+    </section>
+
+    <section id="shell">
+      <div class="sn">02</div>
+      <div class="pl">Part I · 入り口</div>
+      <h2>シェルとターミナル</h2>
+      <p>まず用語を1つだけ整理します。<strong>ターミナル</strong>は文字を打って表示する「窓」、<strong>シェル</strong>はその窓の奥で<span class="mark">入力を読み取り、解釈し、プログラムを起動する「通訳」</span>です。Linuxで広く使われるシェルが <code class="k">bash</code>（最近は <code class="k">zsh</code> も）。プロンプト（<code class="k">$</code>）が出ていれば、シェルが入力を待っている合図です。</p>
+      <p>コマンドの形はいつも同じ。<strong>コマンド名・オプション・引数</strong>の3要素です。</p>
+      <figure class="dgm">
+        <svg viewBox="0 0 720 130" role="img" aria-label="コマンドの構造：コマンド名・オプション・引数">
+          <g font-family="'IBM Plex Mono',monospace">
+            <text x="40" y="60" font-size="20" fill="#1F2530">$ ls&#160;&#160;&#160;-l&#160;&#160;&#160;/home/user</text>
+          </g>
+          <g font-family="'Zen Kaku Gothic Antique',sans-serif">
+            <rect x="56" y="40" width="34" height="28" rx="6" fill="none" stroke="#2F5FA8" stroke-width="1.6"/>
+            <rect x="118" y="40" width="34" height="28" rx="6" fill="none" stroke="#3E7C5A" stroke-width="1.6"/>
+            <rect x="180" y="40" width="150" height="28" rx="6" fill="none" stroke="#B5781E" stroke-width="1.6"/>
+            <text x="73" y="92" text-anchor="middle" font-size="12" fill="#214A85">コマンド名</text>
+            <text x="73" y="108" text-anchor="middle" font-size="10.5" fill="#8A909C">何をする道具か</text>
+            <text x="135" y="92" text-anchor="middle" font-size="12" fill="#2C5840">オプション</text>
+            <text x="135" y="108" text-anchor="middle" font-size="10.5" fill="#8A909C">動きを変える(-付き)</text>
+            <text x="255" y="92" text-anchor="middle" font-size="12" fill="#8A5505">引数</text>
+            <text x="255" y="108" text-anchor="middle" font-size="10.5" fill="#8A909C">対象（ファイル等）</text>
+          </g>
+        </svg>
+        <figcaption>どんなコマンドもこの形。「-l はオプション」「最後は対象」と分けて読めれば、初見でも構造がつかめる。</figcaption>
+      </figure>
+      <p>困ったら頼れる相棒が <strong>マニュアル</strong>。<code class="k">man ls</code> でそのコマンドの全オプションが読めますし、多くのコマンドは <code class="k">--help</code> で要約を出します。<span class="mark">「分からなければ man を引く」</span>を習慣にすると、暗記の負担がぐっと減ります。</p>
+      <pre><code><span class="pr">$</span> ls --help        <span class="cm"># 使い方の要約</span>
+<span class="pr">$</span> man ls            <span class="cm"># 詳しいマニュアル（q で終了）</span>
+<span class="pr">$</span> type cd           <span class="cm"># そのコマンドの正体を表示</span></code></pre>
+      <div class="panel tip">
+        <span class="lb">最初に効くコツ</span>
+        <p><strong>Tabキーで補完</strong>、<strong>↑キーで履歴</strong>。この2つを使うだけで、タイプ量と打ち間違いが激減します。長いファイル名は途中まで打って Tab。先人のコマンドは ↑ で呼び戻す。手に馴染ませる価値が一番高い操作です。</p>
+      </div>
+    </section>
+
+    <section id="path">
+      <div class="sn">03</div>
+      <div class="pl">Part I · 入り口</div>
+      <h2>ファイルシステムとパス</h2>
+      <p>Linuxのファイルは、一番上の <strong>ルート（<code class="k">/</code>）</strong>から枝分かれする<strong>1本の木</strong>になっています。Windowsのような <code class="k">C:</code> ドライブの区切りはなく、すべてが <code class="k">/</code> の下に連なる。場所を表す住所が<strong>パス</strong>です。</p>
+      <figure class="dgm">
+        <svg viewBox="0 0 720 200" role="img" aria-label="ルートからのディレクトリツリーと絶対・相対パス">
+          <defs>
+            <marker id="p-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#8A909C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+          </defs>
+          <g font-family="'IBM Plex Mono',monospace" font-size="12.5">
+            <rect x="330" y="20" width="60" height="26" rx="6" fill="#1C2A45"/><text x="360" y="38" text-anchor="middle" fill="#fff">/</text>
+            <line x1="360" y1="46" x2="200" y2="78" stroke="#D2D2C6"/><line x1="360" y1="46" x2="520" y2="78" stroke="#D2D2C6"/>
+            <rect x="150" y="78" width="100" height="26" rx="6" fill="#E3EBF7" stroke="#2F5FA8"/><text x="200" y="96" text-anchor="middle" fill="#214A85">home</text>
+            <rect x="470" y="78" width="100" height="26" rx="6" fill="#F3F4F0" stroke="#8A909C"/><text x="520" y="96" text-anchor="middle" fill="#4E5666">etc</text>
+            <line x1="200" y1="104" x2="200" y2="132" stroke="#D2D2C6"/>
+            <rect x="150" y="132" width="100" height="26" rx="6" fill="#E3EBF7" stroke="#2F5FA8"/><text x="200" y="150" text-anchor="middle" fill="#214A85">user</text>
+            <line x1="200" y1="158" x2="200" y2="174" stroke="#D2D2C6"/>
+            <rect x="140" y="174" width="120" height="22" rx="6" fill="#E4F1EA" stroke="#3E7C5A"/><text x="200" y="190" text-anchor="middle" font-size="11" fill="#2C5840">memo.txt</text>
+          </g>
+          <g font-family="'Zen Kaku Gothic Antique',sans-serif">
+            <text x="610" y="150" font-size="11.5" fill="#214A85">絶対パス:</text>
+            <text x="610" y="167" font-size="10.5" font-family="'IBM Plex Mono',monospace" fill="#4E5666">/home/user/memo.txt</text>
+            <text x="610" y="186" font-size="11" fill="#2C5840">相対: ./memo.txt</text>
+          </g>
+        </svg>
+        <figcaption>絶対パスは「/ からの完全な住所」、相対パスは「今いる場所からの道順」。どちらも同じ場所を指せる。</figcaption>
+      </figure>
+      <p>パスには2種類あります。<strong>絶対パス</strong>は <code class="k">/</code> から始まる完全な住所、<strong>相対パス</strong>は<span class="mark">「今いるディレクトリ」を起点にした道順</span>です。今いる場所を表す <code class="k">.</code>、1つ上を表す <code class="k">..</code>、自分のホームを表す <code class="k">~</code> を覚えると、移動が一気に楽になります。</p>
+      <pre><code><span class="pr">$</span> pwd                 <span class="cm"># 今いる場所を表示（現在地の確認）</span>
+/home/user
+<span class="pr">$</span> cd /etc             <span class="cm"># 絶対パスで移動</span>
+<span class="pr">$</span> cd ..               <span class="cm"># 1つ上のディレクトリへ</span>
+<span class="pr">$</span> cd ~                <span class="cm"># ホームディレクトリへ一発で戻る</span>
+<span class="pr">$</span> ls -la              <span class="cm"># 隠しファイル(.で始まる)も含めて詳細表示</span></code></pre>
+      <div class="panel warn">
+        <span class="lb">迷子になったら</span>
+        <p><code class="k">pwd</code> で現在地、<code class="k">cd</code>（引数なし）でホームへ即帰宅。相対パスで操作する前に「自分が今どこにいるか」を確認する癖をつけると、思わぬ場所のファイルを触る事故を防げます。</p>
+      </div>
+    </section>
+
+    <section id="files">
+      <div class="sn">04</div>
+      <div class="pl">Part II · 基本操作</div>
+      <h2>ファイル操作の基本</h2>
+      <p>作る・写す・動かす・消す。日々の操作はこの数個に集約されます。どれも<strong>「コマンド＋対象」</strong>の形に従うだけです。</p>
+      <table class="tb">
+        <thead><tr><th>やりたいこと</th><th>コマンド</th><th>ひとこと</th></tr></thead>
+        <tbody>
+          <tr><td>ディレクトリを作る</td><td><code class="k">mkdir work</code></td><td><code class="k">-p</code> で途中の階層もまとめて作成</td></tr>
+          <tr><td>空ファイルを作る</td><td><code class="k">touch memo.txt</code></td><td>既存なら更新日時だけ変わる</td></tr>
+          <tr><td>コピー</td><td><code class="k">cp a.txt b.txt</code></td><td>ディレクトリごとは <code class="k">-r</code></td></tr>
+          <tr><td>移動・改名</td><td><code class="k">mv a.txt sub/</code></td><td>同じ場所へ別名で＝<b>リネーム</b></td></tr>
+          <tr><td>削除</td><td><code class="k">rm a.txt</code></td><td>ディレクトリは <code class="k">-r</code>。<b>ゴミ箱なし</b></td></tr>
+        </tbody>
+      </table>
+      <p>強力なのが<strong>ワイルドカード</strong>。<code class="k">*</code> は「任意の文字列」、<code class="k">?</code> は「任意の1文字」にマッチし、シェルが<span class="mark">実行前にファイル名へ展開</span>してくれます。「2024で始まる <code class="k">.log</code> を全部」といった一括操作が一行で書けます。</p>
+      <pre><code><span class="pr">$</span> ls *.log              <span class="cm"># 拡張子 .log のファイルすべて</span>
+<span class="pr">$</span> cp 2024-*.txt backup/  <span class="cm"># 2024- で始まる .txt をまとめてコピー</span>
+<span class="pr">$</span> mkdir -p a/b/c        <span class="cm"># 途中の a, b も自動で作る</span></code></pre>
+      <div class="panel danger">
+        <span class="lb">rm は取り消せない</span>
+        <p>Linuxの <code class="k">rm</code> に<strong>ゴミ箱はありません</strong>。特に <code class="k">rm -rf</code>（再帰・強制）はディレクトリを丸ごと一瞬で消します。実行前に「対象が合っているか」を <code class="k">ls</code> で確かめる、ワイルドカード削除は <code class="k">-i</code>（確認付き）で慎重に。<code class="k">rm -rf /</code> のような事故は一生ものの後悔になります。</p>
+      </div>
+    </section>
+
+    <section id="pipe">
+      <div class="sn">05</div>
+      <div class="pl">Part II · 基本操作</div>
+      <h2>標準入出力・パイプ・リダイレクト</h2>
+      <p>ここがコマンドラインの<strong>心臓部</strong>です。多くのコマンドは、決まった3つの口を持っています。データが入ってくる<strong>標準入力（stdin）</strong>、結果を出す<strong>標準出力（stdout）</strong>、エラーを出す<strong>標準エラー出力（stderr）</strong>。この口を<span class="mark">つなぎ替えたり、ファイルへ向けたり</span>できるのが、UNIXの強さの源泉です。</p>
+      <figure class="dgm">
+        <svg viewBox="0 0 720 200" role="img" aria-label="パイプとリダイレクト：コマンドの出力を次のコマンドの入力やファイルへつなぐ">
+          <defs>
+            <marker id="pp-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#2F5FA8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
+          </defs>
+          <g font-family="'Zen Kaku Gothic Antique',sans-serif">
+            <text x="360" y="22" text-anchor="middle" font-size="12.5" font-weight="700" fill="#4E5666">パイプ「|」＝ 出力を次のコマンドの入力につなぐ</text>
+            <rect x="50" y="44" width="120" height="44" rx="9" fill="#E3EBF7" stroke="#2F5FA8"/><text x="110" y="63" text-anchor="middle" font-size="12" fill="#214A85" font-family="'IBM Plex Mono',monospace">cat log</text><text x="110" y="80" text-anchor="middle" font-size="10" fill="#4E5666">出力</text>
+            <path d="M172 66 L228 66" fill="none" stroke="#2F5FA8" stroke-width="1.6" marker-end="url(#pp-a)"/><text x="200" y="56" text-anchor="middle" font-size="11" font-family="'IBM Plex Mono',monospace" fill="#2F5FA8">|</text>
+            <rect x="230" y="44" width="130" height="44" rx="9" fill="#E3EBF7" stroke="#2F5FA8"/><text x="295" y="63" text-anchor="middle" font-size="12" fill="#214A85" font-family="'IBM Plex Mono',monospace">grep ERROR</text><text x="295" y="80" text-anchor="middle" font-size="10" fill="#4E5666">絞り込み</text>
+            <path d="M362 66 L418 66" fill="none" stroke="#2F5FA8" stroke-width="1.6" marker-end="url(#pp-a)"/><text x="390" y="56" text-anchor="middle" font-size="11" font-family="'IBM Plex Mono',monospace" fill="#2F5FA8">|</text>
+            <rect x="420" y="44" width="120" height="44" rx="9" fill="#E3EBF7" stroke="#2F5FA8"/><text x="480" y="63" text-anchor="middle" font-size="12" fill="#214A85" font-family="'IBM Plex Mono',monospace">wc -l</text><text x="480" y="80" text-anchor="middle" font-size="10" fill="#4E5666">行数を数える</text>
+            <path d="M542 66 L598 66" fill="none" stroke="#2F5FA8" stroke-width="1.6" marker-end="url(#pp-a)"/>
+            <rect x="600" y="48" width="90" height="36" rx="9" fill="#1C2A45"/><text x="645" y="71" text-anchor="middle" font-size="12" fill="#fff">画面へ</text>
+
+            <text x="360" y="132" text-anchor="middle" font-size="12.5" font-weight="700" fill="#4E5666">リダイレクト「&gt;」＝ 出力をファイルへ向ける</text>
+            <rect x="200" y="150" width="150" height="40" rx="9" fill="#E4F1EA" stroke="#3E7C5A"/><text x="275" y="174" text-anchor="middle" font-size="12" fill="#2C5840" font-family="'IBM Plex Mono',monospace">ls -l</text>
+            <path d="M352 170 L408 170" fill="none" stroke="#3E7C5A" stroke-width="1.6" marker-end="url(#pp-a)"/><text x="380" y="160" text-anchor="middle" font-size="11" font-family="'IBM Plex Mono',monospace" fill="#3E7C5A">&gt;</text>
+            <rect x="410" y="150" width="150" height="40" rx="9" fill="#fff" stroke="#3E7C5A" stroke-width="1.4"/><text x="485" y="174" text-anchor="middle" font-size="12" fill="#2C5840" font-family="'IBM Plex Mono',monospace">list.txt</text>
+          </g>
+        </svg>
+        <figcaption>小さなコマンドを「|」で数珠つなぎにして、目的のデータへ削り出す。これがコマンドラインの醍醐味。</figcaption>
+      </figure>
+      <p><strong>パイプ <code class="k">|</code></strong> は、前のコマンドの<strong>出力</strong>を次のコマンドの<strong>入力</strong>へ直結します。<strong>リダイレクト</strong>は出力先をファイルへ向ける道具で、<code class="k">&gt;</code> は<strong>上書き</strong>、<code class="k">&gt;&gt;</code> は<strong>追記</strong>。入力をファイルから取るなら <code class="k">&lt;</code> です。</p>
+      <pre><code><span class="pr">$</span> ls -l &gt; list.txt        <span class="cm"># 結果をファイルに保存（上書き）</span>
+<span class="pr">$</span> echo "done" &gt;&gt; log.txt    <span class="cm"># 末尾に追記</span>
+<span class="pr">$</span> cat access.log | grep 404 | wc -l   <span class="cm"># 404を含む行数を数える</span>
+<span class="pr">$</span> command 2&gt; error.log     <span class="cm"># エラー(stderr)だけ別ファイルへ</span></code></pre>
+      <div class="panel why">
+        <span class="lb">なぜこの設計が強いのか</span>
+        <p>各コマンドが「1つのことだけ上手にやる」小道具に徹し、出力を<strong>ただのテキスト</strong>で渡すから、自由に組み合わせられます。専用の巨大ツールを作る代わりに、<strong>小道具をつないで目的を達成</strong>する——これがUNIX哲学。覚える対象が減り、応用が無限に広がります。</p>
+      </div>
+    </section>
+
+    <section id="grep">
+      <div class="sn">06</div>
+      <div class="pl">Part II · 基本操作</div>
+      <h2>テキスト処理と grep</h2>
+      <p>Linuxの設定もログも、多くは<strong>テキスト</strong>です。だからテキストを「見る・探す・切り出す」道具が日々効きます。中心にいるのが <strong><code class="k">grep</code></strong>——<span class="mark">指定したパターンを含む行だけを抜き出す</span>フィルタです。</p>
+      <table class="tb">
+        <thead><tr><th>道具</th><th>役割</th><th>例</th></tr></thead>
+        <tbody>
+          <tr><td><code class="k">cat</code> / <code class="k">less</code></td><td>中身を表示（less はスクロール閲覧）</td><td><code class="k">less big.log</code></td></tr>
+          <tr><td><code class="k">head</code> / <code class="k">tail</code></td><td>先頭/末尾の数行。<code class="k">tail -f</code> で追従</td><td><code class="k">tail -f app.log</code></td></tr>
+          <tr><td><code class="k">grep</code></td><td>パターンを含む行を抽出</td><td><code class="k">grep -i error log</code></td></tr>
+          <tr><td><code class="k">sort</code> / <code class="k">uniq</code></td><td>並べ替え / 重複の集約</td><td><code class="k">sort f | uniq -c</code></td></tr>
+          <tr><td><code class="k">wc</code></td><td>行数・単語数・文字数を数える</td><td><code class="k">wc -l f</code></td></tr>
+        </tbody>
+      </table>
+      <p><code class="k">grep</code> は<strong>正規表現</strong>でパターンを表現できます。最初は <code class="k">^</code>（行頭）、<code class="k">$</code>（行末）、<code class="k">.</code>（任意の1文字）、<code class="k">*</code>（直前の繰り返し）だけ知っていれば十分。<code class="k">-i</code>（大小無視）・<code class="k">-r</code>（再帰検索）・<code class="k">-n</code>（行番号）が日常の三種の神器です。</p>
+      <pre><code><span class="pr">$</span> grep -rn "TODO" src/      <span class="cm"># src以下を再帰検索し行番号付きで表示</span>
+<span class="pr">$</span> grep "^2024" access.log    <span class="cm"># 行頭が 2024 の行だけ</span>
+<span class="pr">$</span> tail -f app.log | grep -i error   <span class="cm"># 流れるログからerrorだけ追う</span></code></pre>
+      <div class="panel tip">
+        <span class="lb">組み合わせて使う</span>
+        <p>「アクセスの多いIP上位5件」のような集計も、パイプの定石で書けます：<code class="k">cut</code> で列を切り出し → <code class="k">sort</code> → <code class="k">uniq -c</code> で集計 → <code class="k">sort -rn</code> で多い順 → <code class="k">head -5</code>。一つひとつは単純な道具なのに、つなぐだけで分析になります。</p>
+      </div>
+    </section>
+
+    <section id="vim">
+      <div class="sn">07</div>
+      <div class="pl">Part III · 編集と権限</div>
+      <h2>vim 入門</h2>
+      <p>サーバ上ではGUIエディタが使えないことも多く、<strong>vim</strong> が最後の頼みになります。最初の関門は<span class="mark">「モードがある」</span>こと。文字を打つ<strong>ノーマルモード</strong>（操作・移動）と<strong>インサートモード</strong>（入力）が分かれていて、これを知らないと「文字が打てない」「抜けられない」と詰みます。</p>
+      <figure class="dgm">
+        <svg viewBox="0 0 720 150" role="img" aria-label="vimのノーマルモードとインサートモードの行き来">
+          <defs>
+            <marker id="v-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#2F5FA8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
+          </defs>
+          <g font-family="'Zen Kaku Gothic Antique',sans-serif">
+            <rect x="80" y="50" width="220" height="56" rx="11" fill="#E3EBF7" stroke="#2F5FA8" stroke-width="1.6"/><text x="190" y="76" text-anchor="middle" font-size="14" font-weight="700" fill="#214A85">ノーマルモード</text><text x="190" y="95" text-anchor="middle" font-size="11" fill="#4E5666">移動・削除・保存・終了</text>
+            <rect x="420" y="50" width="220" height="56" rx="11" fill="#E4F1EA" stroke="#3E7C5A" stroke-width="1.6"/><text x="530" y="76" text-anchor="middle" font-size="14" font-weight="700" fill="#2C5840">インサートモード</text><text x="530" y="95" text-anchor="middle" font-size="11" fill="#4E5666">文字を入力する</text>
+            <path d="M302 66 L418 66" fill="none" stroke="#2F5FA8" stroke-width="1.6" marker-end="url(#v-a)"/><text x="360" y="58" text-anchor="middle" font-size="12" font-family="'IBM Plex Mono',monospace" fill="#2F5FA8">i / a / o</text>
+            <path d="M418 92 L302 92" fill="none" stroke="#3E7C5A" stroke-width="1.6" marker-end="url(#v-a)"/><text x="360" y="86" text-anchor="middle" font-size="12" font-family="'IBM Plex Mono',monospace" fill="#3E7C5A">Esc</text>
+            <text x="360" y="132" text-anchor="middle" font-size="11" fill="#8A909C">迷ったら Esc でノーマルへ。終了は :q（保存して終了は :wq）</text>
+          </g>
+        </svg>
+        <figcaption>「i で入力、Esc で戻る」。この往復さえ掴めば、vimの恐怖の8割は消える。</figcaption>
+      </figure>
+      <table class="tb">
+        <thead><tr><th>操作</th><th>キー</th><th>意味</th></tr></thead>
+        <tbody>
+          <tr><td>入力開始</td><td><code class="k">i</code></td><td>カーソル位置から挿入（インサートへ）</td></tr>
+          <tr><td>戻る</td><td><code class="k">Esc</code></td><td>ノーマルモードへ。迷ったらまず Esc</td></tr>
+          <tr><td>保存して終了</td><td><code class="k">:wq</code></td><td>write & quit</td></tr>
+          <tr><td>保存せず終了</td><td><code class="k">:q!</code></td><td>変更を捨てて強制終了</td></tr>
+          <tr><td>取り消し / やり直し</td><td><code class="k">u</code> / <code class="k">Ctrl-r</code></td><td>undo / redo</td></tr>
+        </tbody>
+      </table>
+      <div class="panel warn">
+        <span class="lb">「抜けられない」を脱出</span>
+        <p>何が起きているか分からなくなったら、<strong>まず <code class="k">Esc</code> を数回</strong>押してノーマルモードに戻る。それから保存せず逃げたいなら <code class="k">:q!</code>、保存して出たいなら <code class="k">:wq</code>。この2つの呪文を覚えておけば、どんな状態からでも脱出できます。</p>
+      </div>
+    </section>
+
+    <section id="perm">
+      <div class="sn">08</div>
+      <div class="pl">Part III · 編集と権限</div>
+      <h2>パーミッションと sudo</h2>
+      <p>Linuxは複数人で1台を共有する前提で生まれました。だから各ファイルに<strong>「誰が・何をできるか」</strong>の権限が付きます。対象は<strong>所有者(u)・グループ(g)・その他(o)</strong>の3者、操作は<strong>読み(r)・書き(w)・実行(x)</strong>の3種。<code class="k">ls -l</code> の左端の文字列が、まさにこの権限表です。</p>
+      <figure class="dgm">
+        <svg viewBox="0 0 720 160" role="img" aria-label="rwxパーミッション文字列の読み方">
+          <g font-family="'IBM Plex Mono',monospace">
+            <text x="60" y="56" font-size="30" letter-spacing="6" fill="#1F2530">-</text>
+            <text x="92" y="56" font-size="30" letter-spacing="6" fill="#214A85">rwx</text>
+            <text x="176" y="56" font-size="30" letter-spacing="6" fill="#2C5840">r-x</text>
+            <text x="260" y="56" font-size="30" letter-spacing="6" fill="#8A5505">r--</text>
+          </g>
+          <g font-family="'Zen Kaku Gothic Antique',sans-serif">
+            <text x="70" y="86" text-anchor="middle" font-size="11" fill="#4E5666">種別</text>
+            <text x="70" y="101" text-anchor="middle" font-size="10" fill="#8A909C">- =ファイル</text>
+            <text x="70" y="114" text-anchor="middle" font-size="10" fill="#8A909C">d =ディレクトリ</text>
+            <text x="118" y="86" text-anchor="middle" font-size="11" fill="#214A85">所有者(u)</text>
+            <text x="118" y="101" text-anchor="middle" font-size="10" fill="#8A909C">読み書き実行</text>
+            <text x="202" y="86" text-anchor="middle" font-size="11" fill="#2C5840">グループ(g)</text>
+            <text x="202" y="101" text-anchor="middle" font-size="10" fill="#8A909C">読み・実行</text>
+            <text x="286" y="86" text-anchor="middle" font-size="11" fill="#8A5505">その他(o)</text>
+            <text x="286" y="101" text-anchor="middle" font-size="10" fill="#8A909C">読みのみ</text>
+            <text x="500" y="50" font-size="12.5" font-weight="700" fill="#4E5666">数字表記（8進数）</text>
+            <text x="500" y="74" font-size="11.5" font-family="'IBM Plex Mono',monospace" fill="#214A85">r=4  w=2  x=1 を足す</text>
+            <text x="500" y="96" font-size="11.5" font-family="'IBM Plex Mono',monospace" fill="#4E5666">rwx = 7,  r-x = 5,  r-- = 4</text>
+            <text x="500" y="124" font-size="12.5" font-family="'IBM Plex Mono',monospace" fill="#2F5FA8">→ chmod 754 file</text>
+          </g>
+        </svg>
+        <figcaption>9文字を3つずつ区切って読む。数字派は「r=4・w=2・x=1」を足すだけ。rwx=7、r-x=5。</figcaption>
+      </figure>
+      <p>権限を変えるのが <code class="k">chmod</code>、所有者を変えるのが <code class="k">chown</code>。スクリプトを実行可能にする <code class="k">chmod +x</code> は頻出です。そして、システム全体に関わる操作には<strong>管理者(root)権限</strong>が要る。普段は一般ユーザーで作業し、必要なときだけ <strong><code class="k">sudo</code></strong> で一時的に管理者として実行するのが鉄則です。</p>
+      <pre><code><span class="pr">$</span> chmod +x deploy.sh        <span class="cm"># 実行権限を付ける</span>
+<span class="pr">$</span> chmod 644 config.txt      <span class="cm"># 所有者は読み書き、他は読みのみ</span>
+<span class="pr">$</span> sudo systemctl restart nginx   <span class="cm"># 管理者権限が要る操作だけ sudo</span></code></pre>
+      <div class="panel danger">
+        <span class="lb">sudo は慎重に</span>
+        <p><code class="k">sudo</code> はカーネルの安全装置を一時的に飛び越える行為です。意味の分からないコマンドを <code class="k">sudo</code> 付きで実行しない、<code class="k">chmod 777</code>（誰でも何でも可）を安易に使わない。「動いたから」で権限を緩めると、セキュリティの穴になります。最小権限が原則です。</p>
+      </div>
+    </section>
+
+    <section id="proc">
+      <div class="sn">09</div>
+      <div class="pl">Part IV · 動かす・束ねる</div>
+      <h2>プロセスとジョブ管理</h2>
+      <p>実行中のプログラムは<strong>プロセス</strong>として動き、それぞれに番号（<strong>PID</strong>）が振られます。今何が動いているかを見るのが <code class="k">ps</code> や <code class="k">top</code>、止めるのが <code class="k">kill</code>。<span class="mark"><code class="k">kill</code> は「殺す」というより「シグナル（合図）を送る」</span>コマンドで、丁寧に終了を促す <code class="k">TERM</code> と、強制終了の <code class="k">KILL（-9）</code> があります。</p>
+      <pre><code><span class="pr">$</span> ps aux | grep nginx     <span class="cm"># nginx のプロセスを探す</span>
+<span class="pr">$</span> top                      <span class="cm"># CPU/メモリ使用量をリアルタイム表示(q で終了)</span>
+<span class="pr">$</span> kill 1234                <span class="cm"># PID 1234 に終了シグナル(TERM)を送る</span>
+<span class="pr">$</span> kill -9 1234             <span class="cm"># 効かない時の最終手段(強制終了)</span></code></pre>
+      <p>もう一つ便利なのが<strong>ジョブ制御</strong>。コマンドの末尾に <code class="k">&amp;</code> を付けると<strong>バックグラウンド</strong>で実行され、プロンプトがすぐ戻ります。実行中のコマンドは <code class="k">Ctrl-z</code> で一時停止、<code class="k">bg</code> で背面へ、<code class="k">fg</code> で前面に戻せます。</p>
+      <figure class="dgm">
+        <svg viewBox="0 0 720 140" role="img" aria-label="フォアグラウンドとバックグラウンドのジョブ制御">
+          <defs>
+            <marker id="j2-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#8A909C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+          </defs>
+          <g font-family="'Zen Kaku Gothic Antique',sans-serif">
+            <rect x="90" y="44" width="200" height="50" rx="11" fill="#E3EBF7" stroke="#2F5FA8" stroke-width="1.6"/><text x="190" y="68" text-anchor="middle" font-size="13" font-weight="700" fill="#214A85">フォアグラウンド</text><text x="190" y="86" text-anchor="middle" font-size="10.5" fill="#4E5666">画面を占有して実行</text>
+            <rect x="430" y="44" width="200" height="50" rx="11" fill="#F3F4F0" stroke="#8A909C" stroke-width="1.6"/><text x="530" y="68" text-anchor="middle" font-size="13" font-weight="700" fill="#4E5666">バックグラウンド</text><text x="530" y="86" text-anchor="middle" font-size="10.5" fill="#8A909C">裏で実行・操作を続行</text>
+            <path d="M292 58 L428 58" fill="none" stroke="#8A909C" stroke-width="1.5" marker-end="url(#j2-a)"/><text x="360" y="50" text-anchor="middle" font-size="11" font-family="'IBM Plex Mono',monospace" fill="#2F5FA8">&amp; / Ctrl-z &amp; bg</text>
+            <path d="M428 80 L292 80" fill="none" stroke="#8A909C" stroke-width="1.5" marker-end="url(#j2-a)"/><text x="360" y="74" text-anchor="middle" font-size="11" font-family="'IBM Plex Mono',monospace" fill="#3E7C5A">fg</text>
+            <text x="360" y="124" text-anchor="middle" font-size="11" fill="#8A909C">jobs で一覧。重い処理を背面に回して、手は空けておく</text>
+          </g>
+        </svg>
+        <figcaption>時間のかかる処理は背面（&amp;）へ。前面を空けて別の作業を進め、必要なら fg で呼び戻す。</figcaption>
+      </figure>
+      <div class="panel tip">
+        <span class="lb">ログアウトしても止めたくない</span>
+        <p>SSH接続が切れると、その上で動いていたプロセスは巻き添えで止まりがち。長時間の処理は <code class="k">nohup</code> や、本書も触れる <code class="k">tmux</code>／<code class="k">screen</code> といった<strong>端末を切り離せる道具</strong>の上で動かすと、接続が切れても走り続けます。</p>
+      </div>
+    </section>
+
+    <section id="custom">
+      <div class="sn">10</div>
+      <div class="pl">Part IV · 動かす・束ねる</div>
+      <h2>シェルをカスタマイズする</h2>
+      <p>毎回同じ長いコマンドを打つのは退屈です。シェルは<strong>自分好みに育てられます</strong>。鍵になるのが<strong>環境変数</strong>と<strong>エイリアス</strong>。とりわけ大事なのが <code class="k">PATH</code>——<span class="mark">コマンドを名前で打てるのは、シェルが <code class="k">PATH</code> に並ぶディレクトリを順に探して実行ファイルを見つけてくれる</span>からです。</p>
+      <pre><code><span class="pr">$</span> echo $PATH                    <span class="cm"># コマンドを探す場所の一覧（: 区切り）</span>
+/usr/local/bin:/usr/bin:/bin
+<span class="pr">$</span> which ls                      <span class="cm"># ls の実体がどこにあるか</span>
+/usr/bin/ls
+
+<span class="cm"># よく使う操作に短い別名を付ける</span>
+<span class="pr">$</span> alias ll=<span class="st">'ls -la'</span>
+<span class="cm"># 自分のスクリプト置き場を PATH に足す</span>
+<span class="pr">$</span> export PATH=<span class="st">"$HOME/bin:$PATH"</span></code></pre>
+      <p>これらを<strong>毎回有効にする</strong >には、設定ファイル（bashなら <code class="k">~/.bashrc</code>、zshなら <code class="k">~/.zshrc</code>）に書いておきます。シェルの起動時に読み込まれるので、次回から自動で効きます。<code class="k">history</code> で過去のコマンドを振り返り、<code class="k">Ctrl-r</code> で履歴をインクリメンタル検索できるのも、覚えると手放せません。</p>
+      <table class="tb">
+        <thead><tr><th>仕組み</th><th>役割</th><th>例</th></tr></thead>
+        <tbody>
+          <tr><td>環境変数</td><td>シェルやプログラムへ渡す設定値</td><td><code class="k">export EDITOR=vim</code></td></tr>
+          <tr><td><code class="k">PATH</code></td><td>コマンドを探すディレクトリの並び</td><td><code class="k">echo $PATH</code></td></tr>
+          <tr><td>エイリアス</td><td>コマンドの別名・短縮</td><td><code class="k">alias g=git</code></td></tr>
+          <tr><td>設定ファイル</td><td>起動時に自動で読み込む</td><td><code class="k">~/.bashrc</code></td></tr>
+        </tbody>
+      </table>
+      <div class="panel why">
+        <span class="lb">なぜ PATH を知ると世界が広がるか</span>
+        <p>「command not found」の正体は、たいてい<strong>PATHに実行ファイルの場所が入っていない</strong>だけ。インストールしたツールが使えない時、PATHを疑えれば自力で解決できます。コマンドが「名前で呼べる」魔法の裏に、この素朴な仕組みがあると知るのが第一歩です。</p>
+      </div>
+    </section>
+
+    <section id="script">
+      <div class="sn">11</div>
+      <div class="pl">Part IV · 動かす・束ねる</div>
+      <h2>シェルスクリプト入門</h2>
+      <p>同じコマンド列を繰り返すなら、<strong>ファイルにまとめて1つの命令にする</strong>——それがシェルスクリプトです。特別な言語ではなく、<span class="mark">ターミナルで打つコマンドを、そのまま並べたもの</span>。そこに変数・条件分岐・繰り返しを足せば、立派な自動化になります。</p>
+      <pre><code><span class="cm">#!/bin/bash</span>              <span class="cm"># shebang：このスクリプトを動かす実行系</span>
+<span class="kw">set</span> -e                   <span class="cm"># エラーが出たら途中で止める（安全策）</span>
+
+dir=<span class="st">"backup"</span>            <span class="cm"># 変数（= の前後にスペースを入れない）</span>
+mkdir -p <span class="st">"$dir"</span>
+
+<span class="cm"># 引数で受け取ったファイルを順にコピー（$1, $2... が引数）</span>
+<span class="kw">for</span> f <span class="kw">in</span> "$@"; <span class="kw">do</span>
+  <span class="kw">if</span> [ -f <span class="st">"$f"</span> ]; <span class="kw">then</span>      <span class="cm"># ファイルが存在すれば</span>
+    cp <span class="st">"$f"</span> <span class="st">"$dir/"</span>
+    <span class="fn">echo</span> <span class="st">"copied: $f"</span>
+  <span class="kw">fi</span>
+<span class="kw">done</span></code></pre>
+      <p>動かすには実行権限を付けて呼び出します（§08の <code class="k">chmod +x</code> が効いてきます）。引数は <code class="k">$1 $2 …</code>、全部まとめては <code class="k">$@</code> で受け取れます。</p>
+      <pre><code><span class="pr">$</span> chmod +x backup.sh
+<span class="pr">$</span> ./backup.sh a.txt b.txt    <span class="cm"># a.txt, b.txt が $@ に入る</span>
+copied: a.txt
+copied: b.txt</code></pre>
+      <div class="panel warn">
+        <span class="lb">スクリプトの落とし穴</span>
+        <p>変数は<strong>必ず <code class="k">"$var"</code> とダブルクォートで囲む</strong>。囲まないと、空白を含むファイル名やスペースで思わぬ分割が起き、事故になります。冒頭に <code class="k">set -e</code>（エラーで停止）を置くのも定番。「動いた」だけで満足せず、<strong>変な入力でも壊れないか</strong>を一度試すのがコツです。</p>
+      </div>
+    </section>
+
+    <section id="cheat">
+      <div class="sn">12</div>
+      <h2>まとめ・早見表・用語集</h2>
+      <table class="tb">
+        <thead><tr><th>やりたいこと</th><th>コマンド</th><th>ひとこと</th></tr></thead>
+        <tbody>
+          <tr><td>現在地・移動</td><td><code class="k">pwd</code> / <code class="k">cd</code> / <code class="k">ls -la</code></td><td>迷ったら pwd、ホームへは cd</td></tr>
+          <tr><td>作る・写す・消す</td><td><code class="k">mkdir -p</code> / <code class="k">cp -r</code> / <code class="k">rm -r</code></td><td>rm に<b>ゴミ箱なし</b></td></tr>
+          <tr><td>中身を見る</td><td><code class="k">cat</code> / <code class="k">less</code> / <code class="k">tail -f</code></td><td>長いものは less</td></tr>
+          <tr><td>探す</td><td><code class="k">grep -rn</code> / <code class="k">find</code></td><td>中身は grep、名前は find</td></tr>
+          <tr><td>つなぐ・流す</td><td><code class="k">|</code> / <code class="k">&gt;</code> / <code class="k">&gt;&gt;</code></td><td>小道具を直列に</td></tr>
+          <tr><td>権限</td><td><code class="k">chmod +x</code> / <code class="k">sudo</code></td><td>最小権限。777は避ける</td></tr>
+          <tr><td>プロセス</td><td><code class="k">ps aux</code> / <code class="k">top</code> / <code class="k">kill</code></td><td>-9 は最終手段</td></tr>
+          <tr><td>編集</td><td><code class="k">vim</code>（<code class="k">i</code>→<code class="k">Esc</code>→<code class="k">:wq</code>）</td><td>迷ったら Esc</td></tr>
+          <tr><td>困ったとき</td><td><code class="k">man</code> / <code class="k">--help</code></td><td>暗記より参照</td></tr>
+        </tbody>
+      </table>
+      <blockquote>コマンドラインは暗記の試練ではなく、小さな道具を組み合わせる遊び場。形を掴めば、未知のコマンドも怖くない。</blockquote>
+      <div class="panel key">
+        <span class="lb">一言で</span>
+        <p>「コマンド＋オプション＋引数」という<strong>共通の形</strong>、出力を<strong>パイプでつなぐ</strong>発想、<strong>すべてはファイル</strong>という統一感。この3つが腑に落ちれば、あとは <code class="k">man</code> を引きながら必要なコマンドを足していくだけ。Linuxは、使うほど手に馴染みます。</p>
+      </div>
+      <h3>用語集</h3>
+      <table class="tb">
+        <tbody>
+          <tr><td><b>シェル / ターミナル</b></td><td>入力を解釈し実行する通訳（シェル）と、文字を表示する窓（ターミナル）。</td></tr>
+          <tr><td><b>絶対パス / 相対パス</b></td><td>/ からの完全な住所と、現在地からの道順。<code class="k">.</code> <code class="k">..</code> <code class="k">~</code> が道しるべ。</td></tr>
+          <tr><td><b>ワイルドカード</b></td><td><code class="k">*</code>（任意の文字列）・<code class="k">?</code>（任意の1文字）。シェルが実行前にファイル名へ展開。</td></tr>
+          <tr><td><b>標準入出力</b></td><td>stdin/stdout/stderr。コマンドの入口と2つの出口。つなぎ替えられる。</td></tr>
+          <tr><td><b>パイプ / リダイレクト</b></td><td><code class="k">|</code> は出力を次の入力へ、<code class="k">&gt;</code> <code class="k">&gt;&gt;</code> は出力をファイルへ。</td></tr>
+          <tr><td><b>パーミッション</b></td><td>所有者・グループ・その他 × 読み書き実行。<code class="k">chmod</code> で変更（rwx=7）。</td></tr>
+          <tr><td><b>プロセス / PID</b></td><td>実行中のプログラムと、その識別番号。<code class="k">kill</code> はシグナルを送る。</td></tr>
+          <tr><td><b>PATH</b></td><td>コマンドを名前で呼べる理由。実行ファイルを探すディレクトリの並び。</td></tr>
+          <tr><td><b>シェルスクリプト</b></td><td>コマンド列をファイルにまとめ、変数や制御構文で自動化したもの。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <footer>
+      <p>本記事は『新しいLinuxの教科書（改訂第2版）』（三宅英明・大角祐介 著／SBクリエイティブ）を、これからLinuxを触る学習者向けに自分の言葉で再構成した学習ノートです。原文の引用ではなく要点の咀嚼であり、コマンド出力や図は説明用に簡略化・模式化しています。挙動はディストリビューションやシェルの設定で変わりうるため、正確な内容は<a href="https://www.sbcr.jp/product/4815617432/">原著</a>と公式ドキュメント（<code class="k">man</code>）でお確かめください。<br>分野: クラウド &amp; インフラ — Cloud &amp; Infra</p>
+    </footer>
+  </main>
+</div>
+<button class="totop" id="totop" aria-label="トップへ戻る">↑</button>
+<script>
+  var prog=document.getElementById('progress'),totop=document.getElementById('totop');
+  function s(){var h=document.documentElement,m=h.scrollHeight-h.clientHeight;prog.style.width=(m>0?h.scrollTop/m*100:0)+'%';if(h.scrollTop>600)totop.classList.add('show');else totop.classList.remove('show');}
+  document.addEventListener('scroll',s,{passive:true});s();
+  totop.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  var links=[].slice.call(document.querySelectorAll('nav.toc a')),map={};
+  links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(l){l.classList.remove('active');});var a=map[e.target.id];if(a)a.classList.add('active');}});},{rootMargin:'-20% 0px -70% 0px',threshold:0});
+  document.querySelectorAll('main section').forEach(function(x){io.observe(x);});
+</script>
+</body>
+</html>
