@@ -77,10 +77,20 @@
       "file": "pages/backend/practical-go.html",
       "shelf": "backend",
       "title": "実用 Go言語",
-      "book": "実用 Go言語 ―システム開発の現場で使える実践テクニック",
+      "book": "実用 Go言語（オライリー）",
       "cat": "Go",
       "tags": ["インタフェース", "エラー", "並行処理", "context"],
       "aliases": ["実用Go", "実用Go言語", "Practical Go", "Go言語", "Go", "practical-go"]
+    },
+    {
+      "slug": "web-api-good-parts",
+      "file": "pages/backend/web-api-good-parts.html",
+      "shelf": "backend",
+      "title": "Web API: The Good Parts",
+      "book": "Web API: The Good Parts（オライリー）",
+      "cat": "Web API",
+      "tags": ["REST", "URI設計", "HTTP", "バージョニング"],
+      "aliases": ["Web API Good Parts", "WebAPIGoodParts", "Good Parts", "WebAPI設計", "API設計", "Web API", "web-api-good-parts"]
     },
     {
       "slug": "software-design",
@@ -91,6 +101,16 @@
       "cat": "DESIGN",
       "tags": ["クリーンアーキテクチャ", "SOLID", "DI", "TDD"],
       "aliases": ["ソフトウェア設計", "ちょうぜつ", "設計入門", "クリーンアーキテクチャ", "software-design"]
+    },
+    {
+      "slug": "unit-testing",
+      "file": "pages/design/unit-testing.html",
+      "shelf": "design",
+      "title": "単体テストの考え方/使い方",
+      "book": "単体テストの考え方/使い方（Khorikov）",
+      "cat": "Unit Testing",
+      "tags": ["4本柱", "リファクタ耐性", "モック", "Humble Object"],
+      "aliases": ["単体テスト", "ユニットテスト", "単体テストの考え方使い方", "Unit Testing", "テストの考え方", "Khorikov", "unit-testing"]
     },
     {
       "slug": "aws-lambda",
