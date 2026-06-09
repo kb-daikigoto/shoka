@@ -20,7 +20,11 @@
 html{scroll-behavior:smooth}
 body{font-family:var(--sans);color:var(--ink);background:var(--bg);line-height:1.85;font-size:16px;
   -webkit-font-smoothing:antialiased;letter-spacing:.005em;
-  background-image:radial-gradient(circle at 12% 6%,rgba(229,83,58,.05),transparent 40%),radial-gradient(circle at 88% 4%,rgba(14,143,143,.05),transparent 38%);
+  background-image:
+    radial-gradient(circle at 12% 6%,rgba(229,83,58,.05),transparent 40%),
+    radial-gradient(circle at 88% 4%,rgba(14,143,143,.05),transparent 38%),
+    radial-gradient(#e7d9c8 .7px,transparent .7px);
+  background-size:auto,auto,24px 24px;
   background-attachment:fixed;}
 
 /* progress bar */
@@ -624,12 +628,12 @@ const spy=new IntersectionObserver(es=>{
 secs.forEach(s=>spy.observe(s));
 
 /* progress bar + back to top */
-const bar=document.getElementById('bar'),top=document.getElementById('top');
+const bar=document.getElementById('bar'),topBtn=document.getElementById('top');
 function onScroll(){
   const h=document.documentElement;
   const sc=h.scrollTop/(h.scrollHeight-h.clientHeight);
   bar.style.width=(sc*100)+'%';
-  top.classList.toggle('show',h.scrollTop>500);
+  topBtn.classList.toggle('show',h.scrollTop>500);
 }
 document.addEventListener('scroll',onScroll,{passive:true});onScroll();
 
