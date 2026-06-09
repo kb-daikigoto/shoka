@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relay Connections とカーソルページネーション</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+JP:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fbf7f2;--bg2:#f3ebe2;--card:#ffffff;--ink:#241c17;--soft:#5c5046;--dim:#8c7e70;
+  --line:#e7dbcd;--line2:#d8c8b5;
+  --accent:#e5533a;--accent-deep:#b83a26;--accent-soft:#fbe6df;
+  --teal:#0e8f8f;--teal-soft:#dcf0ef;
+  --code-bg:#211a16;--code-ink:#f1e6da;
+  --sans:'IBM Plex Sans JP',system-ui,sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);color:var(--ink);background:var(--bg);line-height:1.85;font-size:16px;
+  -webkit-font-smoothing:antialiased;letter-spacing:.005em;
+  background-image:radial-gradient(circle at 12% 6%,rgba(229,83,58,.05),transparent 40%),radial-gradient(circle at 88% 4%,rgba(14,143,143,.05),transparent 38%);
+  background-attachment:fixed;}
+
+/* progress bar */
+#bar{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--accent),var(--teal));z-index:200;transition:width .1s linear;}
+
+/* layout */
+.wrap{max-width:1240px;margin:0 auto;padding:0 clamp(16px,4vw,40px);display:grid;grid-template-columns:248px 1fr;gap:44px;}
+@media(max-width:920px){.wrap{grid-template-columns:1fr;}.toc{display:none!important;}}
+
+/* TOC */
+.toc{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding:32px 0 40px;}
+.toc .tt{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--dim);text-transform:uppercase;margin-bottom:14px;}
+.toc a{display:flex;gap:9px;align-items:baseline;text-decoration:none;color:var(--soft);font-size:13px;padding:5px 10px;border-radius:8px;border-left:2px solid transparent;transition:.14s;line-height:1.5;}
+.toc a .n{font-family:var(--mono);font-size:11px;color:var(--dim);flex:0 0 auto;}
+.toc a:hover{background:var(--bg2);color:var(--ink);}
+.toc a.on{background:var(--accent-soft);color:var(--accent-deep);border-left-color:var(--accent);font-weight:600;}
+.toc a.on .n{color:var(--accent);}
+
+main{padding:0 0 120px;min-width:0;}
+
+/* hero */
+.hero{padding:54px 0 30px;border-bottom:1px solid var(--line);}
+.badge{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+  background:var(--accent-soft);color:var(--accent-deep);padding:5px 12px;border-radius:20px;text-transform:uppercase;}
+.kicker{font-family:var(--mono);font-size:13px;color:var(--teal);margin-top:18px;letter-spacing:.04em;}
+h1{font-size:clamp(28px,5vw,46px);line-height:1.18;font-weight:700;margin:8px 0 0;letter-spacing:.01em;}
+.lede{font-size:17px;color:var(--soft);margin-top:18px;max-width:680px;}
+.meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px;}
+.chip{font-family:var(--mono);font-size:11.5px;color:var(--soft);background:var(--card);border:1px solid var(--line);padding:5px 11px;border-radius:7px;}
+.chip b{color:var(--accent-deep);}
+
+/* sections */
+section{padding-top:52px;scroll-margin-top:18px;}
+.sec-no{font-family:var(--mono);font-size:13px;color:var(--accent);letter-spacing:.12em;}
+h2{font-size:clamp(21px,3.4vw,28px);font-weight:700;line-height:1.3;margin:6px 0 0;}
+h3{font-size:18px;font-weight:600;margin:30px 0 0;color:var(--ink);}
+p{margin-top:15px;color:var(--soft);}
+p strong,li strong{color:var(--ink);font-weight:600;}
+a.ext{color:var(--accent-deep);text-decoration:underline;text-underline-offset:2px;}
+ul,ol{margin-top:14px;padding-left:22px;color:var(--soft);}
+li{margin-top:7px;}
+code.ic{font-family:var(--mono);font-size:.86em;background:var(--bg2);border:1px solid var(--line);border-radius:5px;padding:1px 6px;color:var(--accent-deep);}
+
+/* "一言でいうと" box */
+.tldr{margin-top:22px;background:linear-gradient(180deg,var(--teal-soft),#fff);border:1px solid var(--line2);border-left:4px solid var(--teal);border-radius:10px;padding:15px 18px;}
+.tldr .lab{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--teal);text-transform:uppercase;}
+.tldr p{margin-top:5px;color:var(--ink);font-weight:500;}
+
+/* callouts */
+.call{margin-top:20px;border-radius:10px;padding:14px 17px 14px 16px;border:1px solid var(--line);border-left-width:4px;background:var(--card);}
+.call .h{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;display:flex;align-items:center;gap:7px;}
+.call p{margin-top:6px;font-size:14.5px;color:var(--soft);}
+.call.why{border-left-color:#6f5ad6;background:#f3f0fd;}.call.why .h{color:#5742bf;}
+.call.point{border-left-color:var(--accent);background:var(--accent-soft);}.call.point .h{color:var(--accent-deep);}
+.call.tip{border-left-color:var(--teal);background:var(--teal-soft);}.call.tip .h{color:#0a6e6e;}
+.call.warn{border-left-color:#c98a14;background:#fbf1da;}.call.warn .h{color:#9a6a0c;}
+.call.danger{border-left-color:#cf3b2c;background:#fce4e1;}.call.danger .h{color:#a92b1e;}
+
+/* code */
+.code{margin-top:20px;background:var(--code-bg);border-radius:11px;overflow:hidden;border:1px solid #000;}
+.code .top{display:flex;align-items:center;justify-content:space-between;padding:8px 13px;background:rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.08);}
+.code .fn{font-family:var(--mono);font-size:11.5px;color:#c4b6a6;letter-spacing:.03em;}
+.code .cp{font-family:var(--mono);font-size:11px;color:#c4b6a6;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);
+  border-radius:6px;padding:3px 10px;cursor:pointer;transition:.14s;}
+.code .cp:hover{background:rgba(255,255,255,.16);color:#fff;}
+.code pre{margin:0;padding:15px 17px;overflow-x:auto;}
+.code code{font-family:var(--mono);font-size:13px;line-height:1.72;color:var(--code-ink);white-space:pre;}
+.t-k{color:#ff9d7a;}   /* keyword */
+.t-t{color:#7fd6c9;}   /* type */
+.t-s{color:#e6c98a;}   /* string */
+.t-c{color:#8a7d6f;font-style:italic;} /* comment */
+.t-f{color:#9bb8ff;}   /* field/func */
+.t-n{color:#d9b3ff;}   /* number/const */
+.t-d{color:#ff9d7a;}   /* directive */
+
+/* tables */
+.tbl{margin-top:22px;overflow-x:auto;border:1px solid var(--line);border-radius:10px;}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px;}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top;}
+th{background:var(--bg2);font-weight:600;font-size:12.5px;color:var(--ink);font-family:var(--mono);letter-spacing:.02em;}
+tr:last-child td{border-bottom:none;}
+td code{font-family:var(--mono);font-size:12.5px;color:var(--accent-deep);}
+
+/* cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:13px;margin-top:20px;}
+.cd{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:15px 16px;}
+.cd .ti{font-weight:600;font-size:14.5px;display:flex;align-items:center;gap:8px;}
+.cd .ti .dot{width:9px;height:9px;border-radius:3px;flex:0 0 auto;}
+.cd p{margin-top:7px;font-size:13.5px;}
+
+/* figure */
+.fig{margin-top:24px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 16px;text-align:center;}
+.fig svg{max-width:100%;height:auto;}
+.fig figcaption{font-family:var(--mono);font-size:11.5px;color:var(--dim);margin-top:12px;}
+
+/* glossary */
+.gloss{margin-top:18px;display:grid;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+.gloss div{padding:12px 16px;border-bottom:1px solid var(--line);background:var(--card);}
+.gloss div:last-child{border-bottom:none;}
+.gloss dt{font-family:var(--mono);font-size:13px;color:var(--accent-deep);font-weight:600;}
+.gloss dd{margin-top:3px;font-size:14px;color:var(--soft);}
+
+/* cheat sheet */
+.cheat{margin-top:22px;background:linear-gradient(180deg,#fff,var(--bg2));border:1px dashed var(--line2);border-radius:12px;padding:20px 22px;}
+.cheat h3{margin-top:0;}
+.cheat ul{list-style:none;padding:0;margin-top:14px;}
+.cheat li{margin-top:9px;padding-left:24px;position:relative;font-size:14px;color:var(--soft);}
+.cheat li::before{content:"▸";position:absolute;left:4px;color:var(--accent);}
+.cheat li b{color:var(--ink);}
+
+footer{margin-top:64px;padding-top:24px;border-top:1px solid var(--line);font-size:13px;color:var(--dim);}
+footer .note{font-family:var(--mono);font-size:11.5px;line-height:1.7;}
+
+/* back to top */
+#top{position:fixed;right:22px;bottom:22px;width:44px;height:44px;border-radius:50%;background:var(--accent);color:#fff;
+  display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 6px 18px rgba(229,83,58,.4);
+  opacity:0;pointer-events:none;transition:.22s;z-index:120;font-size:19px;}
+#top.show{opacity:1;pointer-events:auto;}
+#top:hover{background:var(--accent-deep);}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+
+<div class="wrap">
+  <nav class="toc">
+    <div class="tt">目次</div>
+    <div id="toclist"></div>
+  </nav>
+
+  <main>
+    <div class="hero">
+      <span class="badge">◆ GraphQL / Pagination</span>
+      <div class="kicker">Relay ガイドツアー — List Data / Connections</div>
+      <h1>Relay Connections と<br>カーソルページネーション</h1>
+      <p class="lede">「一覧の続きを読む」を堅牢に表現するための GraphQL の作法 ― Connection。edges・node・cursor・pageInfo という4つの部品が、なぜその形をしているのかを理屈から噛み砕き、サーバ実装と Relay クライアントの両側まで一気に押さえます。</p>
+      <div class="meta">
+        <span class="chip">出典 <b>relay.dev / Cursor Connections Spec</b></span>
+        <span class="chip">レベル <b>中級 → 中上級</b></span>
+        <span class="chip">前提 <b>GraphQL 基礎</b></span>
+        <span class="chip">読了 <b>約16分</b></span>
+      </div>
+    </div>
+
+    <!-- 01 -->
+    <section id="s1">
+      <div class="sec-no">01</div>
+      <h2>なぜ「次のページ」が難しいのか</h2>
+      <div class="tldr"><div class="lab">一言でいうと</div>
+        <p>件数で位置を指す offset 方式は、データが動くとズレる・飛ぶ・重複する。Connection は「位置」を件数ではなく<strong>カーソル（しおり）</strong>で持つことで、これを避ける。</p></div>
+
+      <p>一覧をすべて一度に返すのは現実的ではありません。フォロワーが10万人いるユーザーの <code class="ic">friends</code> を全部返したらクライアントもサーバも壊れます。だから「最初の N 件 → 続きの N 件 …」と区切って取りに行く＝ページネーションが要ります。</p>
+
+      <p>素朴なやり方は <strong>offset / limit</strong>（SQL の <code class="ic">LIMIT 20 OFFSET 40</code>）です。しかしこれは「先頭から何件目」で位置を指すため、ページを読んでいる最中に前方の要素が増減すると破綻します。</p>
+
+      <div class="cards">
+        <div class="cd"><div class="ti"><span class="dot" style="background:#cf3b2c"></span>要素が飛ぶ</div>
+          <p>1ページ目を読んだ後に先頭へ1件挿入されると、2ページ目の先頭が1件ぶん後ろにずれ、<strong>1件読み飛ばす</strong>。</p></div>
+        <div class="cd"><div class="ti"><span class="dot" style="background:#c98a14"></span>要素が重複</div>
+          <p>逆に先頭が1件削除されると、すでに見た要素が2ページ目に<strong>もう一度出てくる</strong>。</p></div>
+        <div class="cd"><div class="ti"><span class="dot" style="background:#cf3b2c"></span>深いページが遅い</div>
+          <p><code>OFFSET 100000</code> はDBが10万行を数えて捨てる。後ろのページほど線形に遅くなる。</p></div>
+      </div>
+
+      <div class="call why"><div class="h">◑ なぜカーソルなのか</div>
+        <p>offset は「順序の中の<em>序数</em>（何番目）」で位置を指す。序数は他の要素の増減で変わってしまう。カーソルは「<em>その要素自身</em>を指すしおり」なので、前後で何が起きても「この要素の次から」を安定して再開できる。</p></div>
+    </section>
+
+    <!-- 02 -->
+    <section id="s2">
+      <div class="sec-no">02</div>
+      <h2>Connection の全体像 ― 4つの部品</h2>
+      <div class="tldr"><div class="lab">一言でいうと</div>
+        <p>Connection は「一覧」を表す箱。中身は <strong>edges（縁）の配列</strong>と <strong>pageInfo（ページの状態）</strong>。各 edge は <strong>cursor（しおり）</strong>と <strong>node（実体）</strong>を持つ。</p></div>
+
+      <p>GraphQL の慣習では、コレクションをただの配列 <code class="ic">[User]</code> ではなく、決まった形の入れ子で返します。これが Relay <strong>Cursor Connections</strong> 仕様です。形を絵にするとこうなります。</p>
+
+      <figure class="fig">
+        <svg viewBox="0 0 720 300" role="img" aria-label="Connectionの構造図">
+          <defs>
+            <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+              <path d="M0,0 L9,4.5 L0,9 z" fill="#b83a26"/>
+            </marker>
+          </defs>
+          <!-- Connection -->
+          <rect x="14" y="118" width="150" height="64" rx="10" fill="#fbe6df" stroke="#e5533a" stroke-width="1.5"/>
+          <text x="89" y="146" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="14" fill="#b83a26" font-weight="600">FriendsConnection</text>
+          <text x="89" y="166" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="11" fill="#8c7e70">= 一覧の箱</text>
+          <!-- edges -->
+          <rect x="232" y="40" width="138" height="56" rx="10" fill="#fff" stroke="#0e8f8f" stroke-width="1.5"/>
+          <text x="301" y="64" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="13" fill="#0a6e6e" font-weight="600">edges: [Edge]</text>
+          <text x="301" y="82" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10.5" fill="#8c7e70">縁の配列</text>
+          <!-- pageInfo -->
+          <rect x="232" y="206" width="138" height="56" rx="10" fill="#fff" stroke="#6f5ad6" stroke-width="1.5"/>
+          <text x="301" y="230" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="13" fill="#5742bf" font-weight="600">pageInfo</text>
+          <text x="301" y="248" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10.5" fill="#8c7e70">ページの状態</text>
+          <!-- edge detail -->
+          <rect x="442" y="22" width="262" height="92" rx="10" fill="#fbf7f2" stroke="#d8c8b5" stroke-width="1.3"/>
+          <text x="458" y="46" font-family="IBM Plex Mono,monospace" font-size="12.5" fill="#241c17" font-weight="600">Edge {</text>
+          <text x="474" y="68" font-family="IBM Plex Mono,monospace" font-size="12" fill="#b83a26">cursor: String!</text>
+          <text x="700" y="68" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8c7e70">← しおり</text>
+          <text x="474" y="88" font-family="IBM Plex Mono,monospace" font-size="12" fill="#0a6e6e">node: User</text>
+          <text x="700" y="88" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8c7e70">← 実体</text>
+          <text x="458" y="108" font-family="IBM Plex Mono,monospace" font-size="12.5" fill="#241c17" font-weight="600">}</text>
+          <!-- pageinfo detail -->
+          <rect x="442" y="200" width="262" height="68" rx="10" fill="#fbf7f2" stroke="#d8c8b5" stroke-width="1.3"/>
+          <text x="458" y="222" font-family="IBM Plex Mono,monospace" font-size="11" fill="#5742bf">hasNextPage / hasPreviousPage</text>
+          <text x="458" y="242" font-family="IBM Plex Mono,monospace" font-size="11" fill="#5742bf">startCursor / endCursor</text>
+          <text x="458" y="260" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8c7e70">続きはあるか・端のしおり</text>
+          <!-- arrows -->
+          <line x1="164" y1="140" x2="228" y2="68" stroke="#b83a26" stroke-width="1.6" marker-end="url(#ar)"/>
+          <line x1="164" y1="160" x2="228" y2="234" stroke="#b83a26" stroke-width="1.6" marker-end="url(#ar)"/>
+          <line x1="370" y1="68" x2="438" y2="68" stroke="#b83a26" stroke-width="1.6" marker-end="url(#ar)"/>
+          <line x1="370" y1="234" x2="438" y2="234" stroke="#b83a26" stroke-width="1.6" marker-end="url(#ar)"/>
+        </svg>
+        <figcaption>Connection → edges[] → {cursor, node} ＋ pageInfo</figcaption>
+      </figure>
+
+      <p>スキーマで書くと次のとおり。<code class="ic">friends</code> が裸の <code class="ic">[User]</code> ではなく <code class="ic">FriendsConnection</code> を返している点に注目してください。</p>
+
+      <div class="code"><div class="top"><span class="fn">schema.graphql</span><button class="cp">コピー</button></div>
+<pre><code><span class="t-k">type</span> <span class="t-t">User</span> {
+  <span class="t-f">id</span>: <span class="t-t">ID</span>!
+  <span class="t-f">name</span>: <span class="t-t">String</span>
+  <span class="t-c"># 一覧は Connection を返す。引数で「窓」を指定する</span>
+  <span class="t-f">friends</span>(<span class="t-f">first</span>: <span class="t-t">Int</span>, <span class="t-f">after</span>: <span class="t-t">String</span>, <span class="t-f">last</span>: <span class="t-t">Int</span>, <span class="t-f">before</span>: <span class="t-t">String</span>): <span class="t-t">FriendsConnection</span>
+}
+
+<span class="t-k">type</span> <span class="t-t">FriendsConnection</span> {
+  <span class="t-f">edges</span>: [<span class="t-t">FriendsEdge</span>]
+  <span class="t-f">pageInfo</span>: <span class="t-t">PageInfo</span>!
+}
+
+<span class="t-k">type</span> <span class="t-t">FriendsEdge</span> {
+  <span class="t-f">cursor</span>: <span class="t-t">String</span>!     <span class="t-c"># この要素を指すしおり</span>
+  <span class="t-f">node</span>: <span class="t-t">User</span>          <span class="t-c"># 実体（中身のオブジェクト）</span>
+}
+
+<span class="t-k">type</span> <span class="t-t">PageInfo</span> {
+  <span class="t-f">hasNextPage</span>: <span class="t-t">Boolean</span>!
+  <span class="t-f">hasPreviousPage</span>: <span class="t-t">Boolean</span>!
+  <span class="t-f">startCursor</span>: <span class="t-t">String</span>
+  <span class="t-f">endCursor</span>: <span class="t-t">String</span>
+}</code></pre></div>
+
+      <div class="call point"><div class="h">● 押さえどころ</div>
+        <p>箱が二重（Connection → Edge → node）なのは冗長に見えますが、これは <strong>「縁（edge）に情報を載せる余地」</strong>を作るための設計です（→ 05）。node が実体、edge は「その実体がこの一覧に属していること」を表す関係そのもの。</p></div>
+    </section>
+
+    <!-- 03 -->
+    <section id="s3">
+      <div class="sec-no">03</div>
+      <h2>カーソルの正体 ― 不透明なしおり</h2>
+      <div class="tldr"><div class="lab">一言でいうと</div>
+        <p>cursor は「ここまで読んだ」を表す<strong>不透明（opaque）な文字列</strong>。クライアントはそのまま受け取り、そのまま送り返すだけ。中身を解釈してはいけない。</p></div>
+
+      <p>cursor は仕様上 <code class="ic">String</code> です。中身は実装の自由で、よくあるのは「ソートキー＋IDを base64 エンコードしたもの」。たとえば <code class="ic">"id:1024"</code> を符号化して <code class="ic">"Y3Vyc29yOjEwMjQ="</code> のように見えます。</p>
+
+      <div class="call why"><div class="h">◑ なぜ「不透明」にするのか</div>
+        <p>クライアントが cursor の中身（例: <code class="ic">offset=40</code>）に依存し始めると、サーバはページング方式を二度と変えられなくなる。base64 で「読めなく」しておくのは、<strong>中身に依存させないための心理的な壁</strong>。クライアントは「黒い箱」として往復させるだけにする。</p></div>
+
+      <p>カーソルの良いところは、<strong>各要素が自分専用のしおりを持つ</strong>こと。一覧に変化が起きても「この cursor の<em>次から</em>」という指定は意味が変わりません。これが 01 で見た offset の弱点を消します。</p>
+
+      <div class="call tip"><div class="h">◆ 実装のコツ</div>
+        <p>cursor には<strong>ソートに使ったキーを必ず含める</strong>。ID だけだと「created_at 降順」のような並びで再開位置を一意に決められない。例: <code class="ic">(created_at, id)</code> の複合キーを符号化しておくと、同時刻の要素があっても安定する。</p></div>
+    </section>
+
+    <!-- 04 -->
+    <section id="s4">
+      <div class="sec-no">04</div>
+      <h2>引数 first / after / last / before</h2>
+      <div class="tldr"><div class="lab">一言でいうと</div>
+        <p><strong>first + after</strong> で前方向（古→新でなく、先頭から続きへ）、<strong>last + before</strong> で後ろ方向にページングする。「何件」＋「どのしおりの隣から」の組。</p></div>
+
+      <div class="tbl"><table>
+        <tr><th>引数</th><th>意味</th><th>向き</th></tr>
+        <tr><td><code>first: Int</code></td><td>先頭から N 件取る</td><td rowspan="2">前方向（forward）</td></tr>
+        <tr><td><code>after: String</code></td><td>この cursor の<strong>次</strong>から</td></tr>
+        <tr><td><code>last: Int</code></td><td>末尾から N 件取る</td><td rowspan="2">後ろ方向（backward）</td></tr>
+        <tr><td><code>before: String</code></td><td>この cursor の<strong>手前</strong>まで</td></tr>
+      </table></div>
+
+      <h3>1ページ目 ― first だけ</h3>
+      <div class="code"><div class="top"><span class="fn">query — 最初の3件</span><button class="cp">コピー</button></div>
+<pre><code><span class="t-k">query</span> {
+  <span class="t-f">user</span> {
+    <span class="t-f">friends</span>(<span class="t-f">first</span>: <span class="t-n">3</span>) {
+      <span class="t-f">edges</span> {
+        <span class="t-f">cursor</span>
+        <span class="t-f">node</span> { <span class="t-f">id</span> <span class="t-f">name</span> }
+      }
+      <span class="t-f">pageInfo</span> {
+        <span class="t-f">endCursor</span>
+        <span class="t-f">hasNextPage</span>
+      }
+    }
+  }
+}</code></pre></div>
+
+      <p>レスポンスはこんな形。末尾の <code class="ic">endCursor</code> が「ここまで読んだ」のしおりです。</p>
+
+      <div class="code"><div class="top"><span class="fn">response.json</span><button class="cp">コピー</button></div>
+<pre><code>{
+  <span class="t-s">"data"</span>: { <span class="t-s">"user"</span>: { <span class="t-s">"friends"</span>: {
+    <span class="t-s">"edges"</span>: [
+      { <span class="t-s">"cursor"</span>: <span class="t-s">"YzE="</span>, <span class="t-s">"node"</span>: { <span class="t-s">"id"</span>: <span class="t-s">"1"</span>, <span class="t-s">"name"</span>: <span class="t-s">"Alice"</span> } },
+      { <span class="t-s">"cursor"</span>: <span class="t-s">"YzI="</span>, <span class="t-s">"node"</span>: { <span class="t-s">"id"</span>: <span class="t-s">"2"</span>, <span class="t-s">"name"</span>: <span class="t-s">"Bob"</span> } },
+      { <span class="t-s">"cursor"</span>: <span class="t-s">"YzM="</span>, <span class="t-s">"node"</span>: { <span class="t-s">"id"</span>: <span class="t-s">"3"</span>, <span class="t-s">"name"</span>: <span class="t-s">"Carol"</span> } }
+    ],
+    <span class="t-s">"pageInfo"</span>: { <span class="t-s">"endCursor"</span>: <span class="t-s">"YzM="</span>, <span class="t-s">"hasNextPage"</span>: <span class="t-k">true</span> }
+  } } }
+}</code></pre></div>
+
+      <h3>2ページ目 ― endCursor を after に渡す</h3>
+      <p><code class="ic">hasNextPage</code> が <code class="ic">true</code> なら、もらった <code class="ic">endCursor</code> をそのまま <code class="ic">after</code> に詰めて再リクエスト。これがページネーションの心臓部です。</p>
+
+      <div class="code"><div class="top"><span class="fn">query — 続きの3件</span><button class="cp">コピー</button></div>
+<pre><code><span class="t-f">friends</span>(<span class="t-f">first</span>: <span class="t-n">3</span>, <span class="t-f">after</span>: <span class="t-s">"YzM="</span>) {   <span class="t-c"># ← 前回の endCursor</span>
+  <span class="t-f">edges</span> { <span class="t-f">cursor</span> <span class="t-f">node</span> { <span class="t-f">id</span> <span class="t-f">name</span> } }
+  <span class="t-f">pageInfo</span> { <span class="t-f">endCursor</span> <span class="t-f">hasNextPage</span> }
+}</code></pre></div>
+
+      <figure class="fig">
+        <svg viewBox="0 0 720 150" role="img" aria-label="ページング往復図">
+          <defs><marker id="ar2" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#0e8f8f"/></marker></defs>
+          <rect x="16" y="50" width="150" height="50" rx="9" fill="#fbe6df" stroke="#e5533a" stroke-width="1.4"/>
+          <text x="91" y="72" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="12" fill="#b83a26">first: 3</text>
+          <text x="91" y="90" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8c7e70">最初の窓</text>
+          <rect x="285" y="50" width="150" height="50" rx="9" fill="#dcf0ef" stroke="#0e8f8f" stroke-width="1.4"/>
+          <text x="360" y="72" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="12" fill="#0a6e6e">endCursor</text>
+          <text x="360" y="90" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8c7e70">= "YzM="</text>
+          <rect x="554" y="50" width="150" height="50" rx="9" fill="#fbe6df" stroke="#e5533a" stroke-width="1.4"/>
+          <text x="629" y="72" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="11" fill="#b83a26">first:3,after</text>
+          <text x="629" y="90" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8c7e70">次の窓</text>
+          <line x1="166" y1="75" x2="281" y2="75" stroke="#0e8f8f" stroke-width="1.6" marker-end="url(#ar2)"/>
+          <line x1="435" y1="75" x2="550" y2="75" stroke="#0e8f8f" stroke-width="1.6" marker-end="url(#ar2)"/>
+          <text x="223" y="40" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8c7e70">返ってくる</text>
+          <text x="492" y="40" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8c7e70">そのまま渡す</text>
+        </svg>
+        <figcaption>endCursor を after に渡して窓をずらす ― これを繰り返すだけ</figcaption>
+      </figure>
+
+      <div class="call warn"><div class="h">▲ 注意</div>
+        <p><code class="ic">first</code> と <code class="ic">last</code> を同時に指定するのは仕様上推奨されない（曖昧になる）。前方向と後ろ方向はどちらか一方に決める。多くのUIは <code class="ic">first/after</code> の前方向だけで足りる。</p></div>
+    </section>
+
+    <!-- 05 -->
+    <section id="s5">
+      <div class="sec-no">05</div>
+      <h2>なぜ二重の箱？ ― edge にメタを載せる</h2>
+      <div class="tldr"><div class="lab">一言でいうと</div>
+        <p>「いつ友達になったか」のような<strong>関係そのものの情報</strong>は node（User自身）ではなく edge に置く。これが Connection が node を直接並べず edge を挟む理由。</p></div>
+
+      <p>もし <code class="ic">friends: [User]</code> だったら、「Alice と<em>いつ</em>友達になったか」を置く場所がありません。それは Alice の属性ではなく、<strong>「私とAliceの関係」の属性</strong>だからです。edge があると、その縁の上に情報を載せられます。</p>
+
+      <div class="code"><div class="top"><span class="fn">schema.graphql — edge にフィールドを足す</span><button class="cp">コピー</button></div>
+<pre><code><span class="t-k">type</span> <span class="t-t">FriendsEdge</span> {
+  <span class="t-f">cursor</span>: <span class="t-t">String</span>!
+  <span class="t-f">node</span>: <span class="t-t">User</span>
+  <span class="t-f">friendedAt</span>: <span class="t-t">DateTime</span>    <span class="t-c"># ★ 関係の属性。node ではなく edge に置く</span>
+}</code></pre></div>
+
+      <div class="cards">
+        <div class="cd"><div class="ti"><span class="dot" style="background:#0e8f8f"></span>node に置くもの</div>
+          <p>その実体そのものの属性。<code>id</code> / <code>name</code> / <code>avatar</code> ― 誰から見ても同じ。</p></div>
+        <div class="cd"><div class="ti"><span class="dot" style="background:#e5533a"></span>edge に置くもの</div>
+          <p>「この一覧に属していること」に固有の属性。<code>friendedAt</code> / 並び順スコア / ロール。</p></div>
+      </div>
+
+      <div class="call point"><div class="h">● 押さえどころ</div>
+        <p>cursor が edge 側にあるのも同じ理屈。cursor は「この一覧の中での位置」であって User 自身の属性ではない。同じ User が別の一覧では別の cursor を持つ。</p></div>
+    </section>
+
+    <!-- 06 -->
+    <section id="s6">
+      <div class="sec-no">06</div>
+      <h2>pageInfo ― 端と「続きの有無」</h2>
+      <div class="tldr"><div class="lab">一言でいうと</div>
+        <p>pageInfo はページの状態を1か所にまとめたもの。<strong>hasNextPage</strong> でボタンを出すか決め、<strong>endCursor</strong> で次の窓を指定する。</p></div>
+
+      <div class="tbl"><table>
+        <tr><th>フィールド</th><th>意味</th><th>使いどころ</th></tr>
+        <tr><td><code>hasNextPage</code></td><td>前方向にまだ要素があるか</td><td>「もっと見る」を出すか</td></tr>
+        <tr><td><code>hasPreviousPage</code></td><td>後ろ方向にまだ要素があるか</td><td>「前へ」を出すか</td></tr>
+        <tr><td><code>startCursor</code></td><td>今のページ先頭の cursor</td><td><code>before</code> に渡して前へ戻る</td></tr>
+        <tr><td><code>endCursor</code></td><td>今のページ末尾の cursor</td><td><code>after</code> に渡して次へ進む</td></tr>
+      </table></div>
+
+      <div class="call tip"><div class="h">◆ 実装のコツ</div>
+        <p><code class="ic">hasNextPage</code> を正確に返すには <strong>「N+1件取って、N+1件目があれば true」</strong>のテクニックが定番（→ 08）。総件数を数える必要はない。<code class="ic">totalCount</code> は仕様の必須ではなく、要るときだけ Connection に足す拡張。</p></div>
+
+      <div class="call warn"><div class="h">▲ 注意</div>
+        <p>前方向ページング（<code class="ic">first/after</code>）でも <code class="ic">hasPreviousPage</code> は返せるが、「<code class="ic">after</code> が指定されていれば true」程度の素朴実装になりがち。仕様も「前方向のとき hasPreviousPage の厳密さは要求しない」とゆるく定めている。UIで本当に要るかで実装コストを決める。</p></div>
+    </section>
+
+    <!-- 07 -->
+    <section id="s7">
+      <div class="sec-no">07</div>
+      <h2>Relay クライアント側 ― @connection と usePaginationFragment</h2>
+      <div class="tldr"><div class="lab">一言でいうと</div>
+        <p>Relay は <strong>@connection ディレクティブ</strong>で「これはページングする一覧」と印を付ける。あとは <strong>usePaginationFragment</strong> が cursor の往復・キャッシュ追記・追加読み込みを全部やってくれる。</p></div>
+
+      <p>ここからは「サーバが Connection 仕様に従っている」前提で、JS クライアントの Relay がどう楽をさせてくれるかです。フラグメントで一覧を宣言し、<code class="ic">@connection</code> を付けます。</p>
+
+      <div class="code"><div class="top"><span class="fn">FriendsList.tsx — フラグメント定義</span><button class="cp">コピー</button></div>
+<pre><code><span class="t-k">const</span> <span class="t-f">FriendsFragment</span> = graphql<span class="t-s">`
+  fragment FriendsList_user on User
+  @argumentDefinitions(
+    count: { type: "Int", defaultValue: 3 }
+    cursor: { type: "String" }
+  )
+  @refetchable(queryName: "FriendsListPaginationQuery") {
+    friends(first: $count, after: $cursor)
+      @connection(key: "FriendsList_friends") {
+      edges {
+        node { id name }
+      }
+    }
+  }
+`</span>;</code></pre></div>
+
+      <ul>
+        <li><code class="ic">@connection(key: ...)</code> ― 「ここはページングする一覧。新しいページを<strong>同じリストに追記</strong>して」と Relay に伝える印。key はストア内でその一覧を識別する名前。</li>
+        <li><code class="ic">@refetchable</code> ― このフラグメントを起点に追加クエリを自動生成させる。</li>
+        <li><code class="ic">@argumentDefinitions</code> ― <code class="ic">count</code> / <code class="ic">cursor</code> をフラグメント引数として宣言。Relay が <code class="ic">after</code> に cursor を流し込む。</li>
+      </ul>
+
+      <div class="code"><div class="top"><span class="fn">FriendsList.tsx — フックで描画＆追加読み込み</span><button class="cp">コピー</button></div>
+<pre><code><span class="t-k">function</span> <span class="t-f">FriendsList</span>({ user }) {
+  <span class="t-k">const</span> { data, <span class="t-f">loadNext</span>, hasNext, isLoadingNext } =
+    <span class="t-f">usePaginationFragment</span>(FriendsFragment, user);
+
+  <span class="t-k">return</span> (
+    &lt;<span class="t-t">div</span>&gt;
+      {data.friends.edges.<span class="t-f">map</span>((<span class="t-f">e</span>) =&gt; (
+        &lt;<span class="t-t">Friend</span> <span class="t-f">key</span>={e.node.id} <span class="t-f">name</span>={e.node.name} /&gt;
+      ))}
+
+      {hasNext &amp;&amp; (
+        &lt;<span class="t-t">button</span>
+          <span class="t-f">disabled</span>={isLoadingNext}
+          <span class="t-f">onClick</span>={() =&gt; <span class="t-f">loadNext</span>(<span class="t-n">3</span>)}&gt;   <span class="t-c">// ← 次の3件</span>
+          もっと見る
+        &lt;/<span class="t-t">button</span>&gt;
+      )}
+    &lt;/<span class="t-t">div</span>&gt;
+  );
+}</code></pre></div>
+
+      <div class="call point"><div class="h">● 押さえどころ</div>
+        <p><code class="ic">loadNext(3)</code> を呼ぶだけで Relay は「endCursor を after に詰めて再クエリ → 返ってきた edges を既存リストに追記 → 再描画」を自動でやる。<strong>cursor を自分で持ち回るコードは書かない</strong>。これが Connection 規約をクライアントが守る最大の見返り。</p></div>
+
+      <div class="call tip"><div class="h">◆ 実装のコツ</div>
+        <p>フックは <code class="ic">data</code>（描画用）/ <code class="ic">loadNext</code> / <code class="ic">hasNext</code>（≒ pageInfo.hasNextPage）/ <code class="ic">isLoadingNext</code>（ローディング表示用）を返す。後ろ方向には <code class="ic">loadPrevious</code> / <code class="ic">hasPrevious</code> が対になっている。</p></div>
+    </section>
+
+    <!-- 08 -->
+    <section id="s8">
+      <div class="sec-no">08</div>
+      <h2>サーバ実装の勘どころ</h2>
+      <div class="tldr"><div class="lab">一言でいうと</div>
+        <p>「N+1件取得」で hasNextPage を判定し、各行のソートキーを符号化して cursor にする。Relay でなくても通用する普遍的なレシピ。</p></div>
+
+      <p>言語非依存の擬似コードで、<code class="ic">first/after</code> の前方向リゾルバを書くと次のようになります。</p>
+
+      <div class="code"><div class="top"><span class="fn">resolver — first / after の実装（擬似コード）</span><button class="cp">コピー</button></div>
+<pre><code><span class="t-k">function</span> <span class="t-f">friends</span>(parent, { first, after }) {
+  <span class="t-c">// 1) after があれば復号して「どこから」を決める</span>
+  <span class="t-k">const</span> afterKey = after ? <span class="t-f">decodeCursor</span>(after) : <span class="t-k">null</span>;
+
+  <span class="t-c">// 2) ★ first+1 件取る。「次があるか」を1件多く取って判定する</span>
+  <span class="t-k">const</span> rows = db.<span class="t-f">query</span>(`
+    SELECT * FROM friends
+    WHERE user_id = ?
+      AND (?::cursor IS NULL OR (created_at, id) &lt; ?)  -- after の隣から
+    ORDER BY created_at DESC, id DESC
+    LIMIT ?`, [parent.id, afterKey, afterKey, first + <span class="t-n">1</span>]);
+
+  <span class="t-c">// 3) +1件目が取れたら「次のページあり」</span>
+  <span class="t-k">const</span> hasNextPage = rows.length &gt; first;
+  <span class="t-k">const</span> page = rows.<span class="t-f">slice</span>(<span class="t-n">0</span>, first);
+
+  <span class="t-c">// 4) 各行を edge に。cursor はソートキーを符号化</span>
+  <span class="t-k">const</span> edges = page.<span class="t-f">map</span>((r) =&gt; ({
+    cursor: <span class="t-f">encodeCursor</span>({ createdAt: r.created_at, id: r.id }),
+    node: r,
+  }));
+
+  <span class="t-k">return</span> {
+    edges,
+    pageInfo: {
+      hasNextPage,
+      hasPreviousPage: afterKey != <span class="t-k">null</span>,
+      startCursor: edges[<span class="t-n">0</span>]?.cursor ?? <span class="t-k">null</span>,
+      endCursor: edges[edges.length - <span class="t-n">1</span>]?.cursor ?? <span class="t-k">null</span>,
+    },
+  };
+}</code></pre></div>
+
+      <ul>
+        <li><strong>N+1件取得</strong>：総件数を <code class="ic">COUNT(*)</code> するより安く <code class="ic">hasNextPage</code> がわかる。</li>
+        <li><strong>キーセット方式</strong>：<code class="ic">WHERE (created_at, id) &lt; afterKey</code> はインデックスが効くので、深いページでも速度が落ちない（offset の弱点を解消）。</li>
+        <li><strong>cursor にソートキーを内包</strong>：ORDER BY に使った列をそのまま符号化する。並び順を変えたら cursor の中身も変える。</li>
+      </ul>
+
+      <div class="call danger"><div class="h">■ 落とし穴</div>
+        <p>ソート順が<strong>一意でない</strong>と再開位置がブレる。<code class="ic">created_at</code> だけで並べると同時刻の要素で順序が不定になり、ページ境界で取りこぼし／重複が起きる。必ず <code class="ic">(created_at, id)</code> のように<strong>最後にユニークなキー（id）を足して全順序にする</strong>。</p></div>
+    </section>
+
+    <!-- 09 -->
+    <section id="s9">
+      <div class="sec-no">09</div>
+      <h2>よくある落とし穴</h2>
+      <div class="cards">
+        <div class="cd"><div class="ti"><span class="dot" style="background:#cf3b2c"></span>cursor を offset にする</div>
+          <p>「不透明」とうたいつつ中身が <code>offset=40</code> だと、offset の弱点（飛び・重複）をそのまま引き継ぐ。キーセットで作る。</p></div>
+        <div class="cd"><div class="ti"><span class="dot" style="background:#cf3b2c"></span>cursor を跨いで並び順を変える</div>
+          <p>1ページ目を created_at 順、2ページ目を name 順で取ると cursor の意味が崩壊。並び順は一覧の往復で固定する。</p></div>
+        <div class="cd"><div class="ti"><span class="dot" style="background:#c98a14"></span>totalCount を必須だと思う</div>
+          <p>仕様の必須は edges と pageInfo だけ。総件数が要るUIのときだけ Connection に足す拡張。</p></div>
+        <div class="cd"><div class="ti"><span class="dot" style="background:#c98a14"></span>node を nullable にし忘れ／しすぎ</div>
+          <p>権限などで個別 node を隠す設計なら nullable が活きる。要件に合わせて決める。</p></div>
+        <div class="cd"><div class="ti"><span class="dot" style="background:#6f5ad6"></span>クライアントが cursor を解釈</div>
+          <p>cursor をパースして自前ロジックを組むと、サーバが方式を変えられなくなる。黒い箱として往復だけ。</p></div>
+        <div class="cd"><div class="ti"><span class="dot" style="background:#6f5ad6"></span>@connection の key 衝突</div>
+          <p>Relay で同じ key を別フラグメントに使うとストアが混ざる。一覧ごとに一意な key を付ける。</p></div>
+      </div>
+    </section>
+
+    <!-- cheat -->
+    <section id="s10">
+      <div class="sec-no">10</div>
+      <h2>チートシート</h2>
+      <div class="cheat">
+        <h3>Connection の型</h3>
+        <ul>
+          <li><b>Connection</b> = <code>{ edges: [Edge], pageInfo: PageInfo! }</code> ― 一覧の箱</li>
+          <li><b>Edge</b> = <code>{ cursor: String!, node: T }</code>（＋関係の属性）</li>
+          <li><b>PageInfo</b> = <code>hasNextPage / hasPreviousPage / startCursor / endCursor</code></li>
+        </ul>
+        <h3 style="margin-top:18px">ページングの引数</h3>
+        <ul>
+          <li>前方向：<b><code>first: N, after: 前回のendCursor</code></b></li>
+          <li>後ろ方向：<b><code>last: N, before: 前回のstartCursor</code></b></li>
+          <li>進める条件：<code>pageInfo.hasNextPage === true</code></li>
+        </ul>
+        <h3 style="margin-top:18px">実装レシピ</h3>
+        <ul>
+          <li>サーバ：<b>first+1件取得</b>で hasNextPage 判定、<b>(sortKey, id)</b> をキーセットで where、cursor にソートキーを符号化</li>
+          <li>cursor：<b>不透明（base64）・全順序・並び順を内包</b></li>
+          <li>Relay：<code>@connection(key)</code> ＋ <code>usePaginationFragment</code> → <code>loadNext(N)</code></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- glossary -->
+    <section id="s11">
+      <div class="sec-no">11</div>
+      <h2>用語集</h2>
+      <dl class="gloss">
+        <div><dt>Connection</dt><dd>コレクションを表す型。edges と pageInfo を持つ「一覧の箱」。</dd></div>
+        <div><dt>Edge（縁）</dt><dd>一覧の1要素を包む型。cursor と node、そして「関係そのものの属性」を持つ。</dd></div>
+        <div><dt>node（節点）</dt><dd>edge が指す実体オブジェクト。User や Post など本体。</dd></div>
+        <div><dt>cursor（しおり）</dt><dd>一覧内の位置を指す不透明な文字列。after/before に渡して再開位置を示す。</dd></div>
+        <div><dt>pageInfo</dt><dd>ページの状態。続きの有無（hasNextPage 等）と端の cursor（start/endCursor）。</dd></div>
+        <div><dt>キーセットページネーション</dt><dd><code>WHERE (sortKey, id) &lt; lastSeen</code> で次を取る方式。offset と違いインデックスが効き安定する。</dd></div>
+        <div><dt>@connection</dt><dd>Relay クライアントで「ページングする一覧」を示すディレクティブ。新ページを既存リストへ追記させる。</dd></div>
+        <div><dt>usePaginationFragment</dt><dd>cursor の往復・キャッシュ追記・追加読み込みを担う Relay の React フック。</dd></div>
+      </dl>
+    </section>
+
+    <footer>
+      <p class="note">※ 本記事は Relay 公式ガイド（Cursor Connections Spec）を学習用に噛み砕いたものです。スキーマ例・コードは概念を示す簡略版で、実装やAPIは変わりえます。正確な定義・最新仕様は <a class="ext" href="https://relay.dev/docs/guided-tour/list-data/connections/" target="_blank" rel="noopener">relay.dev の公式ドキュメント</a> を参照してください。</p>
+    </footer>
+  </main>
+</div>
+
+<a href="#" id="top" aria-label="トップへ戻る">↑</a>
+
+<script>
+/* TOC build */
+const secs=[...document.querySelectorAll('main section')];
+const tl=document.getElementById('toclist');
+tl.innerHTML=secs.map(s=>{
+  const no=s.querySelector('.sec-no').textContent;
+  const t=s.querySelector('h2').textContent;
+  return `<a href="#${s.id}"><span class="n">${no}</span><span>${t}</span></a>`;
+}).join('');
+const links=[...tl.querySelectorAll('a')];
+
+/* scroll spy */
+const spy=new IntersectionObserver(es=>{
+  es.forEach(e=>{
+    if(e.isIntersecting){
+      links.forEach(l=>l.classList.remove('on'));
+      const a=links.find(l=>l.getAttribute('href')==='#'+e.target.id);
+      if(a)a.classList.add('on');
+    }
+  });
+},{rootMargin:'-15% 0px -70% 0px'});
+secs.forEach(s=>spy.observe(s));
+
+/* progress bar + back to top */
+const bar=document.getElementById('bar'),top=document.getElementById('top');
+function onScroll(){
+  const h=document.documentElement;
+  const sc=h.scrollTop/(h.scrollHeight-h.clientHeight);
+  bar.style.width=(sc*100)+'%';
+  top.classList.toggle('show',h.scrollTop>500);
+}
+document.addEventListener('scroll',onScroll,{passive:true});onScroll();
+
+/* copy buttons */
+document.querySelectorAll('.code').forEach(box=>{
+  const btn=box.querySelector('.cp'),code=box.querySelector('code');
+  btn.addEventListener('click',()=>{
+    navigator.clipboard.writeText(code.innerText).then(()=>{
+      const o=btn.textContent;btn.textContent='コピー済';
+      setTimeout(()=>btn.textContent=o,1400);
+    });
+  });
+});
+</script>
+</body>
+</html>

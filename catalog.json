@@ -93,6 +93,16 @@
       "aliases": ["Web API Good Parts", "WebAPIGoodParts", "Good Parts", "WebAPI設計", "API設計", "Web API", "web-api-good-parts"]
     },
     {
+      "slug": "relay-connections",
+      "file": "pages/backend/relay-connections.html",
+      "shelf": "backend",
+      "title": "Relay Connections とページネーション",
+      "book": "Relay ガイド — Connections（公式ドキュメント）",
+      "cat": "GraphQL / Pagination",
+      "tags": ["カーソル", "ページネーション", "edges/node", "pageInfo"],
+      "aliases": ["Relay", "リレー", "Connections", "コネクション", "カーソルページネーション", "ページネーション", "pageInfo", "edges node", "relay-connections"]
+    },
+    {
       "slug": "software-design",
       "file": "pages/design/software-design.html",
       "shelf": "design",
