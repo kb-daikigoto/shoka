@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>peco × ghq 実践ガイド — 「選ぶ」と「置く」でターミナルを速くする</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0D1311;--surface:#141C18;--surface-2:#19231E;--ink:#E9F1EC;--muted:#9FB3A8;--faint:#6C7F75;
+    --line:#243129;--line-2:#2E3D34;
+    --ac:#3BD693;--ac-soft:rgba(59,214,147,.12);--ac-dark:#23A06B;
+    --amber:#E2B53E;--amber-soft:rgba(226,181,62,.12);
+    --red:#E2604C;--red-soft:rgba(226,96,76,.12);
+    --blue:#5BB8E8;--blue-soft:rgba(91,184,232,.12);
+    --term-bg:#0A0F0C;--term-ink:#DCE8E1;--term-dim:#71857A;
+    --radius:14px;--maxw:830px;
+    --fh:"Zen Kaku Gothic New",sans-serif;--fb:"Zen Kaku Gothic New",sans-serif;--fm:"Fira Code",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--fb);line-height:1.85;font-size:16.5px;-webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(rgba(59,214,147,.05) 1px,transparent 1px);background-size:26px 26px}
+  ::selection{background:var(--ac);color:#06231A}
+  #progress{position:fixed;top:0;left:0;height:3px;width:0%;background:var(--ac);z-index:100;transition:width .12s linear}
+  .layout{max-width:1250px;margin:0 auto;display:grid;grid-template-columns:256px minmax(0,1fr);gap:46px;padding:0 28px}
+  .content{max-width:var(--maxw);padding:0 0 120px}
+  nav.toc{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding:32px 0 40px}
+  nav.toc .tt{font-family:var(--fm);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin:0 0 12px;font-weight:600}
+  nav.toc ol{list-style:none;margin:0;padding:0;counter-reset:t}nav.toc li{counter-increment:t}
+  nav.toc a{display:flex;gap:9px;align-items:baseline;text-decoration:none;color:var(--muted);font-size:13px;line-height:1.4;padding:5px 10px 5px 13px;border-left:2px solid transparent;transition:all .15s;font-weight:500}
+  nav.toc a::before{content:counter(t,decimal-leading-zero);font-family:var(--fm);font-size:10.5px;color:var(--faint)}
+  nav.toc a:hover{color:var(--ink)}
+  nav.toc a.active{color:var(--ac);border-left-color:var(--ac)}nav.toc a.active::before{color:var(--ac)}
+  header.hero{padding:62px 0 32px}
+  .badge{display:inline-flex;align-items:center;gap:8px;font-family:var(--fm);font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#06231A;background:var(--ac);padding:6px 12px;border-radius:6px;margin-bottom:20px}
+  .kicker{font-family:var(--fm);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--ac);font-weight:600;margin-bottom:14px}
+  h1{font-family:var(--fh);font-weight:900;font-size:clamp(30px,5vw,46px);line-height:1.22;margin:0 0 20px;letter-spacing:-.01em}
+  h1 .ac{color:var(--ac)}
+  .lede{font-size:18.5px;color:var(--muted);margin:0 0 26px;max-width:43em}
+  .meta{display:flex;flex-wrap:wrap;gap:9px}
+  .chip{font-family:var(--fm);font-size:12px;font-weight:500;padding:7px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--line-2);color:var(--muted)}.chip b{color:var(--ink);font-weight:600}
+  section{padding:42px 0 6px;scroll-margin-top:24px;border-top:1px solid var(--line)}section:first-of-type{border-top:none}
+  .sn{font-family:var(--fm);font-size:13px;color:var(--ac);letter-spacing:.08em;font-weight:600}
+  h2{font-family:var(--fh);font-weight:700;font-size:clamp(22px,3.4vw,29px);line-height:1.3;margin:7px 0 16px}
+  h3{font-family:var(--fh);font-weight:700;font-size:18.5px;margin:26px 0 9px}
+  p{margin:0 0 16px}strong{font-weight:700;color:var(--ink)}
+  a.inline{color:var(--ac);text-decoration:none;border-bottom:1.5px solid rgba(59,214,147,.35);font-weight:500}a.inline:hover{border-bottom-color:var(--ac)}
+  code.k{font-family:var(--fm);font-size:.83em;background:var(--surface);border:1px solid var(--line-2);padding:1px 6px;border-radius:6px;color:var(--ac);font-weight:500;white-space:nowrap}
+  .mark{background:linear-gradient(transparent 62%,rgba(59,214,147,.28) 62%);padding:0 1px}
+  ul.list,ol.list{margin:0 0 16px;padding-left:1.35em}ul.list li,ol.list li{margin:0 0 8px}
+  .oneword{border:1px solid var(--line-2);border-left:4px solid var(--ac);background:var(--surface);border-radius:var(--radius);padding:16px 20px;margin:18px 0}
+  .oneword .lb{font-family:var(--fm);font-size:11px;letter-spacing:.13em;text-transform:uppercase;font-weight:600;color:var(--ac);display:inline-block;margin-bottom:6px}
+  .oneword p{margin:0;font-weight:500}
+  .panel{border-radius:var(--radius);padding:18px 20px;margin:20px 0;border:1px solid var(--line-2);background:var(--surface)}
+  .panel .lb{font-family:var(--fm);font-size:11px;letter-spacing:.13em;text-transform:uppercase;font-weight:600;display:inline-block;margin-bottom:8px}
+  .panel p:last-child{margin-bottom:0}
+  .why{background:var(--blue-soft);border-left:4px solid var(--blue)}.why .lb{color:var(--blue)}
+  .point{background:var(--ac-soft);border-left:4px solid var(--ac)}.point .lb{color:var(--ac)}
+  .tip{background:var(--surface-2);border-left:4px solid var(--ac-dark)}.tip .lb{color:var(--ac-dark)}
+  .warn{background:var(--amber-soft);border-left:4px solid var(--amber)}.warn .lb{color:var(--amber)}
+  .danger{background:var(--red-soft);border-left:4px solid var(--red)}.danger .lb{color:var(--red)}
+  figure.dgm{margin:24px 0;padding:20px 14px;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius)}
+  figure.dgm svg{width:100%;height:auto;display:block}figure.dgm figcaption{font-size:13.5px;color:var(--muted);text-align:center;margin-top:12px}
+  .codecap{font-family:var(--fm);font-size:11px;color:var(--muted);margin:16px 0 -8px;letter-spacing:.03em}
+  pre{position:relative;margin:14px 0;background:var(--term-bg);border:1px solid var(--line-2);border-radius:10px;padding:15px 17px;overflow-x:auto}
+  pre code{font-family:var(--fm);font-size:12.8px;line-height:1.75;color:var(--term-ink);white-space:pre;display:block}
+  pre code .pr{color:#52C58D;user-select:none}pre code .cm{color:var(--term-dim)}pre code .hot{color:#EFC75E}pre code .ob{color:var(--term-dim)}
+  button.copy{position:absolute;top:8px;right:8px;font-family:var(--fm);font-size:10.5px;letter-spacing:.05em;color:var(--muted);background:var(--surface-2);border:1px solid var(--line-2);border-radius:6px;padding:4px 9px;cursor:pointer;opacity:0;transition:opacity .15s}
+  pre:hover button.copy{opacity:1}button.copy:hover{color:var(--ac);border-color:var(--ac)}
+  .duo{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}@media(max-width:760px){.duo{grid-template-columns:1fr}}.duo pre{margin:0}
+  table.tb{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius);overflow:hidden}
+  table.tb th,table.tb td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+  table.tb th{font-family:var(--fm);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);font-weight:600;background:var(--surface-2)}
+  table.tb tr:last-child td{border-bottom:none}table.tb td code{font-family:var(--fm);font-size:12.3px;color:var(--ac)}
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0}@media(max-width:760px){.cards{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius);padding:16px 18px}
+  .card h4{font-family:var(--fh);font-weight:700;font-size:15.5px;margin:0 0 8px;color:var(--ac)}
+  .card p{font-size:14px;color:var(--muted);margin:0}
+  dl.gloss{margin:0}dl.gloss dt{font-weight:700;margin-top:14px}dl.gloss dt code{font-family:var(--fm);font-size:.85em;color:var(--ac)}
+  dl.gloss dd{margin:2px 0 0 0;color:var(--muted);font-size:14.5px}
+  footer{border-top:1px solid var(--line);padding:36px 0 70px;color:var(--muted);font-size:13.5px}footer a{color:var(--ac);text-decoration:none;font-weight:500}
+  .totop{position:fixed;right:22px;bottom:22px;width:44px;height:44px;border-radius:12px;background:var(--ac);color:#06231A;border:none;cursor:pointer;font-size:18px;font-weight:700;opacity:0;transform:translateY(10px);transition:all .25s;z-index:60}.totop.show{opacity:1;transform:translateY(0)}
+  @media (max-width:900px){.layout{grid-template-columns:1fr;gap:0}nav.toc{display:none}header.hero{padding:48px 0 22px}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+  .reveal{opacity:0;transform:translateY(12px);animation:rise .65s cubic-bezier(.2,.7,.2,1) forwards}@keyframes rise{to{opacity:1;transform:none}}
+  .d1{animation-delay:.04s}.d2{animation-delay:.12s}.d3{animation-delay:.2s}.d4{animation-delay:.28s}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="layout">
+  <nav class="toc" aria-label="目次">
+    <p class="tt">目次</p>
+    <ol id="toc-list">
+      <li><a href="#what">peco と ghq とは</a></li>
+      <li><a href="#setup">セットアップ</a></li>
+      <li><a href="#ghq">ghq の基本</a></li>
+      <li><a href="#peco">peco の基本</a></li>
+      <li><a href="#peco-adv">peco を育てる</a></li>
+      <li><a href="#combo">黄金コンビ：瞬間移動</a></li>
+      <li><a href="#recipes">活用レシピ集</a></li>
+      <li><a href="#fzf">fzf との使い分け</a></li>
+      <li><a href="#faq">つまずきポイント FAQ</a></li>
+      <li><a href="#cheat">チートシート</a></li>
+      <li><a href="#gloss">用語集</a></li>
+    </ol>
+  </nav>
+  <main class="content">
+    <header class="hero">
+      <div class="badge reveal d1">CLI / Terminal</div>
+      <div class="kicker reveal d1">「選ぶ」の peco × 「置く」の ghq</div>
+      <h1 class="reveal d2"><span class="ac">peco × ghq</span> 実践ガイド</h1>
+      <p class="lede reveal d3">「あのリポジトリ、どこに clone したっけ？」「さっき打った長いコマンド、もう一回…」——その数秒の迷いを毎回ゼロにする2つの定番ツール。clone 先を規約で固定する ghq と、何でもインクリメンタル絞り込みできる peco を、セットアップから zsh 連携レシピまで一本にまとめました。</p>
+      <div class="meta reveal d4">
+        <span class="chip">対象 <b>初学〜実務</b></span>
+        <span class="chip">前提 <b>ターミナルと Git の基本</b></span>
+        <span class="chip">形式 <b>コマンド主体</b></span>
+        <span class="chip">読了 <b>約 30 分</b></span>
+      </div>
+    </header>
+
+    <section id="what">
+      <div class="sn">01</div>
+      <h2>peco と ghq とは — 何が嬉しいのか</h2>
+      <div class="oneword"><span class="lb">一言でいうと</span>
+        <p>ghq が「リポジトリを<strong>決まった場所に置く</strong>」係、peco が「一覧から<strong>1つを高速に選ぶ</strong>」係。2つを繋ぐと「リポジトリ名を数文字打って Enter で cd 完了」になる。</p>
+      </div>
+      <p><strong>ghq</strong>（<a class="inline" href="https://github.com/x-motemen/ghq" target="_blank" rel="noopener">x-motemen/ghq</a>）は、Git などのリモートリポジトリを <code class="k">ルート/ホスト名/オーナー名/リポジトリ名</code> という規約のディレクトリに clone してくれる管理ツール。「どこに clone するか」を毎回考えなくてよくなり、<code class="k">ghq list</code> で手元の全リポジトリを機械可読な一覧として取り出せます。</p>
+      <p><strong>peco</strong>（<a class="inline" href="https://github.com/peco/peco" target="_blank" rel="noopener">peco/peco</a>）は、標準入力で受け取った行のリストを<strong>インクリメンタルに絞り込んで選び、選んだ行を標準出力に返す</strong>だけのシンプルなツール。「だけ」なのが強みで、パイプで繋げばコマンド履歴・ブランチ・プロセス・SSH先、何でも選択UIになります。</p>
+      <figure class="dgm">
+        <svg viewBox="0 0 760 190" role="img" aria-label="ghq listの出力をpecoで絞り込み、選んだパスへcdする流れ">
+          <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#3BD693"/></marker></defs>
+          <rect x="14" y="55" width="180" height="80" rx="12" fill="#141C18" stroke="#2E3D34"/>
+          <text x="104" y="88" text-anchor="middle" fill="#E9F1EC" font-size="15" font-weight="bold">ghq list -p</text>
+          <text x="104" y="112" text-anchor="middle" fill="#9FB3A8" font-size="11.5">全リポジトリのフルパス一覧</text>
+          <line x1="194" y1="95" x2="280" y2="95" stroke="#3BD693" stroke-width="2" marker-end="url(#ar)"/>
+          <text x="237" y="82" text-anchor="middle" fill="#6C7F75" font-size="11" font-family="monospace">| パイプ</text>
+          <rect x="284" y="40" width="200" height="110" rx="12" fill="#0A0F0C" stroke="#3BD693"/>
+          <text x="384" y="72" text-anchor="middle" fill="#3BD693" font-size="15" font-weight="bold">peco</text>
+          <text x="384" y="96" text-anchor="middle" fill="#DCE8E1" font-size="11.5" font-family="monospace">QUERY&gt; sho_</text>
+          <text x="384" y="118" text-anchor="middle" fill="#9FB3A8" font-size="11.5">数文字でリアルタイム絞り込み</text>
+          <line x1="484" y1="95" x2="570" y2="95" stroke="#3BD693" stroke-width="2" marker-end="url(#ar)"/>
+          <text x="527" y="82" text-anchor="middle" fill="#6C7F75" font-size="11" font-family="monospace">Enter</text>
+          <rect x="574" y="55" width="172" height="80" rx="12" fill="#141C18" stroke="#2E3D34"/>
+          <text x="660" y="88" text-anchor="middle" fill="#E9F1EC" font-size="15" font-weight="bold">cd 選んだパス</text>
+          <text x="660" y="112" text-anchor="middle" fill="#9FB3A8" font-size="11.5">目的のリポジトリに瞬間移動</text>
+        </svg>
+        <figcaption>本ガイドのゴール。「一覧を出す → peco で選ぶ → 結果をコマンドに渡す」が全レシピの共通形。</figcaption>
+      </figure>
+      <div class="panel why"><span class="lb">Why — なぜ2つセットなのか</span>
+        <p>ghq 単体では「整然と置ける」だけ、peco 単体では「選べる」だけ。ghq が<strong>選びやすい一覧</strong>を供給し、peco が<strong>選んだ結果を次のコマンドへ渡す</strong>ことで初めて「数文字 → Enter → 移動完了」という体験になります。UNIX の「小さな道具をパイプで繋ぐ」思想のお手本のような組み合わせです。</p>
+      </div>
+    </section>
+
+    <section id="setup">
+      <div class="sn">02</div>
+      <h2>セットアップ</h2>
+      <div class="oneword"><span class="lb">一言でいうと</span>
+        <p>インストールは <code class="k">brew install peco ghq</code> の一発。あとは ghq の置き場所（ルート）を決めるだけ。</p>
+      </div>
+      <p class="codecap">macOS（Homebrew）/ Go 環境がある場合</p>
+      <pre><code><span class="pr">$</span> brew install peco ghq
+<span class="cm"># Go でビルドして入れる場合（どの OS でも）</span>
+<span class="pr">$</span> go install github.com/peco/peco/cmd/peco@latest
+<span class="pr">$</span> go install github.com/x-motemen/ghq@latest</code></pre>
+      <p>次に、ghq がリポジトリを置く<strong>ルートディレクトリ</strong>を決めます。デフォルトは <code class="k">~/ghq</code>。変えたい場合は git の設定として書きます。</p>
+      <pre><code><span class="cm"># 置き場所を ~/src にしたい場合（好みで。デフォルトの ~/ghq のままでも良い）</span>
+<span class="pr">$</span> git config --global ghq.root <span class="hot">'~/src'</span>
+
+<span class="cm"># 現在のルートを確認</span>
+<span class="pr">$</span> ghq root
+/Users/you/src</code></pre>
+      <p>動作確認まで一気にやってしまいましょう。</p>
+      <pre><code><span class="cm"># 何か clone してみる</span>
+<span class="pr">$</span> ghq get x-motemen/ghq
+<span class="cm"># 一覧に出れば OK</span>
+<span class="pr">$</span> ghq list
+github.com/x-motemen/ghq
+<span class="cm"># peco の動作確認：ls の結果を選択 UI にしてみる</span>
+<span class="pr">$</span> ls | peco</code></pre>
+      <div class="panel tip"><span class="lb">Tip — ルートは最初に決め切る</span>
+        <p>ghq のルートを後から変えると、既存リポジトリの物理的な引っ越しが必要になります。<code class="k">~/ghq</code>（デフォルト）か <code class="k">~/src</code> あたりを最初に決めて、以後は触らないのがおすすめです。</p>
+      </div>
+    </section>
+
+    <section id="ghq">
+      <div class="sn">03</div>
+      <h2>ghq の基本 — 置き場所を規約に任せる</h2>
+      <div class="oneword"><span class="lb">一言でいうと</span>
+        <p><code class="k">ghq get URL</code> で clone すると、必ず <code class="k">ルート/ホスト/オーナー/リポジトリ</code> に置かれる。人間は置き場所を考えるのをやめてよい。</p>
+      </div>
+      <figure class="dgm">
+        <svg viewBox="0 0 760 215" role="img" aria-label="ghqのディレクトリ規約のツリー図">
+          <rect x="14" y="14" width="732" height="187" rx="12" fill="#0A0F0C" stroke="#2E3D34"/>
+          <text x="40" y="50" fill="#3BD693" font-size="14" font-family="monospace" font-weight="bold">~/ghq/</text>
+          <text x="110" y="50" fill="#6C7F75" font-size="12" font-family="monospace">← ghq root</text>
+          <text x="70" y="80" fill="#DCE8E1" font-size="13.5" font-family="monospace">└── github.com/</text>
+          <text x="250" y="80" fill="#6C7F75" font-size="12" font-family="monospace">← ホスト名</text>
+          <text x="110" y="110" fill="#DCE8E1" font-size="13.5" font-family="monospace">├── kb-daikigoto/</text>
+          <text x="300" y="110" fill="#6C7F75" font-size="12" font-family="monospace">← オーナー名</text>
+          <text x="110" y="140" fill="#DCE8E1" font-size="13.5" font-family="monospace">│   └── shoka/</text>
+          <text x="300" y="140" fill="#6C7F75" font-size="12" font-family="monospace">← リポジトリ名</text>
+          <text x="110" y="170" fill="#DCE8E1" font-size="13.5" font-family="monospace">└── x-motemen/</text>
+          <text x="156" y="195" fill="#DCE8E1" font-size="13.5" font-family="monospace">└── ghq/</text>
+        </svg>
+        <figcaption>URL の構造がそのままディレクトリになる。同名リポジトリも衝突せず、出どころも一目で分かる。</figcaption>
+      </figure>
+      <h3>clone する — <code class="k">ghq get</code></h3>
+      <pre><code><span class="cm"># URL 指定（https でも ssh でも OK）</span>
+<span class="pr">$</span> ghq get https://github.com/x-motemen/ghq
+<span class="pr">$</span> ghq get git@github.com:peco/peco.git
+
+<span class="cm"># GitHub なら owner/repo の短縮形で書ける</span>
+<span class="pr">$</span> ghq get x-motemen/ghq
+
+<span class="cm"># よく使うオプション</span>
+<span class="pr">$</span> ghq get <span class="hot">-u</span> x-motemen/ghq      <span class="cm"># clone 済みなら pull で更新</span>
+<span class="pr">$</span> ghq get <span class="hot">-p</span> x-motemen/ghq      <span class="cm"># ssh プロトコルで clone</span>
+<span class="pr">$</span> ghq get <span class="hot">--shallow</span> torvalds/linux  <span class="cm"># 浅い clone（巨大リポジトリ向け）</span></code></pre>
+      <h3>一覧する — <code class="k">ghq list</code></h3>
+      <pre><code><span class="cm"># 相対パス（ルートから）の一覧</span>
+<span class="pr">$</span> ghq list
+github.com/peco/peco
+github.com/x-motemen/ghq
+
+<span class="cm"># フルパスで出す（cd やエディタに渡すならこちら）</span>
+<span class="pr">$</span> ghq list <span class="hot">-p</span>
+/Users/you/ghq/github.com/peco/peco
+/Users/you/ghq/github.com/x-motemen/ghq
+
+<span class="cm"># 引数で部分一致フィルタ。-e で完全一致</span>
+<span class="pr">$</span> ghq list peco
+<span class="pr">$</span> ghq list -p -e ghq</code></pre>
+      <h3>その他のサブコマンド</h3>
+      <table class="tb">
+        <thead><tr><th>コマンド</th><th>役割</th><th>メモ</th></tr></thead>
+        <tbody>
+          <tr><td><code>ghq root</code></td><td>ルートのパスを表示</td><td>スクリプトから参照するのに便利</td></tr>
+          <tr><td><code>ghq create owner/repo</code></td><td>規約の位置に<strong>新規ローカルリポジトリ</strong>を作る</td><td>自作プロジェクトの始点も規約に乗せられる</td></tr>
+          <tr><td><code>ghq rm owner/repo</code></td><td>管理下のリポジトリを削除</td><td>確認プロンプトあり。それでも実行は慎重に</td></tr>
+        </tbody>
+      </table>
+      <div class="panel point"><span class="lb">Point — 「一覧が機械可読」が本体</span>
+        <p>ghq の価値は clone の手間削減そのものより、<strong>手元の全リポジトリを <code class="k">ghq list -p</code> 一発で行のリストとして取り出せる</strong>ことにあります。この出力が次節の peco の入力になります。</p>
+      </div>
+      <div class="panel warn"><span class="lb">注意 — ghq 管理外で clone しない</span>
+        <p>一部のリポジトリだけ手で <code class="k">git clone</code> してバラバラの場所に置くと、「ghq の一覧に出ないリポジトリ」が生まれて道具の信頼性が下がります。<span class="mark">clone は常に ghq get</span>、を習慣にするのがコツです。既存リポジトリの引っ越し方は FAQ（09）で扱います。</p>
+      </div>
+    </section>
+
+    <section id="peco">
+      <div class="sn">04</div>
+      <h2>peco の基本 — パイプで「選ぶ」を差し込む</h2>
+      <div class="oneword"><span class="lb">一言でいうと</span>
+        <p><code class="k">何かの一覧 | peco | 次のコマンド</code>。peco は行を受けて、選ばれた行を返す「選択フィルタ」。</p>
+      </div>
+      <p>peco を起動すると画面が選択 UI に切り替わり、上部の <code class="k">QUERY&gt;</code> に文字を打つたびに候補がリアルタイムで絞り込まれます。Enter で確定すると、<strong>選んだ行がそのまま標準出力に出る</strong>——それだけです。</p>
+      <pre><code><span class="cm"># ファイルを選んでエディタで開く</span>
+<span class="pr">$</span> vim $(find . -name '*.go' | peco)
+
+<span class="cm"># 引数にファイルを渡せば、その内容から選ぶ</span>
+<span class="pr">$</span> peco /var/log/system.log
+
+<span class="cm"># 起動時にクエリを入れておく / プロンプト文字列を変える</span>
+<span class="pr">$</span> ghq list -p | peco <span class="hot">--query "shoka"</span> --prompt "repo&gt;"</code></pre>
+      <h3>キー操作</h3>
+      <table class="tb">
+        <thead><tr><th>キー</th><th>動作</th></tr></thead>
+        <tbody>
+          <tr><td><code>↑ / ↓</code>（<code>C-p / C-n</code>）</td><td>候補の上下移動</td></tr>
+          <tr><td><code>Enter</code></td><td>確定（選択行を標準出力へ）</td></tr>
+          <tr><td><code>C-c</code> / <code>Esc</code></td><td>キャンセル（何も出力せず終了コード ≠ 0）</td></tr>
+          <tr><td><code>C-Space</code></td><td><strong>複数選択</strong>のトグル（選んで次へ）。確定で全選択行が出力される</td></tr>
+          <tr><td><code>C-a / C-e</code></td><td>クエリ行の先頭 / 末尾へ</td></tr>
+          <tr><td><code>C-u / C-w</code></td><td>クエリをまとめて消す / 直前の単語を消す</td></tr>
+          <tr><td><code>C-r</code></td><td>フィルタ方式の切り替え（次節）</td></tr>
+        </tbody>
+      </table>
+      <div class="panel tip"><span class="lb">Tip — スペース区切りは AND 検索</span>
+        <p>クエリに <code class="k">api user</code> のようにスペース区切りで複数語を打つと、<strong>すべての語を含む行</strong>に絞り込まれます。長いパスやコマンド履歴から探すときに効きます。</p>
+      </div>
+      <div class="panel point"><span class="lb">Point — キャンセルは「失敗」として返る</span>
+        <p><code class="k">C-c</code> でキャンセルすると peco は何も出力しません。<code class="k">vim $(... | peco)</code> のような使い方では、後続のコマンドに空文字が渡らないようシェル関数側で空チェックを入れるのが定石です（06 のレシピはすべて対応済み）。</p>
+      </div>
+    </section>
+
+    <section id="peco-adv">
+      <div class="sn">05</div>
+      <h2>peco を育てる — フィルタとオプションと設定</h2>
+      <div class="oneword"><span class="lb">一言でいうと</span>
+        <p>絞り込み方式（IgnoreCase / SmartCase / Regexp / Fuzzy）は <code class="k">C-r</code> で切替え。挙動の好みは <code class="k">~/.config/peco/config.json</code> に書く。</p>
+      </div>
+      <h3>フィルタ方式</h3>
+      <table class="tb">
+        <thead><tr><th>フィルタ</th><th>挙動</th></tr></thead>
+        <tbody>
+          <tr><td><code>IgnoreCase</code></td><td>大文字小文字を無視した部分一致（デフォルト）</td></tr>
+          <tr><td><code>CaseSensitive</code></td><td>大文字小文字を区別する部分一致</td></tr>
+          <tr><td><code>SmartCase</code></td><td>クエリが小文字だけなら無視、大文字を含むと区別</td></tr>
+          <tr><td><code>Regexp</code></td><td>正規表現でマッチ</td></tr>
+          <tr><td><code>Fuzzy</code></td><td>あいまいマッチ（<code>gcg</code> で <code>git-complete-guide</code> に当たる、fzf 風）</td></tr>
+        </tbody>
+      </table>
+      <p class="codecap">起動時にフィルタを指定する</p>
+      <pre><code><span class="pr">$</span> ghq list -p | peco <span class="hot">--initial-filter Fuzzy</span></code></pre>
+      <h3>知っておくと便利なオプション</h3>
+      <ul class="list">
+        <li><code class="k">--select-1</code> … 候補が最初から1件なら UI を出さず即確定。スクリプトが滑らかになる。</li>
+        <li><code class="k">--initial-index N</code> … 最初に選択しておく行を指定。</li>
+        <li><code class="k">--on-cancel error</code> … キャンセル時に終了コードを明示的にエラーへ。</li>
+        <li><code class="k">--rcfile PATH</code> … 設定ファイルを指定して起動。</li>
+      </ul>
+      <h3>設定ファイル</h3>
+      <p>キーバインドや配色は <code class="k">~/.config/peco/config.json</code> でカスタマイズできます。たとえば既定フィルタを Fuzzy 寄りに育てたり、選択キーを変えたり。</p>
+      <pre><code><span class="cm">// ~/.config/peco/config.json（例）</span>
+{
+  "InitialFilter": "SmartCase",
+  "Keymap": {
+    "C-j": "peco.SelectDown",
+    "C-k": "peco.SelectUp"
+  }
+}</code></pre>
+      <div class="panel warn"><span class="lb">注意 — 設定はまず素のまま使ってから</span>
+        <p>peco はデフォルトで十分使いやすく設計されています。最初から設定を盛るより、<span class="mark">不便を感じた箇所だけ最小限に変える</span>方が、他人の環境や ssh 先でも手が迷いません。</p>
+      </div>
+    </section>
+
+    <section id="combo">
+      <div class="sn">06</div>
+      <h2>黄金コンビ — リポジトリへ瞬間移動する</h2>
+      <div class="oneword"><span class="lb">一言でいうと</span>
+        <p><code class="k">ghq list -p | peco</code> の結果へ cd する関数をキーに割り当てる。<code class="k">Ctrl-]</code> 一発で全リポジトリがジャンプ先になる。</p>
+      </div>
+      <p>ここが本ガイドの山場です。zsh なら <code class="k">~/.zshrc</code> に次を追記してください。</p>
+      <p class="codecap">~/.zshrc — Ctrl-] でリポジトリ選択 → cd</p>
+      <pre><code>function peco-src() {
+  local selected
+  selected=$(ghq list -p | peco --query "$LBUFFER")
+  if [ -n "$selected" ]; then
+    BUFFER="cd ${selected}"
+    zle accept-line
+  fi
+  zle clear-screen
+}
+zle -N peco-src
+bindkey '^]' peco-src</code></pre>
+      <p>読み込み直して（<code class="k">source ~/.zshrc</code>）、<code class="k">Ctrl-]</code> を押すと全リポジトリの一覧が開きます。数文字打って Enter——これで <strong>どこにいても任意のリポジトリへ2秒で移動</strong>できます。</p>
+      <p class="codecap">bash 派はこちら（~/.bashrc）</p>
+      <pre><code>peco-src() {
+  local selected
+  selected=$(ghq list -p | peco --query "$READLINE_LINE")
+  if [ -n "$selected" ]; then
+    READLINE_LINE="cd ${selected}"
+    READLINE_POINT=${#READLINE_LINE}
+  fi
+}
+bind -x '"\C-]": peco-src'</code></pre>
+      <div class="panel why"><span class="lb">Why — なぜ alias でなく zle ウィジェットなのか</span>
+        <p>ただの関数や alias でも動きますが、zsh の <code class="k">zle</code>（ラインエディタ）ウィジェットにすると<strong>入力中のコマンドラインを壊さずに割り込める</strong>うえ、<code class="k">$LBUFFER</code>（入力済み文字列）を初期クエリとして引き継げます。「途中まで打った名前で絞り込み始める」自然な体験になります。</p>
+      </div>
+      <div class="panel point"><span class="lb">Point — 新しいリポジトリも増えた瞬間から対象</span>
+        <p>一覧は毎回 <code class="k">ghq list -p</code> を実行して作るので、<code class="k">ghq get</code> した直後のリポジトリも即座にジャンプ先に含まれます。キャッシュ更新のような儀式は不要です。</p>
+      </div>
+    </section>
+
+    <section id="recipes">
+      <div class="sn">07</div>
+      <h2>活用レシピ集 — 「一覧 | peco | コマンド」を量産する</h2>
+      <div class="oneword"><span class="lb">一言でいうと</span>
+        <p>パターンはすべて同じ：<strong>一覧を出す → peco で選ぶ → 結果を次に渡す</strong>。自分の「よく探すもの」に当てはめれば無限に作れる。</p>
+      </div>
+      <h3>① コマンド履歴を検索（Ctrl-R を置き換え）</h3>
+      <p class="codecap">~/.zshrc — 履歴をインクリメンタル検索して呼び戻す</p>
+      <pre><code>function peco-history() {
+  BUFFER=$(history -n -r 1 | peco --query "$LBUFFER")
+  CURSOR=$#BUFFER
+}
+zle -N peco-history
+bindkey '^r' peco-history</code></pre>
+      <p>標準の <code class="k">Ctrl-R</code>（1件ずつ遡る）と違い、候補一覧を見ながら AND 検索で探せます。「先週打った長い docker コマンド」も数文字で戻ってきます。</p>
+      <h3>② ブランチを選んで切り替え</h3>
+      <pre><code><span class="pr">$</span> git switch $(git branch --format='%(refname:short)' | peco)
+
+<span class="cm"># 関数にしておくと楽（gsw と打つだけ）</span>
+function gsw() {
+  local b
+  b=$(git branch --format='%(refname:short)' | peco)
+  [ -n "$b" ] &amp;&amp; git switch "$b"
+}</code></pre>
+      <h3>③ 選んだリポジトリをエディタで開く</h3>
+      <pre><code><span class="cm"># VS Code で開く</span>
+<span class="pr">$</span> code $(ghq list -p | peco)
+
+<span class="cm"># GitHub のページをブラウザで開く（macOS）</span>
+<span class="pr">$</span> open "https://$(ghq list | peco)"</code></pre>
+      <h3>④ SSH 接続先を選ぶ</h3>
+      <pre><code><span class="pr">$</span> ssh $(grep -E '^Host ' ~/.ssh/config | awk '{print $2}' | grep -v '\*' | peco)</code></pre>
+      <h3>⑤ プロセスを選んで kill（複数選択の出番）</h3>
+      <pre><code><span class="cm"># C-Space で複数選んでまとめて kill できる</span>
+<span class="pr">$</span> ps aux | peco | awk '{print $2}' | xargs kill</code></pre>
+      <h3>⑥ 変更ファイルを選んで git add</h3>
+      <pre><code><span class="cm"># これも C-Space の複数選択が活きる</span>
+<span class="pr">$</span> git add $(git status -s | peco | awk '{print $2}')</code></pre>
+      <div class="panel danger"><span class="lb">Danger — 破壊的コマンドに直結させない</span>
+        <p><code class="k">kill</code> や <code class="k">git checkout -- </code>、<code class="k">rm</code> のような取り返しのつかないコマンドへ peco の出力を直結するときは、<span class="mark">選択ミス＝即実行</span>になることを忘れずに。まずは <code class="k">echo</code> を挟んで出力を確認してから繋ぐ癖をつけると安全です。</p>
+      </div>
+      <div class="panel tip"><span class="lb">Tip — レシピの作り方は3問だけ</span>
+        <p>「①何の一覧か（コマンドで出せるか）」「②1行に必要な情報が入っているか」「③選んだ行をどう加工して渡すか（awk/cut）」。この3つに答えられれば、それはもう peco レシピになります。</p>
+      </div>
+    </section>
+
+    <section id="fzf">
+      <div class="sn">08</div>
+      <h2>fzf との比較・使い分け</h2>
+      <div class="oneword"><span class="lb">一言でいうと</span>
+        <p>役割はほぼ同じ「選択フィルタ」。fzf は高機能（あいまい検索既定・プレビュー・補完統合）、peco は小さく素直。どちらか一方で十分で、ghq とはどちらも組める。</p>
+      </div>
+      <table class="tb">
+        <thead><tr><th>観点</th><th>peco</th><th>fzf</th></tr></thead>
+        <tbody>
+          <tr><td>既定の検索</td><td>部分一致（Fuzzy へ切替可）</td><td>あいまい（fuzzy）検索</td></tr>
+          <tr><td>プレビュー表示</td><td>なし</td><td><code>--preview</code> でファイル内容等を横に表示</td></tr>
+          <tr><td>シェル統合</td><td>自分で関数を書く（本ガイドの形）</td><td>同梱の keybinding / 補完スクリプトが豊富</td></tr>
+          <tr><td>設計</td><td>小さく単機能。設定なしでも完結</td><td>多機能。オプションが非常に多い</td></tr>
+          <tr><td>共通点</td><td colspan="2">標準入力 → 選択 → 標準出力、という同じインタフェース。レシピは互いにほぼ移植可能</td></tr>
+        </tbody>
+      </table>
+      <div class="panel point"><span class="lb">Point — 思想で選べばよい</span>
+        <p>「道具は薄く、組み立ては自分で」が好きなら peco、「全部入りの便利さ」が好きなら fzf。本ガイドのレシピは <code class="k">peco</code> を <code class="k">fzf</code> に置き換えてもほぼそのまま動くので、移行コストを心配する必要はありません。</p>
+      </div>
+    </section>
+
+    <section id="faq">
+      <div class="sn">09</div>
+      <h2>つまずきポイント FAQ</h2>
+      <h3>Q1. すでに手で clone したリポジトリが散らばっている</h3>
+      <p>同じリポジトリをもう一度 <code class="k">ghq get</code> し直すのが最も簡単で確実です（リモートが真実なので、ローカルの未 push 変更だけ退避してから）。物理移動したい場合は、<code class="k">ghq root</code> 配下の規約どおりの位置（<code class="k">ルート/ホスト/オーナー/リポジトリ</code>）へ <code class="k">mv</code> すれば ghq は認識します。</p>
+      <pre><code><span class="cm"># 例：~/work/myrepo を規約の位置へ移す</span>
+<span class="pr">$</span> mkdir -p $(ghq root)/github.com/your-name
+<span class="pr">$</span> mv ~/work/myrepo $(ghq root)/github.com/your-name/myrepo
+<span class="pr">$</span> ghq list myrepo   <span class="cm"># 出てくれば認識されている</span></code></pre>
+      <h3>Q2. パスが深くて手で cd するのが辛い</h3>
+      <p>それは仕様であり、<strong>手で cd しなくなるのが前提</strong>の設計です。06 の <code class="k">Ctrl-]</code> を入れた瞬間に深さは問題でなくなります。むしろ深い規約パスのおかげで衝突や迷子が起きません。</p>
+      <h3>Q3. 会社の GitLab や自前 Git サーバでも使える？</h3>
+      <p>使えます。<code class="k">ghq get https://gitlab.example.com/team/repo</code> のように URL で渡せば、<code class="k">ルート/gitlab.example.com/team/repo</code> に置かれます。ホスト名でディレクトリが分かれるので、GitHub と社内リポジトリが混ざることもありません。</p>
+      <h3>Q4. peco の画面でキャンセルしたのにコマンドが走った</h3>
+      <p><code class="k">$(... | peco)</code> を直接埋め込むと、キャンセル時に空文字で後続が実行されることがあります。レシピのように<strong>一度変数に受けて <code class="k">[ -n "$selected" ]</code> で空チェック</strong>する形にしてください。</p>
+      <h3>Q5. リポジトリが増えて一覧が重くなった</h3>
+      <p><code class="k">ghq list</code> はディレクトリ走査なので通常は一瞬です。気になる場合は <code class="k">ghq list 部分文字列</code> で先に絞ってから peco に渡す、巨大リポジトリは <code class="k">--shallow</code> で取る、などで快適さを保てます。</p>
+    </section>
+
+    <section id="cheat">
+      <div class="sn">10</div>
+      <h2>チートシート</h2>
+      <h3>ghq</h3>
+      <table class="tb">
+        <thead><tr><th>コマンド</th><th>意味</th></tr></thead>
+        <tbody>
+          <tr><td><code>ghq get owner/repo</code></td><td>規約の位置に clone（GitHub 短縮形）</td></tr>
+          <tr><td><code>ghq get -u URL</code></td><td>clone 済みなら更新（pull）</td></tr>
+          <tr><td><code>ghq get -p URL</code></td><td>ssh プロトコルで clone</td></tr>
+          <tr><td><code>ghq get --shallow URL</code></td><td>浅い clone</td></tr>
+          <tr><td><code>ghq list</code> / <code>ghq list -p</code></td><td>一覧（相対 / フルパス）</td></tr>
+          <tr><td><code>ghq list 文字列</code></td><td>部分一致で絞った一覧</td></tr>
+          <tr><td><code>ghq root</code></td><td>ルートのパスを表示</td></tr>
+          <tr><td><code>ghq create owner/repo</code></td><td>規約の位置に新規リポジトリ作成</td></tr>
+          <tr><td><code>git config --global ghq.root PATH</code></td><td>ルートの変更</td></tr>
+        </tbody>
+      </table>
+      <h3>peco</h3>
+      <table class="tb">
+        <thead><tr><th>操作 / オプション</th><th>意味</th></tr></thead>
+        <tbody>
+          <tr><td><code>一覧 | peco</code></td><td>選択 UI を起動、選択行を標準出力へ</td></tr>
+          <tr><td><code>C-Space</code></td><td>複数選択トグル</td></tr>
+          <tr><td><code>C-r</code></td><td>フィルタ方式切替（IgnoreCase→Regexp→Fuzzy…）</td></tr>
+          <tr><td><code>スペース区切りクエリ</code></td><td>AND 検索</td></tr>
+          <tr><td><code>--query 文字列</code></td><td>初期クエリ</td></tr>
+          <tr><td><code>--select-1</code></td><td>候補1件なら即確定</td></tr>
+          <tr><td><code>--initial-filter Fuzzy</code></td><td>起動時のフィルタ指定</td></tr>
+          <tr><td><code>~/.config/peco/config.json</code></td><td>キーマップ・既定フィルタ等の設定</td></tr>
+        </tbody>
+      </table>
+      <h3>定番レシピ（再掲・最小形）</h3>
+      <pre><code><span class="cm"># リポジトリへ移動（関数化して Ctrl-] へ）</span>
+<span class="pr">$</span> cd $(ghq list -p | peco)
+<span class="cm"># 履歴から再実行（関数化して Ctrl-R へ）</span>
+<span class="pr">$</span> $(history -n -r 1 | peco)
+<span class="cm"># ブランチ切替</span>
+<span class="pr">$</span> git switch $(git branch --format='%(refname:short)' | peco)
+<span class="cm"># エディタで開く</span>
+<span class="pr">$</span> code $(ghq list -p | peco)</code></pre>
+    </section>
+
+    <section id="gloss">
+      <div class="sn">11</div>
+      <h2>用語集</h2>
+      <dl class="gloss">
+        <dt>インクリメンタル検索</dt>
+        <dd>1文字打つごとに候補がリアルタイムで絞り込まれていく検索方式。peco の基本動作。</dd>
+        <dt><code>ghq root</code>（ルート）</dt>
+        <dd>ghq がリポジトリを配置する起点ディレクトリ。デフォルトは <code class="k">~/ghq</code>、<code class="k">git config ghq.root</code> で変更できる。</dd>
+        <dt>ディレクトリ規約</dt>
+        <dd><code class="k">ルート/ホスト名/オーナー名/リポジトリ名</code> という ghq の配置ルール。URL の構造をそのままパスに写す。</dd>
+        <dt>フィルタ（peco）</dt>
+        <dd>クエリと候補行の照合方式。IgnoreCase / CaseSensitive / SmartCase / Regexp / Fuzzy があり <code class="k">C-r</code> で切替。</dd>
+        <dt>zle ウィジェット</dt>
+        <dd>zsh のラインエディタに登録する自作機能。<code class="k">zle -N 関数名</code> で登録し <code class="k">bindkey</code> でキーに割り当てる。</dd>
+        <dt><code>$LBUFFER</code></dt>
+        <dd>zsh で、カーソルより左側の入力済み文字列。peco の初期クエリに渡すと「打ちかけの文字で絞り込み開始」できる。</dd>
+        <dt>fzf</dt>
+        <dd>peco と同役割の選択フィルタ。あいまい検索が既定で、プレビューやシェル統合が豊富。</dd>
+      </dl>
+    </section>
+
+    <footer>
+      <p>このガイドは <a href="https://github.com/peco/peco" target="_blank" rel="noopener">peco</a> と <a href="https://github.com/x-motemen/ghq" target="_blank" rel="noopener">ghq</a> の公式 README・ドキュメントをもとに、要点を噛み砕いて再構成したものです。挙動やオプションは簡略化している箇所があり、ツールの仕様は変わりえます。最新・正確な情報は各公式リポジトリを参照してください。</p>
+    </footer>
+  </main>
+</div>
+<button class="totop" id="totop" aria-label="トップへ戻る">↑</button>
+<script>
+  const prog=document.getElementById('progress');
+  const totop=document.getElementById('totop');
+  addEventListener('scroll',()=>{
+    const h=document.documentElement;
+    const max=h.scrollHeight-h.clientHeight;
+    prog.style.width=(max>0?(h.scrollTop/max*100):0)+'%';
+    totop.classList.toggle('show',h.scrollTop>600);
+  },{passive:true});
+  totop.onclick=()=>scrollTo({top:0,behavior:'smooth'});
+
+  const links=[...document.querySelectorAll('#toc-list a')];
+  const map=new Map(links.map(a=>[a.getAttribute('href').slice(1),a]));
+  const io=new IntersectionObserver(es=>{
+    es.forEach(e=>{
+      if(e.isIntersecting){
+        links.forEach(a=>a.classList.remove('active'));
+        const a=map.get(e.target.id); if(a) a.classList.add('active');
+      }
+    });
+  },{rootMargin:'-10% 0px -70% 0px'});
+  document.querySelectorAll('section[id]').forEach(s=>io.observe(s));
+
+  document.querySelectorAll('pre').forEach(pre=>{
+    const btn=document.createElement('button');
+    btn.className='copy';btn.type='button';btn.textContent='copy';
+    btn.onclick=()=>{
+      const code=pre.querySelector('code');
+      const text=code.innerText.split('\n').map(l=>l.replace(/^\$ /,'')).join('\n');
+      navigator.clipboard.writeText(text).then(()=>{
+        btn.textContent='copied!';setTimeout(()=>btn.textContent='copy',1200);
+      });
+    };
+    pre.appendChild(btn);
+  });
+</script>
+</body>
+</html>

@@ -257,6 +257,16 @@
       "aliases": ["Claude Code", "クロードコード", "claude code", "Claude Code Tips", "cc tips", "Claudeコード", "claude-code-tips"]
     },
     {
+      "slug": "peco-ghq",
+      "file": "pages/tools/peco-ghq.html",
+      "shelf": "tools",
+      "title": "peco × ghq 実践ガイド",
+      "book": "peco × ghq — 「選ぶ」と「置く」でターミナルを速くする",
+      "cat": "CLI / Terminal",
+      "tags": ["peco", "ghq", "インクリメンタル検索", "zsh連携"],
+      "aliases": ["peco", "ghq", "ペコ", "peco ghq", "ghq peco", "リポジトリ管理", "あいまい検索", "瞬間移動", "peco-ghq"]
+    },
+    {
       "slug": "world-class-engineer",
       "file": "pages/mindset/world-class-engineer.html",
       "shelf": "mindset",
